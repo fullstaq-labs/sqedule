@@ -7,12 +7,14 @@ import (
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
 )
 
+// ApprovalRuleset ...
 type ApprovalRuleset struct {
 	BaseModel
 	ID        string    `gorm:"primaryKey; not null"`
 	CreatedAt time.Time `gorm:"not null"`
 }
 
+// ApprovalRulesetMajorVersion ...
 type ApprovalRulesetMajorVersion struct {
 	OrganizationID    string    `gorm:"primaryKey; not null; index:version,unique"`
 	ID                uint64    `gorm:"primaryKey; not null"`
@@ -24,6 +26,7 @@ type ApprovalRulesetMajorVersion struct {
 	ApprovalRuleset ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
+// ApprovalRulesetMinorVersion ...
 type ApprovalRulesetMinorVersion struct {
 	BaseModel
 	ApprovalRulesetMajorVersionID uint64            `gorm:"primaryKey; not null"`

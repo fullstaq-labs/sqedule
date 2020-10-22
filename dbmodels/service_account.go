@@ -1,5 +1,6 @@
 package dbmodels
 
+// ServiceAccount ...
 type ServiceAccount struct {
 	OrganizationMember
 	Name       string `gorm:"primaryKey; not null"`

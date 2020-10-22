@@ -19,5 +19,5 @@ type DeploymentRequest struct {
 
 	ApplicationMajorVersionID     uint64                  `gorm:"not null"`
 	ApplicationMinorVersionNumber uint32                  `gorm:"not null"`
-	ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber" references:OrganizationID,ApplicationMajorVersionID,VersionNumber`
+	ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber references:OrganizationID,ApplicationMajorVersionID,VersionNumber"`
 }

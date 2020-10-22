@@ -2,6 +2,7 @@ package dbmodels
 
 import "database/sql"
 
+// User ...
 type User struct {
 	OrganizationMember
 	Email        string `gorm:"primaryKey; not null"`

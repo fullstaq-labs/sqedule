@@ -7,12 +7,14 @@ import (
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
 )
 
+// Application ...
 type Application struct {
 	BaseModel
 	ID        string    `gorm:"primaryKey; not null"`
 	CreatedAt time.Time `gorm:"not null"`
 }
 
+// ApplicationMajorVersion ...
 type ApplicationMajorVersion struct {
 	OrganizationID string    `gorm:"primaryKey; not null; index:version,unique"`
 	ID             uint64    `gorm:"primaryKey; not null"`
@@ -24,6 +26,7 @@ type ApplicationMajorVersion struct {
 	Application Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
+// ApplicationMinorVersion ...
 type ApplicationMinorVersion struct {
 	BaseModel
 	ApplicationMajorVersionID uint64            `gorm:"primaryKey; not null"`
