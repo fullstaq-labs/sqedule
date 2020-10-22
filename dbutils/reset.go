@@ -23,36 +23,30 @@ func listUserDefinedTypes(db *gorm.DB) ([]string, error) {
 
 // ResetDatabase drops all tables and user-defined types in the current database.
 func ResetDatabase(context context.Context, db *gorm.DB) error {
-	if err := db.Begin().Error; err != nil {
-		return err
-	}
-
-	tableNames, err := listTableNames(db)
-	if err != nil {
-		db.Rollback()
-		return fmt.Errorf("error listing table names: %w", err)
-	}
-	db.Logger.Info(context, "List of tables: %v", tableNames)
-
-	typeNames, err := listUserDefinedTypes(db)
-	if err != nil {
-		db.Rollback()
-		return fmt.Errorf("error listing user-defined types: %w", err)
-	}
-	db.Logger.Info(context, "List of user-defined types: %v", typeNames)
-
-	for _, tableName := range tableNames {
-		if result := db.Exec(`DROP TABLE IF EXISTS "` + tableName + `" CASCADE`); result.Error != nil {
-			db.Rollback()
-			return fmt.Errorf("error dropping table %s: %w", tableName, result.Error)
+	return db.Transaction(func(tx *gorm.DB) error {
+		tableNames, err := listTableNames(tx)
+		if err != nil {
+			return fmt.Errorf("error listing table names: %w", err)
 		}
-	}
-	for _, typeName := range typeNames {
-		if result := db.Exec(`DROP TYPE IF EXISTS "` + typeName + `" CASCADE`); result.Error != nil {
-			db.Rollback()
-			return fmt.Errorf("error dropping user-defined type %s: %w", typeName, result.Error)
-		}
-	}
+		db.Logger.Info(context, "List of tables: %v", tableNames)
 
-	return db.Commit().Error
+		typeNames, err := listUserDefinedTypes(tx)
+		if err != nil {
+			return fmt.Errorf("error listing user-defined types: %w", err)
+		}
+		db.Logger.Info(context, "List of user-defined types: %v", typeNames)
+
+		for _, tableName := range tableNames {
+			if result := tx.Exec(`DROP TABLE IF EXISTS "` + tableName + `" CASCADE`); result.Error != nil {
+				return fmt.Errorf("error dropping table %s: %w", tableName, result.Error)
+			}
+		}
+		for _, typeName := range typeNames {
+			if result := tx.Exec(`DROP TYPE IF EXISTS "` + typeName + `" CASCADE`); result.Error != nil {
+				return fmt.Errorf("error dropping user-defined type %s: %w", typeName, result.Error)
+			}
+		}
+
+		return nil
+	})
 }

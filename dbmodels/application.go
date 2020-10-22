@@ -18,8 +18,8 @@ type Application struct {
 type ApplicationMajorVersion struct {
 	OrganizationID string       `gorm:"primaryKey; not null; index:version,unique"`
 	Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	ID             uint64       `gorm:"primaryKey; not null"`
-	ApplicationID  string       `gorm:"index:version,unique"`
+	ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
+	ApplicationID  string       `gorm:"not null; index:version,unique"`
 	VersionNumber  *uint32      `gorm:"index:version,unique"`
 	CreatedAt      time.Time    `gorm:"not null"`
 	UpdatedAt      time.Time    `gorm:"not null"`
@@ -35,7 +35,7 @@ type ApplicationMinorVersion struct {
 	ReviewState               reviewstate.State `gorm:"type:review_state; not null"`
 	ReviewComments            sql.NullString
 	CreatedAt                 time.Time `gorm:"not null"`
-	Enabled                   bool      `gorm:"not null"`
+	Enabled                   bool      `gorm:"not null; default:true"`
 
 	DisplayName string `gorm:"not null"`
 

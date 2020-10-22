@@ -329,6 +329,8 @@ func (g *Gormigrate) RollbackMigration(m *Migration) error {
 }
 
 func (g *Gormigrate) rollbackMigration(m *Migration) error {
+	g.logInfo("Rolling back migration: %s", m.ID)
+
 	if m.Rollback == nil {
 		return ErrRollbackImpossible
 	}

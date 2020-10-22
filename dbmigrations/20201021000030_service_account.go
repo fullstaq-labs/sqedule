@@ -11,8 +11,7 @@ var migration20201021000030 = gormigrate.Migration{
 	ID: "20201021000030 Service account",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID          string `gorm:"primaryKey; not null"`
-			DisplayName string `gorm:"not null"`
+			ID string `gorm:"primaryKey; not null"`
 		}
 
 		type BaseModel struct {
