@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/fullstaq-labs/sqedule/dbmigrations"
@@ -35,12 +36,13 @@ var dbRollbackCmd = &cobra.Command{
 			return fmt.Errorf("Error establishing database connection: %w", err)
 		}
 
-		gormigrateOptions := createGormigrateOptions(dbLogger)
-		migrator := gormigrate.New(db, &gormigrateOptions, dbmigrations.DbMigrations)
+		gormigrateOptions := createGormigrateOptions(logger)
+		migrator := gormigrate.New(db, &gormigrateOptions, dbmigrations.DbMigrations())
 		if err := migrator.RollbackTo(*dbRollbackFlags.target); err != nil {
 			return fmt.Errorf("Error rolling back database schema: %w", err)
 		}
 
+		logger.Info(context.Background(), "Database schema rollback complete")
 		return nil
 	},
 }

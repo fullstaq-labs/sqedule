@@ -14,17 +14,17 @@ type CreationAuditRecord struct {
 	// Object association
 
 	UserEmail sql.NullString
-	User      User `gorm:"foreignKey:OrganizationID,UserEmail references:OrganizationID,Email check:((CASE user_email IS NULL THEN 0 ELSE 1 END) + (CASE service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
+	User      User `gorm:"foreignKey:OrganizationID,UserEmail; references:OrganizationID,Email; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT; check:((CASE user_email IS NULL THEN 0 ELSE 1 END) + (CASE service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
 
 	ServiceAccountName sql.NullString
-	ServiceAccount     ServiceAccount `gorm:"foreignKey:OrganizationID,ServiceAccountName references:OrganizationID,Name"`
+	ServiceAccount     ServiceAccount `gorm:"foreignKey:OrganizationID,ServiceAccountName; references:OrganizationID,Name; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Subject association
 
 	ApplicationMajorVersionID     uint64
 	ApplicationMinorVersionNumber uint32                  `gorm:"check:((application_major_version_id IS NULL) = (application_minor_version_number IS NULL))"`
-	ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber references:OrganizationID,ApplicationMajorVersionID,VersionNumber check:((CASE application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE deployment_request_id IS NULL THEN 0 ELSE 1 END) <= 1)"`
+	ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber; references:OrganizationID,ApplicationMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT; check:((CASE application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE deployment_request_id IS NULL THEN 0 ELSE 1 END) <= 1)"`
 
 	DeploymentRequestID uint64
-	DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,DeploymentRequestID references:OrganizationID,ID"`
+	DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,DeploymentRequestID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }

@@ -45,8 +45,8 @@ var dbMigrateCmd = &cobra.Command{
 			}
 		}
 
-		gormigrateOptions := createGormigrateOptions(dbLogger)
-		migrator := gormigrate.New(db, &gormigrateOptions, dbmigrations.DbMigrations)
+		gormigrateOptions := createGormigrateOptions(logger)
+		migrator := gormigrate.New(db, &gormigrateOptions, dbmigrations.DbMigrations())
 		if len(*dbMigrateFlags.upTo) > 0 {
 			err = migrator.MigrateTo(*dbMigrateFlags.upTo)
 		} else {
@@ -56,6 +56,7 @@ var dbMigrateCmd = &cobra.Command{
 			return fmt.Errorf("Error running migrations: %w", err)
 		}
 
+		logger.Info(context.Background(), "Database migration complete")
 		return nil
 	},
 }

@@ -16,12 +16,13 @@ type Application struct {
 
 // ApplicationMajorVersion ...
 type ApplicationMajorVersion struct {
-	OrganizationID string    `gorm:"primaryKey; not null; index:version,unique"`
-	ID             uint64    `gorm:"primaryKey; not null"`
-	ApplicationID  string    `gorm:"index:version,unique"`
-	VersionNumber  *uint32   `gorm:"index:version,unique"`
-	CreatedAt      time.Time `gorm:"not null"`
-	UpdatedAt      time.Time `gorm:"not null"`
+	OrganizationID string       `gorm:"primaryKey; not null; index:version,unique"`
+	Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ID             uint64       `gorm:"primaryKey; not null"`
+	ApplicationID  string       `gorm:"index:version,unique"`
+	VersionNumber  *uint32      `gorm:"index:version,unique"`
+	CreatedAt      time.Time    `gorm:"not null"`
+	UpdatedAt      time.Time    `gorm:"not null"`
 
 	Application Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
