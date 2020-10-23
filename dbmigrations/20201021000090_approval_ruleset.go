@@ -49,11 +49,11 @@ var migration20201021000090 = gormigrate.Migration{
 			ReviewState                   string `gorm:"type:review_state; not null"`
 			ReviewComments                sql.NullString
 			CreatedAt                     time.Time `gorm:"not null"`
-			Enabled                       bool      `gorm:"not null"`
+			Enabled                       bool      `gorm:"not null; default:true"`
 
 			DisplayName        string `gorm:"not null"`
 			Description        string `gorm:"not null"`
-			GloballyApplicable bool   `gorm:"not null"`
+			GloballyApplicable bool   `gorm:"not null; default:false"`
 
 			ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
