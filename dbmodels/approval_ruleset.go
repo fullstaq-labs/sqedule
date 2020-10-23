@@ -18,7 +18,7 @@ type ApprovalRuleset struct {
 type ApprovalRulesetMajorVersion struct {
 	OrganizationID    string       `gorm:"type: citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
 	Organization      Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	ID                uint64       `gorm:"primaryKey; not null"`
+	ID                uint64       `gorm:"primaryKey; autoIncrement; not null"`
 	ApprovalRulesetID string       `gorm:"type: citext; index:approval_ruleset_major_version_idx,unique"`
 	VersionNumber     *uint32      `gorm:"index:approval_ruleset_major_version_idx,unique"`
 	CreatedAt         time.Time    `gorm:"not null"`

@@ -49,12 +49,11 @@ var migration20201021000070 = gormigrate.Migration{
 			ResultState string `gorm:"type:deployment_request_state; not null"`
 		}
 
-		return tx.AutoMigrate(&DeploymentRequestEvent{}, &DeploymentRequestCreatedEvent{},
+		return tx.AutoMigrate(&DeploymentRequestCreatedEvent{},
 			&DeploymentRequestCancelledEvent{}, &DeploymentRequestRuleProcessedEvent{})
 	},
 	Rollback: func(tx *gorm.DB) error {
 		return tx.Migrator().DropTable("deployment_request_rule_processed_events",
-			"deployment_request_cancelled_events", "deployment_request_created_events",
-			"deployment_request_events")
+			"deployment_request_cancelled_events", "deployment_request_created_events")
 	},
 }
