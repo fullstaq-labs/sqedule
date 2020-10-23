@@ -16,11 +16,11 @@ var migration20201021000070 = gormigrate.Migration{
 	ID: "20201021000070 Creation audit record",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID string `gorm:"primaryKey; not null"`
+			ID string `gorm:"type: citext; primaryKey; not null"`
 		}
 
 		type BaseModel struct {
-			OrganizationID string       `gorm:"primaryKey; not null"`
+			OrganizationID string       `gorm:"type: citext; primaryKey; not null"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
@@ -30,24 +30,24 @@ var migration20201021000070 = gormigrate.Migration{
 
 		type User struct {
 			OrganizationMember
-			Email string `gorm:"primaryKey; not null"`
+			Email string `gorm:"type: citext; primaryKey; not null"`
 		}
 
 		type ServiceAccount struct {
 			OrganizationMember
-			Name string `gorm:"primaryKey; not null"`
+			Name string `gorm:"type: citext; primaryKey; not null"`
 		}
 
 		type Application struct {
 			BaseModel
-			ID string `gorm:"primaryKey; not null"`
+			ID string `gorm:"type: citext; primaryKey; not null"`
 		}
 
 		type ApplicationMajorVersion struct {
-			OrganizationID string       `gorm:"primaryKey; not null; index:version,unique"`
+			OrganizationID string       `gorm:"type: citext; primaryKey; not null; index:version,unique"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApplicationID  string       `gorm:"not null; index:version,unique"`
+			ApplicationID  string       `gorm:"type: citext; not null; index:version,unique"`
 			Application    Application  `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
@@ -75,10 +75,10 @@ var migration20201021000070 = gormigrate.Migration{
 
 			// Object association
 
-			UserEmail sql.NullString
-			User      User `gorm:"foreignKey:OrganizationID,UserEmail; references:OrganizationID,Email; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT; check:((CASE user_email IS NULL THEN 0 ELSE 1 END) + (CASE service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
+			UserEmail sql.NullString `gorm:"type: citext"`
+			User      User           `gorm:"foreignKey:OrganizationID,UserEmail; references:OrganizationID,Email; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT; check:((CASE user_email IS NULL THEN 0 ELSE 1 END) + (CASE service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
 
-			ServiceAccountName sql.NullString
+			ServiceAccountName sql.NullString `gorm:"type: citext"`
 			ServiceAccount     ServiceAccount `gorm:"foreignKey:OrganizationID,ServiceAccountName; references:OrganizationID,Name; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 			// Subject association

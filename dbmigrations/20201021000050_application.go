@@ -16,25 +16,25 @@ var migration20201021000050 = gormigrate.Migration{
 	ID: "20201021000050 Application",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID string `gorm:"primaryKey; not null"`
+			ID string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type BaseModel struct {
-			OrganizationID string       `gorm:"primaryKey; not null"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
 		type Application struct {
 			BaseModel
-			ID        string    `gorm:"primaryKey; not null"`
+			ID        string    `gorm:"type: citext; primaryKey; not null"`
 			CreatedAt time.Time `gorm:"not null"`
 		}
 
 		type ApplicationMajorVersion struct {
-			OrganizationID string       `gorm:"primaryKey; not null; index:application_major_version_idx,unique"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null; index:application_major_version_idx,unique"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApplicationID  string       `gorm:"not null; index:application_major_version_idx,unique"`
+			ApplicationID  string       `gorm:"type: citext; not null; index:application_major_version_idx,unique"`
 			VersionNumber  *uint32      `gorm:"index:application_major_version_idx,unique"`
 			CreatedAt      time.Time    `gorm:"not null"`
 			UpdatedAt      time.Time    `gorm:"not null"`

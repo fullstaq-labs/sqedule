@@ -10,16 +10,11 @@ func init() {
 }
 
 var migration20201021000000 = gormigrate.Migration{
-	ID: "20201021000000 Organization",
+	ID: "20201021000000 Basic settings",
 	Migrate: func(tx *gorm.DB) error {
-		type Organization struct {
-			ID          string `gorm:"primaryKey; not null"`
-			DisplayName string `gorm:"not null"`
-		}
-
-		return tx.AutoMigrate(&Organization{})
+		return tx.Exec("CREATE EXTENSION IF NOT EXISTS citext").Error
 	},
 	Rollback: func(tx *gorm.DB) error {
-		return tx.Migrator().DropTable("organizations")
+		return tx.Exec("DROP EXTENSION citext").Error
 	},
 }

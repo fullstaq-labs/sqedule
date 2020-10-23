@@ -13,10 +13,10 @@ type CreationAuditRecord struct {
 
 	// Object association
 
-	UserEmail sql.NullString
-	User      User `gorm:"foreignKey:OrganizationID,UserEmail; references:OrganizationID,Email; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT; check:((CASE user_email IS NULL THEN 0 ELSE 1 END) + (CASE service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
+	UserEmail sql.NullString `gorm:"type: citext"`
+	User      User           `gorm:"foreignKey:OrganizationID,UserEmail; references:OrganizationID,Email; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT; check:((CASE user_email IS NULL THEN 0 ELSE 1 END) + (CASE service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
 
-	ServiceAccountName sql.NullString
+	ServiceAccountName sql.NullString `gorm:"type: citext"`
 	ServiceAccount     ServiceAccount `gorm:"foreignKey:OrganizationID,ServiceAccountName; references:OrganizationID,Name; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Subject association

@@ -15,11 +15,11 @@ var migration20201021000020 = gormigrate.Migration{
 	ID: "20201021000020 User",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID string `gorm:"primaryKey; not null"`
+			ID string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type BaseModel struct {
-			OrganizationID string       `gorm:"primaryKey; not null"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
@@ -32,7 +32,7 @@ var migration20201021000020 = gormigrate.Migration{
 
 		type User struct {
 			OrganizationMember
-			Email        string `gorm:"primaryKey; not null"`
+			Email        string `gorm:"type: citext; primaryKey; not null"`
 			PasswordHash string `gorm:"not null"`
 			FirstName    string `gorm:"not null"`
 			LastName     string `gorm:"not null"`

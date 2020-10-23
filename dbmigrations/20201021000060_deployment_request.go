@@ -16,24 +16,24 @@ var migration20201021000060 = gormigrate.Migration{
 	ID: "20201021000060 Deployment request",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID string `gorm:"primaryKey; not null"`
+			ID string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type BaseModel struct {
-			OrganizationID string       `gorm:"primaryKey; not null"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
 		type Application struct {
 			BaseModel
-			ID string `gorm:"primaryKey; not null"`
+			ID string `gorm:"type: citext; primaryKey; not null"`
 		}
 
 		type ApplicationMajorVersion struct {
-			OrganizationID string       `gorm:"primaryKey; not null; index:version,unique"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null; index:version,unique"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApplicationID  string       `gorm:"not null; index:version,unique"`
+			ApplicationID  string       `gorm:"type: citext; not null; index:version,unique"`
 			Application    Application  `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
