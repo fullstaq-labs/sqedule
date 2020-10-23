@@ -5,6 +5,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func init() {
+	registerDbMigration(&migration20201021000000)
+}
+
 var migration20201021000000 = gormigrate.Migration{
 	ID: "20201021000000 Organization",
 	Migrate: func(tx *gorm.DB) error {
@@ -18,8 +22,4 @@ var migration20201021000000 = gormigrate.Migration{
 	Rollback: func(tx *gorm.DB) error {
 		return tx.Migrator().DropTable("organizations")
 	},
-}
-
-func init() {
-	registerDbMigration(&migration20201021000000)
 }

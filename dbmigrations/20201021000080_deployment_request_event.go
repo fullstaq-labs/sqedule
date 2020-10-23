@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func init() {
+	registerDbMigration(&migration20201021000080)
+}
+
 var migration20201021000080 = gormigrate.Migration{
 	ID: "20201021000080 Deployment request event",
 	Migrate: func(tx *gorm.DB) error {
@@ -77,8 +81,4 @@ var migration20201021000080 = gormigrate.Migration{
 			"deployment_request_cancelled_events", "deployment_request_created_events",
 			"deployment_request_events")
 	},
-}
-
-func init() {
-	registerDbMigration(&migration20201021000080)
 }

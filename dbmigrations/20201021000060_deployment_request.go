@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func init() {
+	registerDbMigration(&migration20201021000060)
+}
+
 var migration20201021000060 = gormigrate.Migration{
 	ID: "20201021000060 Deployment request",
 	Migrate: func(tx *gorm.DB) error {
@@ -71,8 +75,4 @@ var migration20201021000060 = gormigrate.Migration{
 
 		return tx.Exec("DROP TYPE deployment_request_state").Error
 	},
-}
-
-func init() {
-	registerDbMigration(&migration20201021000060)
 }

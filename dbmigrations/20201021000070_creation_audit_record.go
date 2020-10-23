@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func init() {
+	registerDbMigration(&migration20201021000070)
+}
+
 var migration20201021000070 = gormigrate.Migration{
 	ID: "20201021000070 Creation audit record",
 	Migrate: func(tx *gorm.DB) error {
@@ -92,8 +96,4 @@ var migration20201021000070 = gormigrate.Migration{
 	Rollback: func(tx *gorm.DB) error {
 		return tx.Migrator().DropTable("creation_audit_records")
 	},
-}
-
-func init() {
-	registerDbMigration(&migration20201021000070)
 }

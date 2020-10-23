@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func init() {
+	registerDbMigration(&migration20201021000050)
+}
+
 var migration20201021000050 = gormigrate.Migration{
 	ID: "20201021000050 Application",
 	Migrate: func(tx *gorm.DB) error {
@@ -59,8 +63,4 @@ var migration20201021000050 = gormigrate.Migration{
 		return tx.Migrator().DropTable("application_minor_versions",
 			"application_major_versions", "applications")
 	},
-}
-
-func init() {
-	registerDbMigration(&migration20201021000050)
 }
