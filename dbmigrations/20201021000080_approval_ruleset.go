@@ -9,11 +9,11 @@ import (
 )
 
 func init() {
-	registerDbMigration(&migration20201021000090)
+	registerDbMigration(&migration20201021000080)
 }
 
-var migration20201021000090 = gormigrate.Migration{
-	ID: "20201021000090 Approval ruleset",
+var migration20201021000080 = gormigrate.Migration{
+	ID: "20201021000080 Approval ruleset",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
 			ID string `gorm:"type: citext; primaryKey; not null"`
