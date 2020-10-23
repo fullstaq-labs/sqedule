@@ -16,11 +16,11 @@ type ApprovalRuleset struct {
 
 // ApprovalRulesetMajorVersion ...
 type ApprovalRulesetMajorVersion struct {
-	OrganizationID    string       `gorm:"primaryKey; not null; index:version,unique"`
+	OrganizationID    string       `gorm:"primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
 	Organization      Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	ID                uint64       `gorm:"primaryKey; not null"`
-	ApprovalRulesetID string       `gorm:"index:version,unique"`
-	VersionNumber     *uint32      `gorm:"index:version,unique"`
+	ApprovalRulesetID string       `gorm:"index:approval_ruleset_major_version_idx,unique"`
+	VersionNumber     *uint32      `gorm:"index:approval_ruleset_major_version_idx,unique"`
 	CreatedAt         time.Time    `gorm:"not null"`
 	UpdatedAt         time.Time    `gorm:"not null"`
 
@@ -39,7 +39,7 @@ type ApprovalRulesetMinorVersion struct {
 
 	DisplayName        string `gorm:"not null"`
 	Description        string `gorm:"not null"`
-	GloballyApplicable string `gorm:"not null"` // TODO: index this
+	GloballyApplicable bool   `gorm:"not null"`
 
 	ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
