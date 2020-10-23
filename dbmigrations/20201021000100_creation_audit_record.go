@@ -44,38 +44,27 @@ var migration20201021000100 = gormigrate.Migration{
 		}
 
 		type ApplicationMajorVersion struct {
-			OrganizationID string       `gorm:"type: citext; primaryKey; not null; index:version,unique"`
+			OrganizationID string       `gorm:"type: citext; primaryKey; not null; index:application_major_version_idx,unique"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApplicationID  string       `gorm:"type: citext; not null; index:version,unique"`
-			Application    Application  `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApplicationID  string       `gorm:"type: citext; not null; index:application_major_version_idx,unique"`
+			VersionNumber  *uint32      `gorm:"index:application_major_version_idx,unique"`
+
+			Application Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
 		type ApplicationMinorVersion struct {
 			BaseModel
-			ApplicationMajorVersionID uint64                  `gorm:"primaryKey; not null"`
-			VersionNumber             uint32                  `gorm:"primaryKey; not null"`
-			ApplicationMajorVersion   ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-		}
+			ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
+			VersionNumber             uint32 `gorm:"primaryKey; not null"`
 
-		type ApprovalRuleset struct {
-			BaseModel
-			ID string `gorm:"type: citext; primaryKey; not null"`
-		}
-
-		type ApprovalRulesetMajorVersion struct {
-			OrganizationID    string          `gorm:"type: citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
-			Organization      Organization    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-			ID                uint64          `gorm:"primaryKey; not null"`
-			ApprovalRulesetID string          `gorm:"type: citext; index:approval_ruleset_major_version_idx,unique"`
-			ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApplicationMajorVersion ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
 		type ApprovalRulesetMinorVersion struct {
 			BaseModel
-			ApprovalRulesetMajorVersionID uint64                      `gorm:"primaryKey; not null"`
-			VersionNumber                 uint32                      `gorm:"primaryKey; not null"`
-			ApprovalRulesetMajorVersion   ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
+			VersionNumber                 uint32 `gorm:"primaryKey; not null"`
 		}
 
 		type DeploymentRequestEvent struct {
