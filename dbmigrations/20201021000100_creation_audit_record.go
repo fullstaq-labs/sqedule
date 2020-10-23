@@ -38,27 +38,10 @@ var migration20201021000100 = gormigrate.Migration{
 			Name string `gorm:"type: citext; primaryKey; not null"`
 		}
 
-		type Application struct {
-			BaseModel
-			ID string `gorm:"type: citext; primaryKey; not null"`
-		}
-
-		type ApplicationMajorVersion struct {
-			OrganizationID string       `gorm:"type: citext; primaryKey; not null; index:application_major_version_idx,unique"`
-			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApplicationID  string       `gorm:"type: citext; not null; index:application_major_version_idx,unique"`
-			VersionNumber  *uint32      `gorm:"index:application_major_version_idx,unique"`
-
-			Application Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-		}
-
 		type ApplicationMinorVersion struct {
 			BaseModel
 			ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
 			VersionNumber             uint32 `gorm:"primaryKey; not null"`
-
-			ApplicationMajorVersion ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
 		type ApprovalRulesetMinorVersion struct {
