@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// CreationAuditRecord ...
 type CreationAuditRecord struct {
 	BaseModel
 	ID                   uint64 `gorm:"primaryKey; not null"`

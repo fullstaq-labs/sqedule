@@ -7,6 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
 )
 
+// DeploymentRequest ...
 type DeploymentRequest struct {
 	BaseModel
 	ID             uint64                       `gorm:"primaryKey; not null"`

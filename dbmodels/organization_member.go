@@ -6,6 +6,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/dbmodels/organizationmemberrole"
 )
 
+// OrganizationMember ...
 type OrganizationMember struct {
 	BaseModel
 	Role      organizationmemberrole.Role `gorm:"type:organization_member_role; not null"`
