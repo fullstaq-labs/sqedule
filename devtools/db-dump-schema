@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+set -o pipefail
+
+pg_dump --schema-only --no-privileges --no-owner --no-tablespaces "$@" | sed '/^--/d; /^SET /d' | awk 'NF{c=1} (c++)<3'
