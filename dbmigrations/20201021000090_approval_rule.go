@@ -15,7 +15,7 @@ func init() {
 }
 
 var migration20201021000090 = gormigrate.Migration{
-	ID: "20201021000090 Approval rules",
+	ID: "20201021000090 Approval rule",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
 			ID string `gorm:"type:citext; primaryKey; not null"`
