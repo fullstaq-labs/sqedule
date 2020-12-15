@@ -22,13 +22,16 @@ type CreationAuditRecord struct {
 
 	// Subject association
 
-	ApplicationMajorVersionID     uint64                  `gorm:"check:((CASE WHEN application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
+	ApplicationMajorVersionID     uint64                  `gorm:"check:((CASE WHEN application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
 	ApplicationMinorVersionNumber uint32                  `gorm:"check:((application_major_version_id IS NULL) = (application_minor_version_number IS NULL))"`
 	ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber; references:OrganizationID,ApplicationMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	ApprovalRulesetMajorVersionID     uint64
 	ApprovalRulesetMinorVersionNumber uint32                      `gorm:"check:((approval_ruleset_major_version_id IS NULL) = (approval_ruleset_minor_version_number IS NULL))"`
-	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber"`
+	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	ManualApprovalRuleOutcomeID uint64
+	ManualApprovalRuleOutcome   ManualApprovalRuleOutcome `gorm:"foreignKey:OrganizationID,ManualApprovalRuleOutcomeID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	DeploymentRequestCreatedEventID uint64
 	DeploymentRequestCreatedEvent   DeploymentRequestCreatedEvent `gorm:"foreignKey:OrganizationID,DeploymentRequestCreatedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
