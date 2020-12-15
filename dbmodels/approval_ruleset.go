@@ -10,16 +10,16 @@ import (
 // ApprovalRuleset ...
 type ApprovalRuleset struct {
 	BaseModel
-	ID        string    `gorm:"type: citext; primaryKey; not null"`
+	ID        string    `gorm:"type:citext; primaryKey; not null"`
 	CreatedAt time.Time `gorm:"not null"`
 }
 
 // ApprovalRulesetMajorVersion ...
 type ApprovalRulesetMajorVersion struct {
-	OrganizationID    string       `gorm:"type: citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
+	OrganizationID    string       `gorm:"type:citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
 	Organization      Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	ID                uint64       `gorm:"primaryKey; autoIncrement; not null"`
-	ApprovalRulesetID string       `gorm:"type: citext; index:approval_ruleset_major_version_idx,unique"`
+	ApprovalRulesetID string       `gorm:"type:citext; index:approval_ruleset_major_version_idx,unique"`
 	VersionNumber     *uint32      `gorm:"index:approval_ruleset_major_version_idx,unique"`
 	CreatedAt         time.Time    `gorm:"not null"`
 	UpdatedAt         time.Time    `gorm:"not null"`

@@ -16,25 +16,25 @@ var migration20201021000080 = gormigrate.Migration{
 	ID: "20201021000080 Approval ruleset",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID string `gorm:"type: citext; primaryKey; not null"`
+			ID string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type BaseModel struct {
-			OrganizationID string       `gorm:"type: citext; primaryKey; not null"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
 		type ApprovalRuleset struct {
 			BaseModel
-			ID        string    `gorm:"type: citext; primaryKey; not null"`
+			ID        string    `gorm:"type:citext; primaryKey; not null"`
 			CreatedAt time.Time `gorm:"not null"`
 		}
 
 		type ApprovalRulesetMajorVersion struct {
-			OrganizationID    string       `gorm:"type: citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
+			OrganizationID    string       `gorm:"type:citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
 			Organization      Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID                uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApprovalRulesetID string       `gorm:"type: citext; index:approval_ruleset_major_version_idx,unique"`
+			ApprovalRulesetID string       `gorm:"type:citext; index:approval_ruleset_major_version_idx,unique"`
 			VersionNumber     *uint32      `gorm:"index:approval_ruleset_major_version_idx,unique"`
 			CreatedAt         time.Time    `gorm:"not null"`
 			UpdatedAt         time.Time    `gorm:"not null"`

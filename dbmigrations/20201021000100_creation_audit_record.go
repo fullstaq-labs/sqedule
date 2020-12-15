@@ -16,11 +16,11 @@ var migration20201021000100 = gormigrate.Migration{
 	ID: "20201021000100 Creation audit record",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
-			ID string `gorm:"type: citext; primaryKey; not null"`
+			ID string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type BaseModel struct {
-			OrganizationID string       `gorm:"type: citext; primaryKey; not null"`
+			OrganizationID string       `gorm:"type:citext; primaryKey; not null"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
@@ -30,12 +30,12 @@ var migration20201021000100 = gormigrate.Migration{
 
 		type User struct {
 			OrganizationMember
-			Email string `gorm:"type: citext; primaryKey; not null"`
+			Email string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type ServiceAccount struct {
 			OrganizationMember
-			Name string `gorm:"type: citext; primaryKey; not null"`
+			Name string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		type ApplicationMinorVersion struct {
@@ -75,10 +75,10 @@ var migration20201021000100 = gormigrate.Migration{
 
 			// Object association
 
-			UserEmail sql.NullString `gorm:"type: citext; check:((CASE WHEN user_email IS NULL THEN 0 ELSE 1 END) + (CASE WHEN service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
+			UserEmail sql.NullString `gorm:"type:citext; check:((CASE WHEN user_email IS NULL THEN 0 ELSE 1 END) + (CASE WHEN service_account_name IS NULL THEN 0 ELSE 1 END) <= 1)"`
 			User      User           `gorm:"foreignKey:OrganizationID,UserEmail; references:OrganizationID,Email; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
-			ServiceAccountName sql.NullString `gorm:"type: citext"`
+			ServiceAccountName sql.NullString `gorm:"type:citext"`
 			ServiceAccount     ServiceAccount `gorm:"foreignKey:OrganizationID,ServiceAccountName; references:OrganizationID,Name; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 			// Subject association

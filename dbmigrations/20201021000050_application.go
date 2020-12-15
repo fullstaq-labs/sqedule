@@ -26,7 +26,7 @@ var migration20201021000050 = gormigrate.Migration{
 
 		type Application struct {
 			BaseModel
-			ID        string    `gorm:"type: citext; primaryKey; not null"`
+			ID        string    `gorm:"type:citext; primaryKey; not null"`
 			CreatedAt time.Time `gorm:"not null"`
 		}
 
@@ -34,7 +34,7 @@ var migration20201021000050 = gormigrate.Migration{
 			OrganizationID string       `gorm:"type:citext; primaryKey; not null; index:application_major_version_idx,unique"`
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApplicationID  string       `gorm:"type: citext; not null; index:application_major_version_idx,unique"`
+			ApplicationID  string       `gorm:"type:citext; not null; index:application_major_version_idx,unique"`
 			VersionNumber  *uint32      `gorm:"index:application_major_version_idx,unique"`
 			CreatedAt      time.Time    `gorm:"not null"`
 			UpdatedAt      time.Time    `gorm:"not null"`

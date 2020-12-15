@@ -8,6 +8,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
-	gorm.io/driver/postgres v1.0.4
-	gorm.io/gorm v1.20.4
+	gorm.io/driver/postgres v1.0.5
+	gorm.io/gorm v1.20.5
 )

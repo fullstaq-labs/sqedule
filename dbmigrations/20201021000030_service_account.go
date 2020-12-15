@@ -32,7 +32,7 @@ var migration20201021000030 = gormigrate.Migration{
 
 		type ServiceAccount struct {
 			OrganizationMember
-			Name       string `gorm:"type: citext; primaryKey; not null"`
+			Name       string `gorm:"type:citext; primaryKey; not null"`
 			SecretHash string `gorm:"not null"`
 		}
 
