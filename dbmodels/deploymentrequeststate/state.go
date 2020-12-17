@@ -18,7 +18,7 @@ const (
 
 // Scan ...
 func (t *State) Scan(value interface{}) error {
-	*t = State(value.([]byte))
+	*t = State(value.(string))
 	return nil
 }
 

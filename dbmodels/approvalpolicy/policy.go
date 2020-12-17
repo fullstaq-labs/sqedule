@@ -16,7 +16,7 @@ const (
 
 // Scan ...
 func (t *Policy) Scan(value interface{}) error {
-	*t = Policy(value.([]byte))
+	*t = Policy(value.(string))
 	return nil
 }
 

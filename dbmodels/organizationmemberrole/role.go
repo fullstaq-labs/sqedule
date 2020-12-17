@@ -20,7 +20,7 @@ const (
 
 // Scan ...
 func (t *Role) Scan(value interface{}) error {
-	*t = Role(value.([]byte))
+	*t = Role(value.(string))
 	return nil
 }
 
