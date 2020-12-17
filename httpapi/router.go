@@ -8,7 +8,7 @@ import (
 )
 
 // SetupRouter ...
-func (ctx *Context) SetupRouter(engine *gin.Engine) error {
+func (ctx Context) SetupRouter(engine *gin.Engine) error {
 	authMiddleware, err := ctx.createAuthMiddleware()
 	if err != nil {
 		return fmt.Errorf("error setting up authentication middleware: %w", err)
@@ -19,17 +19,17 @@ func (ctx *Context) SetupRouter(engine *gin.Engine) error {
 	authenticatedGroup.Use(authMiddleware.MiddlewareFunc())
 	authenticatedGroup.Use(ctx.lookupAndRequireAuthenticatedOrganizationMember)
 
-	setupUnauthenticatedRoutes(ctx, v1, authMiddleware)
-	setupAuthenticatedRoutes(ctx, authenticatedGroup)
+	ctx.setupUnauthenticatedRoutes(v1, authMiddleware)
+	ctx.setupAuthenticatedRoutes(authenticatedGroup)
 	return nil
 }
 
-func setupUnauthenticatedRoutes(ctx *Context, rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+func (ctx Context) setupUnauthenticatedRoutes(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	rg.POST("/auth/login", authMiddleware.LoginHandler)
 	rg.POST("/auth/refresh-token", authMiddleware.RefreshHandler)
 }
 
-func setupAuthenticatedRoutes(ctx *Context, rg *gin.RouterGroup) {
+func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	// Organizations
 	rg.GET("organization", ctx.GetCurrentOrganization)
 	rg.PATCH("organization", ctx.PatchCurrentOrganization)
