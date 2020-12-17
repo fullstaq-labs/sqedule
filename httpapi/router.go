@@ -30,4 +30,9 @@ func setupUnauthenticatedRoutes(ctx *Context, rg *gin.RouterGroup, authMiddlewar
 }
 
 func setupAuthenticatedRoutes(ctx *Context, rg *gin.RouterGroup) {
+	// Organizations
+	rg.GET("organization", ctx.GetCurrentOrganization)
+	rg.PATCH("organization", ctx.PatchCurrentOrganization)
+	rg.GET("organizations/:name", ctx.GetOrganization)
+	rg.PATCH("organizations/:name", ctx.PatchOrganization)
 }
