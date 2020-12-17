@@ -89,11 +89,11 @@ func (ctx Context) lookupAndRequireAuthenticatedOrganizationMember(ginctx *gin.C
 	ginctx.Next()
 }
 
-// getGuaranteedAuthenticatedOrganizationMember returns the OrganizationMember that's
+// getAuthenticatedOrganizationMemberNoFail returns the OrganizationMember that's
 // authenticated with the current request. It assumes that the
 // lookupAndRequireAuthenticatedOrganizationMember middleware has already run,
 // hence this function never returns an error.
-func getGuaranteedAuthenticatedOrganizationMember(ginctx *gin.Context) dbmodels.IOrganizationMember {
+func getAuthenticatedOrganizationMemberNoFail(ginctx *gin.Context) dbmodels.IOrganizationMember {
 	orgMember, exists := ginctx.Get(orgMemberContextKey)
 	if !exists {
 		panic("Bug: no authenticated organization member found in request context. Does the request use the lookupAndRequireAuthenticatedOrganizationMember() middleware?")

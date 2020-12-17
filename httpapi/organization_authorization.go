@@ -1,8 +1,6 @@
 package httpapi
 
 import (
-	"net/http"
-
 	"github.com/fullstaq-labs/sqedule/dbmodels"
 	"github.com/fullstaq-labs/sqedule/dbmodels/organizationmemberrole"
 	"github.com/gin-gonic/gin"
@@ -12,14 +10,14 @@ import (
 type OrganizationAction int
 
 const (
-	// CreateOrganization ...
-	CreateOrganization OrganizationAction = iota
-	// ReadOrganization ...
-	ReadOrganization
-	// UpdateOrganization ...
-	UpdateOrganization
-	// DeleteOrganization ...
-	DeleteOrganization
+	// ActionCreateOrganization ...
+	ActionCreateOrganization OrganizationAction = iota
+	// ActionReadOrganization ...
+	ActionReadOrganization
+	// ActionUpdateOrganization ...
+	ActionUpdateOrganization
+	// ActionDeleteOrganization ...
+	ActionDeleteOrganization
 )
 
 // GetOrganizationAuthorizations returns which actions an OrganizationMember is
@@ -29,10 +27,10 @@ func GetOrganizationAuthorizations(orgMember dbmodels.IOrganizationMember, targe
 	concreteOrgMember := orgMember.GetOrganizationMember()
 
 	if concreteOrgMember.Role == organizationmemberrole.OrgAdmin {
-		result[CreateOrganization] = true
-		result[ReadOrganization] = true
-		result[UpdateOrganization] = true
-		result[DeleteOrganization] = true
+		result[ActionCreateOrganization] = true
+		result[ActionReadOrganization] = true
+		result[ActionUpdateOrganization] = true
+		result[ActionDeleteOrganization] = true
 		return result
 	}
 
@@ -40,9 +38,9 @@ func GetOrganizationAuthorizations(orgMember dbmodels.IOrganizationMember, targe
 		return result
 	}
 
-	result[ReadOrganization] = true
+	result[ActionReadOrganization] = true
 	if concreteOrgMember.Role == organizationmemberrole.Admin {
-		result[UpdateOrganization] = true
+		result[ActionUpdateOrganization] = true
 	}
 	return result
 }
@@ -60,8 +58,4 @@ func AuthorizeOrganizationAction(ginctx *gin.Context, orgMember dbmodels.IOrgani
 	}
 
 	return true
-}
-
-func respondWithUnauthorizedError(ginctx *gin.Context) {
-	ginctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized action"})
 }

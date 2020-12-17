@@ -9,13 +9,14 @@ import (
 
 // GetCurrentOrganization ...
 func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
-	orgMember := getGuaranteedAuthenticatedOrganizationMember(ginctx)
-	organizationID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
-	if !AuthorizeOrganizationAction(ginctx, orgMember, organizationID, ReadOrganization) {
+	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+
+	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionReadOrganization) {
 		return
 	}
 
-	organization, err := dbmodels.FindOrganizationByID(ctx.Db, organizationID)
+	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
 	if err != nil {
 		respondWithDbQueryError("organization", err, ginctx)
 		return
@@ -27,13 +28,14 @@ func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 
 // PatchCurrentOrganization ...
 func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
-	orgMember := getGuaranteedAuthenticatedOrganizationMember(ginctx)
-	organizationID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
-	if !AuthorizeOrganizationAction(ginctx, orgMember, organizationID, UpdateOrganization) {
+	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+
+	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionUpdateOrganization) {
 		return
 	}
 
-	organization, err := dbmodels.FindOrganizationByID(ctx.Db, organizationID)
+	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
 	if err != nil {
 		respondWithDbQueryError("organization", err, ginctx)
 		return
@@ -57,13 +59,14 @@ func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 
 // GetOrganization ...
 func (ctx Context) GetOrganization(ginctx *gin.Context) {
-	organizationID := ginctx.Param("name")
-	orgMember := getGuaranteedAuthenticatedOrganizationMember(ginctx)
-	if !AuthorizeOrganizationAction(ginctx, orgMember, organizationID, ReadOrganization) {
+	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgID := ginctx.Param("id")
+
+	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionReadOrganization) {
 		return
 	}
 
-	organization, err := dbmodels.FindOrganizationByID(ctx.Db, organizationID)
+	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
 	if err != nil {
 		respondWithDbQueryError("organization", err, ginctx)
 		return
@@ -75,13 +78,14 @@ func (ctx Context) GetOrganization(ginctx *gin.Context) {
 
 // PatchOrganization ...
 func (ctx Context) PatchOrganization(ginctx *gin.Context) {
-	organizationID := ginctx.Param("name")
-	orgMember := getGuaranteedAuthenticatedOrganizationMember(ginctx)
-	if !AuthorizeOrganizationAction(ginctx, orgMember, organizationID, UpdateOrganization) {
+	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgID := ginctx.Param("id")
+
+	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionUpdateOrganization) {
 		return
 	}
 
-	organization, err := dbmodels.FindOrganizationByID(ctx.Db, organizationID)
+	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
 	if err != nil {
 		respondWithDbQueryError("organization", err, ginctx)
 		return

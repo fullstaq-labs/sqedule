@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/fullstaq-labs/sqedule/dbmodels/approvalpolicy"
-	"github.com/fullstaq-labs/sqedule/dbmodels/retrypolicy"
 	"github.com/fullstaq-labs/sqedule/dbutils/gormigrate"
 	"gorm.io/gorm"
 )
@@ -50,8 +48,8 @@ var migration20201021000090 = gormigrate.Migration{
 			Username         sql.NullString
 			Password         sql.NullString
 			TLSCaCertificate sql.NullString
-			RetryPolicy      retrypolicy.Policy `gorm:"type:retry_policy; not null"`
-			RetryLimit       int                `gorm:"not null; default:1; check:((retry_policy = 'retry_on_fail') = (retry_limit IS NOT NULL))"`
+			RetryPolicy      string `gorm:"type:retry_policy; not null"`
+			RetryLimit       int    `gorm:"not null; default:1; check:((retry_policy = 'retry_on_fail') = (retry_limit IS NOT NULL))"`
 		}
 
 		// ScheduleApprovalRule ...
@@ -67,8 +65,8 @@ var migration20201021000090 = gormigrate.Migration{
 		// ManualApprovalRule ...
 		type ManualApprovalRule struct {
 			ApprovalRule
-			ApprovalPolicy approvalpolicy.Policy `gorm:"type:approval_policy; not null"`
-			Minimum        sql.NullInt32         `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
+			ApprovalPolicy string        `gorm:"type:approval_policy; not null"`
+			Minimum        sql.NullInt32 `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
 		}
 
 		err := tx.Exec("CREATE TYPE retry_policy AS ENUM " +

@@ -1,7 +1,6 @@
 package dbmigrations
 
 import (
-	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/dbutils/gormigrate"
 	"gorm.io/gorm"
 )
@@ -42,7 +41,7 @@ var migration20201021000110 = gormigrate.Migration{
 			ApprovalRulesetID string          `gorm:"type:citext; primaryKey; not null"`
 			ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
-			Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
+			Mode string `gorm:"type:approval_ruleset_binding_mode; not null"`
 		}
 
 		err := tx.Exec("CREATE TYPE approval_ruleset_binding_mode AS ENUM " +

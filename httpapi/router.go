@@ -33,6 +33,6 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	// Organizations
 	rg.GET("organization", ctx.GetCurrentOrganization)
 	rg.PATCH("organization", ctx.PatchCurrentOrganization)
-	rg.GET("organizations/:name", ctx.GetOrganization)
-	rg.PATCH("organizations/:name", ctx.PatchOrganization)
+	rg.GET("organizations/:id", ctx.GetOrganization)
+	rg.PATCH("organizations/:id", ctx.PatchOrganization)
 }

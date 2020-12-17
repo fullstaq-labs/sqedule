@@ -15,3 +15,7 @@ func respondWithDbQueryError(resourceTypeName string, err error, ginctx *gin.Con
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying database"})
 	}
 }
+
+func respondWithUnauthorizedError(ginctx *gin.Context) {
+	ginctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized action"})
+}
