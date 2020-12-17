@@ -2,21 +2,29 @@ package reviewstate
 
 import "database/sql/driver"
 
+// State ...
 type State string
 
 const (
-	Draft     State = "draft"
+	// Draft ...
+	Draft State = "draft"
+	// Reviewing ...
 	Reviewing State = "reviewing"
-	Approved  State = "approved"
-	Rejected  State = "rejected"
+	// Approved ...
+	Approved State = "approved"
+	// Rejected ...
+	Rejected State = "rejected"
+	// Abandoned ...
 	Abandoned State = "abandoned"
 )
 
+// Scan ...
 func (t *State) Scan(value interface{}) error {
 	*t = State(value.([]byte))
 	return nil
 }
 
+// Value ...
 func (t State) Value() (driver.Value, error) {
 	return string(t), nil
 }
