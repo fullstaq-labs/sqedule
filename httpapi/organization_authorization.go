@@ -28,7 +28,7 @@ func GetOrganizationAuthorizations(orgMember dbmodels.IOrganizationMember, targe
 	result := make(map[OrganizationAction]bool)
 	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	if concreteOrgMember.Role == organizationmemberrole.Owner {
+	if concreteOrgMember.Role == organizationmemberrole.OrgAdmin {
 		result[CreateOrganization] = true
 		result[ReadOrganization] = true
 		result[UpdateOrganization] = true
