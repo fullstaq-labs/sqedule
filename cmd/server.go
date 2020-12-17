@@ -3,34 +3,64 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/fullstaq-labs/sqedule/dbutils"
+	"github.com/fullstaq-labs/sqedule/httpapi"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 )
+
+const (
+	serverDefaultBind = "localhost"
+	serverDefaultPort = 8080
+)
+
+var serverFlags struct {
+	dbconn databaseConnectionFlags
+	bind   *string
+	port   *int
+}
 
 // cmd represents the 'server' command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "A brief description of your command",
-	Long: `?A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Run the Sqedule API server",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		dbLogger, err := createLoggerWithLevel(*serverFlags.dbconn.dbLogLevel)
+		if err != nil {
+			return fmt.Errorf("Error initializing logger: %w", err)
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server called")
+		db, err := dbutils.EstablishDatabaseConnection(
+			*serverFlags.dbconn.dbType,
+			*serverFlags.dbconn.dbConnection,
+			&gorm.Config{
+				Logger: dbLogger,
+			})
+		if err != nil {
+			return fmt.Errorf("Error establishing database connection: %w", err)
+		}
+
+		engine := gin.Default()
+		ctx := httpapi.Context{
+			Db: db,
+		}
+
+		err = ctx.SetupRouter(engine)
+		if err != nil {
+			return fmt.Errorf("Error setting up router: %w", err)
+		}
+
+		engine.Run(fmt.Sprintf("%s:%d", *serverFlags.bind, *serverFlags.port))
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
-	// Here you will define your flags and configuration settings.
+	serverFlags.dbconn = defineDatabaseConnectionFlags(serverCmd)
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serverCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serverFlags.bind = serverCmd.Flags().String("bind", serverDefaultBind, "IP to listen on")
+	serverFlags.port = serverCmd.Flags().Int("port", serverDefaultPort, "port to listen on")
 }
