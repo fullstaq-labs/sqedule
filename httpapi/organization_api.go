@@ -43,12 +43,12 @@ func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 
 	var input organizationJSON
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
-		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
 	}
 
 	patchOrganizationDbModelFromJSON(&organization, input)
-	if err = ctx.Db.Save(organization).Error; err != nil {
+	if err = ctx.Db.Save(&organization).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -93,12 +93,12 @@ func (ctx Context) PatchOrganization(ginctx *gin.Context) {
 
 	var input organizationJSON
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
-		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
 	}
 
 	patchOrganizationDbModelFromJSON(&organization, input)
-	if err = ctx.Db.Save(organization).Error; err != nil {
+	if err = ctx.Db.Save(&organization).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
