@@ -35,4 +35,11 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	rg.PATCH("organization", ctx.PatchCurrentOrganization)
 	rg.GET("organizations/:id", ctx.GetOrganization)
 	rg.PATCH("organizations/:id", ctx.PatchOrganization)
+
+	// DeploymentRequests
+	rg.GET("applications/:application_id/deployment-requests", ctx.GetAllDeploymentRequests)
+	rg.POST("applications/:application_id/deployment-requests", ctx.CreateDeploymentRequest)
+	rg.GET("applications/:application_id/deployment-requests/:id", ctx.GetDeploymentRequest)
+	rg.PATCH("applications/:application_id/deployment-requests/:id", ctx.PatchDeploymentRequest)
+	rg.DELETE("applications/:application_id/deployment-requests/:id", ctx.DeleteDeploymentRequest)
 }

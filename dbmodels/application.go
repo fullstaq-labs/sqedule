@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/dbutils"
+	"gorm.io/gorm"
 )
 
 // Application ...
@@ -40,4 +42,14 @@ type ApplicationMinorVersion struct {
 	DisplayName string `gorm:"not null"`
 
 	ApplicationMajorVersion ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// FindApplication looks up an Application by its ID.
+// When not found, returns a `gorm.ErrRecordNotFound` error.
+func FindApplication(db *gorm.DB, organizationID string, id string) (Application, error) {
+	var result Application
+
+	tx := db.Where("organization_id = ? AND id = ?", organizationID, id)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
 }

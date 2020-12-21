@@ -26,7 +26,8 @@ var migration20201021000100 = gormigrate.Migration{
 
 		type DeploymentRequest struct {
 			BaseModel
-			ID uint64 `gorm:"primaryKey; not null"`
+			ApplicationID string `gorm:"type:citext; primaryKey; not null"`
+			ID            uint64 `gorm:"primaryKey; not null"`
 		}
 
 		type DeploymentRequestEvent struct {
