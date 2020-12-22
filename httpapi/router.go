@@ -2,8 +2,10 @@ package httpapi
 
 import (
 	"fmt"
+	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,6 +15,18 @@ func (ctx Context) SetupRouter(engine *gin.Engine) error {
 	if err != nil {
 		return fmt.Errorf("error setting up authentication middleware: %w", err)
 	}
+
+	engine.Use(cors.New(cors.Config{
+		// TODO: change this
+		AllowOrigins:  []string{"https://localhost:3000"},
+		AllowMethods:  []string{"HEAD", "GET", "POST", "PATCH", "DELETE"},
+		AllowHeaders:  []string{"Authorization", "Content-Length", "Content-Type"},
+		ExposeHeaders: []string{"Content-Length"},
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
+		MaxAge: 12 * time.Hour,
+	}))
 
 	v1 := engine.Group("/v1")
 	authenticatedGroup := v1.Group("/")
@@ -37,6 +51,7 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	rg.PATCH("organizations/:id", ctx.PatchOrganization)
 
 	// DeploymentRequests
+	rg.GET("deployment-requests", ctx.GetAllDeploymentRequests)
 	rg.GET("applications/:application_id/deployment-requests", ctx.GetAllDeploymentRequests)
 	rg.POST("applications/:application_id/deployment-requests", ctx.CreateDeploymentRequest)
 	rg.GET("applications/:application_id/deployment-requests/:id", ctx.GetDeploymentRequest)

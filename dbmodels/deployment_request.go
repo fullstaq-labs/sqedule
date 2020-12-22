@@ -26,7 +26,11 @@ type DeploymentRequest struct {
 // FindAllDeploymentRequests ...
 func FindAllDeploymentRequests(db *gorm.DB, organizationID string, applicationID string) ([]DeploymentRequest, error) {
 	var result []DeploymentRequest
-	tx := db.Where("organization_id = ? AND application_id = ?", organizationID, applicationID).Find(&result)
+	tx := db.Where("organization_id = ?", organizationID)
+	if len(applicationID) > 0 {
+		tx = tx.Where("application_id = ?", applicationID)
+	}
+	tx = tx.Find(&result)
 	return result, tx.Error
 }
 

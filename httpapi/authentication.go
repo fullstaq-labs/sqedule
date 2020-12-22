@@ -24,8 +24,8 @@ func (ctx Context) createAuthMiddleware() (*jwt.GinJWTMiddleware, error) {
 	return jwt.New(&jwt.GinJWTMiddleware{
 		Realm:         "Sqedule",
 		Key:           []byte("secret key"),
-		Timeout:       time.Hour,
-		MaxRefresh:    time.Hour,
+		Timeout:       time.Hour * 1024,
+		MaxRefresh:    time.Hour * 1024,
 		TokenLookup:   "header:Authorization",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,

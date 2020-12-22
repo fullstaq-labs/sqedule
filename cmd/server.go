@@ -12,7 +12,7 @@ import (
 
 const (
 	serverDefaultBind = "localhost"
-	serverDefaultPort = 8080
+	serverDefaultPort = 3001
 )
 
 var serverFlags struct {

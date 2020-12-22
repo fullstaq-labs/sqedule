@@ -9,3 +9,18 @@ trim_trailing_whitespace = true
 
 [*.go]
 indent_style = tab
+
+[*.{js,ts,tsx}]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+
+[*.json]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+
+[*.css]
+indent_style = space
+indent_size = 4
+insert_final_newline = true

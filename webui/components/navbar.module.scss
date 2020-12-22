@@ -1,0 +1,14 @@
+.navbar {
+    max-width: 90vw;
+    width: 17rem;
+}
+
+.paper {
+    // Makes the paper as wide as the navbar itself.
+    position: unset !important;
+}
+
+.app_banner {
+    // Makes the app banner as high as the app bar.
+    padding: 4px 0 !important;
+}
