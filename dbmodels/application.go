@@ -55,3 +55,63 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
 }
+
+// LoadApplicationsLatestVersions ...
+func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applications []*Application) error {
+	if len(applications) == 0 {
+		return nil
+	}
+
+	appIndex := make(map[string][]*Application)
+	appIds := make([]string, 0, len(applications))
+	for _, app := range applications {
+		if appIndex[app.ID] == nil {
+			appIndex[app.ID] = make([]*Application, 0)
+			appIds = append(appIds, app.ID)
+		}
+		appIndex[app.ID] = append(appIndex[app.ID], app)
+	}
+
+	majorVersions := make([]ApplicationMajorVersion, 0)
+	majorIndex := make(map[uint64]*ApplicationMajorVersion)
+	majorIds := make([]uint64, 0)
+	tx := db.
+		Select("DISTINCT ON (organization_id, application_id) *").
+		Where("organization_id = ? AND application_id IN ? AND version_number IS NOT NULL",
+			organizationID, appIds).
+		Order("organization_id, application_id, version_number DESC").
+		Find(&majorVersions)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	for _, majorVersion := range majorVersions {
+		apps := appIndex[majorVersion.ApplicationID]
+		for _, app := range apps {
+			app.LatestMajorVersion = &majorVersion
+		}
+		majorVersion.Application = *apps[0]
+		majorIndex[majorVersion.ID] = &majorVersion
+		majorIds = append(majorIds, majorVersion.ID)
+	}
+
+	var minorVersions []ApplicationMinorVersion
+	tx = db.
+		Select("DISTINCT ON (organization_id, application_major_version_id) *").
+		Where("organization_id = ? AND application_major_version_id IN ?",
+			organizationID, majorIds).
+		Order("organization_id, application_major_version_id, version_number DESC").
+		Find(&minorVersions)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	for _, minorVersion := range minorVersions {
+		majorVersion := majorIndex[minorVersion.ApplicationMajorVersionID]
+		minorVersion.ApplicationMajorVersion = *majorVersion
+		apps := appIndex[majorVersion.ApplicationID]
+		for _, app := range apps {
+			app.LatestMinorVersion = &minorVersion
+		}
+	}
+
+	return nil
+}

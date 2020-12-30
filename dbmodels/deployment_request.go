@@ -39,3 +39,13 @@ func FindDeploymentRequest(db *gorm.DB, organizationID string, applicationID str
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
 }
+
+// CollectDeploymentRequestApplications ...
+func CollectDeploymentRequestApplications(deploymentRequests []DeploymentRequest) []*Application {
+	result := make([]*Application, 0)
+	for i := range deploymentRequests {
+		deploymentRequest := &deploymentRequests[i]
+		result = append(result, &deploymentRequest.Application)
+	}
+	return result
+}

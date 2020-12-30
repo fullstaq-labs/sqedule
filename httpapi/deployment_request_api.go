@@ -1,7 +1,9 @@
 package httpapi
 
 import (
+	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
 	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
@@ -20,9 +22,18 @@ func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
 		return
 	}
 
-	deploymentRequests, err := dbmodels.FindAllDeploymentRequests(ctx.Db, orgID, applicationID)
+	deploymentRequests, err := dbmodels.FindAllDeploymentRequests(
+		ctx.Db.Preload("Application"),
+		orgID, applicationID)
 	if err != nil {
 		respondWithDbQueryError("deployment requests", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+		dbmodels.CollectDeploymentRequestApplications(deploymentRequests))
+	if err != nil {
+		respondWithDbQueryError("applications", err, ginctx)
 		return
 	}
 
@@ -41,7 +52,7 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 
 	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
 	if err != nil {
-		respondWithDbQueryError("application", err, ginctx)
+		respondWithDbQueryError("application versions", err, ginctx)
 		return
 	}
 
@@ -59,6 +70,7 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 		BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
 		ApplicationID: applicationID,
 		State:         deploymentrequeststate.Approved, // TODO: set to InProgress when developing rules engine
+		FinalizedAt:   sql.NullTime{Time: time.Now(), Valid: true},
 	}
 	patchDeploymentRequestDbModelFromJSON(&deploymentRequest, input)
 	if err = ctx.Db.Create(&deploymentRequest).Error; err != nil {
@@ -77,9 +89,18 @@ func (ctx Context) GetDeploymentRequest(ginctx *gin.Context) {
 	deploymentRequestID := ginctx.Param("id")
 	applicationID := ginctx.Param("application_id")
 
-	deploymentRequest, err := dbmodels.FindDeploymentRequest(ctx.Db, orgID, applicationID, deploymentRequestID)
+	deploymentRequest, err := dbmodels.FindDeploymentRequest(
+		ctx.Db.Preload("Application"),
+		orgID, applicationID, deploymentRequestID)
 	if err != nil {
 		respondWithDbQueryError("deployment request", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+		[]*dbmodels.Application{&deploymentRequest.Application})
+	if err != nil {
+		respondWithDbQueryError("application versions", err, ginctx)
 		return
 	}
 
