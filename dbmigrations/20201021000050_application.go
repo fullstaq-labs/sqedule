@@ -35,7 +35,7 @@ var migration20201021000050 = gormigrate.Migration{
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
 			ApplicationID  string       `gorm:"type:citext; not null; index:application_major_version_idx,unique"`
-			VersionNumber  *uint32      `gorm:"index:application_major_version_idx,unique"`
+			VersionNumber  *uint32      `gorm:"index:application_major_version_idx,sort:desc,where:version_number IS NOT NULL,unique"`
 			CreatedAt      time.Time    `gorm:"not null"`
 			UpdatedAt      time.Time    `gorm:"not null"`
 
