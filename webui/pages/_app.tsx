@@ -1,4 +1,4 @@
-import { useContext, useState, useLayoutEffect } from 'react';
+import { useContext, useState } from 'react';
 import { useRouter, NextRouter } from 'next/router';
 import Head from 'next/head';
 import { SWRConfig } from 'swr';
@@ -9,6 +9,7 @@ import { IUser } from '../common/user';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import blue from '@material-ui/core/colors/blue';
+import { useIsomorphicLayoutEffect } from '../common/utils';
 import '../common/global.css';
 
 const THEME = createMuiTheme({
@@ -32,7 +33,7 @@ const SWR_OPTIONS = {
 }
 
 function useEffect_HideProgressBarOnRouteChange(router: NextRouter, appContext: IAppContext) {
-  useLayoutEffect(function() {
+  useIsomorphicLayoutEffect(function() {
     function handleRouteChange() {
       if (appContext.isValidatingFetchedData) {
         appContext.setValidatingFetchedData(false);

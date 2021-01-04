@@ -1,4 +1,5 @@
-import React, { useLayoutEffect } from 'react';
+import React from 'react';
+import { useIsomorphicLayoutEffect } from '../common/utils';
 
 export interface IAppContext {
   isValidatingFetchedData: boolean,
@@ -8,7 +9,7 @@ export interface IAppContext {
 export const AppContext = React.createContext({} as IAppContext);
 
 export function declareValidatingFetchedData(appContext: IAppContext, value: boolean) {
-  useLayoutEffect(function() {
+  useIsomorphicLayoutEffect(function() {
     appContext.setValidatingFetchedData(value);
   }, [value]);
 }

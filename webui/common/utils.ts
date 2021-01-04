@@ -1,3 +1,5 @@
+import { useEffect, useLayoutEffect } from 'react';
+
 /**
  * Format a Date object into a human-readable string.
  * This string strives to be readable and unambiguous across different cultures,
@@ -51,3 +53,17 @@ export function formatErrorMessage(error: any): string {
 
   return error.message;
 }
+
+/**
+ * React currently throws a warning when using useLayoutEffect during
+ * server-side rendering. To get around it, we can conditionally useEffect
+ * on the server (no-op) and useLayoutEffect in the browser.
+ * https://gist.github.com/gaearon/e7d97cdf38a2907924ea12e4ebdf3c85#gistcomment-2911761
+ *
+ * We don't care about this warning because we expect Sqedule to be only
+ * usable after downloading Javascript anyway.
+ */
+export const useIsomorphicLayoutEffect =
+  (typeof window !== 'undefined')
+  ? useLayoutEffect
+  : useEffect;

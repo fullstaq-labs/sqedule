@@ -1,9 +1,10 @@
-import { CSSProperties, Dispatch, SetStateAction, useLayoutEffect, useState } from 'react';
+import { CSSProperties, Dispatch, SetStateAction, useState } from 'react';
 import { DataGrid as MaterialDataGrid, RowModel, Columns, SortModelParams } from '@material-ui/data-grid';
 import Box from '@material-ui/core/Box';
 import IconButton from '@material-ui/core/IconButton';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import { useIsomorphicLayoutEffect } from '../common/utils';
 import styles from './data_grid.module.scss';
 
 interface RequestedState {
@@ -120,7 +121,7 @@ export function DataGrid(props: IProps) {
     setRequestedPage(page + 1);
   }
 
-  useLayoutEffect(function() {
+  useIsomorphicLayoutEffect(function() {
     if (requestedPage !== undefined && requestedPage != page) {
       setPage(requestedPage);
     }
