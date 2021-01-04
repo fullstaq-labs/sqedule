@@ -3,6 +3,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
+import { formatErrorMessage } from '../common/utils';
 
 interface IProps {
   error: any;
@@ -30,7 +31,7 @@ export default function DataRefreshErrorSnackbar(props: IProps) {
 
   return <Snackbar
     open={show}
-    message={show && error && `Error refreshing data: ${error.message}`}
+    message={show && error && `Error refreshing data: ${formatErrorMessage(error)}`}
     action={
       <>
         <Button color="secondary" size="small" onClick={handleReload}>

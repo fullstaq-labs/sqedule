@@ -4,6 +4,7 @@ import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
 import Button from '@material-ui/core/Button';
+import { formatErrorMessage } from '../common/utils';
 
 interface IProps {
   error: any;
@@ -29,7 +30,7 @@ export default function DataLoadErrorScreen(props: IProps) {
           Oops, something went wrong
         </Typography>
         <Typography paragraph={true}>
-          {error.message}
+          {formatErrorMessage(error)}
         </Typography>
         <Button variant="contained" color="primary" onClick={handleReload}>Reload</Button>
       </Box>
