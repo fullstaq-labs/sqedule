@@ -73,16 +73,46 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 		return
 	}
 
-	deploymentRequest := dbmodels.DeploymentRequest{
-		BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
-		ApplicationID: applicationID,
-		State:         deploymentrequeststate.Approved, // TODO: set to InProgress when developing rules engine
-		FinalizedAt:   sql.NullTime{Time: time.Now(), Valid: true},
-	}
-	patchDeploymentRequestDbModelFromJSON(&deploymentRequest, input)
-	if err = ctx.Db.Create(&deploymentRequest).Error; err != nil {
+	var deploymentRequest dbmodels.DeploymentRequest
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		deploymentRequest = dbmodels.DeploymentRequest{
+			BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
+			ApplicationID: applicationID,
+			State:         deploymentrequeststate.Approved, // TODO: set to InProgress when developing rules engine
+			FinalizedAt:   sql.NullTime{Time: time.Now(), Valid: true},
+		}
+		patchDeploymentRequestDbModelFromJSON(&deploymentRequest, input)
+		if err := tx.Create(&deploymentRequest).Error; err != nil {
+			return err
+		}
+
+		err = tx.Create(dbmodels.DeploymentRequestCreatedEvent{
+			DeploymentRequestEvent: dbmodels.DeploymentRequestEvent{
+				BaseModel:           dbmodels.BaseModel{OrganizationID: orgID},
+				DeploymentRequestID: deploymentRequest.ID,
+				ApplicationID:       applicationID,
+			},
+		}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Create(dbmodels.DeploymentRequestRuleProcessedEvent{
+			DeploymentRequestEvent: dbmodels.DeploymentRequestEvent{
+				BaseModel:           dbmodels.BaseModel{OrganizationID: orgID},
+				DeploymentRequestID: deploymentRequest.ID,
+				ApplicationID:       applicationID,
+			},
+			ResultState: deploymentrequeststate.Approved,
+		}).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
 
 	output := createDeploymentRequestJSONFromDbModel(deploymentRequest)
