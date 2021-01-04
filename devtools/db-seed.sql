@@ -50,16 +50,38 @@ INSERT INTO application_minor_versions (organization_id, application_major_versi
 
 -- Deployment requests for org1
 DO $$
+DECLARE
+    n_deployment_requests INT;
 BEGIN
+    n_deployment_requests := 120;
+
     IF (SELECT COUNT(*) FROM deployment_requests WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
-        INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at, finalized_at) VALUES (
-            'org1',
-            'app1',
-            'approved',
-            NOW(),
-            NOW(),
-            NOW()
-        );
+        INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at, finalized_at)
+        SELECT
+            'org1' AS organization_id,
+            'app1' AS application_id,
+            'approved' AS state,
+            NOW() - (INTERVAL '1 day' * series) AS created_at,
+            NOW() - (INTERVAL '1 day' * series) AS updated_at,
+            NOW() - (INTERVAL '1 day' * series) AS finalized_at
+        FROM generate_series(1, n_deployment_requests) series;
+
+        INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at)
+        SELECT
+            'org1' AS organization_id,
+            (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
+            'app1' AS application_id,
+            NOW() - (INTERVAL '1 day' * series) AS created_at
+        FROM generate_series(1, n_deployment_requests) series;
+
+        INSERT INTO deployment_request_rule_processed_events (organization_id, deployment_request_id, application_id, created_at, result_state)
+        SELECT
+            'org1' AS organization_id,
+            (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
+            'app1' AS application_id,
+            NOW() - (INTERVAL '1 day' * series) AS created_at,
+            'approved' AS result_state
+        FROM generate_series(1, n_deployment_requests) series;
     END IF;
 END $$;
 

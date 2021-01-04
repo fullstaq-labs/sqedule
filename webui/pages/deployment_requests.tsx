@@ -9,7 +9,8 @@ import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Skeleton from '@material-ui/lab/Skeleton';
-import { DataGrid, ColDef, ValueFormatterParams } from '@material-ui/data-grid';
+import { ColDef } from '@material-ui/data-grid';
+import { DataGrid, useDataGrid } from '../components/data_grid';
 
 interface IProps {
   appContext: IAppContext;
@@ -63,12 +64,13 @@ const COLUMNS: ColDef[] = [
 
 export default function DeploymentRequestsPage(props: IProps) {
   const { appContext } = props;
-  const { data, error, isValidating, mutate } = useSWR('/v1/deployment-requests');
+  const dataGridState = useDataGrid();
+  const { data, error, isValidating, mutate } = useSWR(`/v1/deployment-requests?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);
 
   declareValidatingFetchedData(appContext, isValidating);
 
   if (data) {
-    if (data.items.length == 0) {
+    if (data.items.length == 0 && dataGridState.requestedPage == 1) {
       return (
         <Container maxWidth="md">
           <Box px={2} py={2} textAlign="center">
@@ -85,7 +87,11 @@ export default function DeploymentRequestsPage(props: IProps) {
         <DataRefreshErrorSnackbar error={error} refreshing={isValidating} onReload={mutate} />
         <Box mx={2} my={2} style={{ display: 'flex', flexGrow: 1 }}>
           <Paper style={{ display: 'flex', flexGrow: 1 }}>
-            <DataGrid rows={data.items} columns={COLUMNS} />
+            <DataGrid
+              rows={data.items}
+              columns={COLUMNS}
+              requestedState={dataGridState}
+              style={{ flexGrow: 1 }} />
           </Paper>
         </Box>
       </>

@@ -1,0 +1,12 @@
+.outer_container {
+    display: flex;
+    flex-direction: column;
+}
+
+.material_grid_container {
+    flex-grow: 1;
+}
+
+.page_label {
+    margin-right: 1em;
+}

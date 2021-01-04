@@ -7,7 +7,9 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
 	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbutils"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // GetAllDeploymentRequests ...
@@ -22,8 +24,13 @@ func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
 		return
 	}
 
+	tx, err := dbutils.ApplyDbQueryPagination(ginctx, ctx.Db)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	deploymentRequests, err := dbmodels.FindAllDeploymentRequests(
-		ctx.Db.Preload("Application"),
+		tx.Preload("Application").Order("created_at DESC"),
 		orgID, applicationID)
 	if err != nil {
 		respondWithDbQueryError("deployment requests", err, ginctx)

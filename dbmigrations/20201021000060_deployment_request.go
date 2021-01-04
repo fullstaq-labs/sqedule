@@ -48,7 +48,13 @@ var migration20201021000060 = gormigrate.Migration{
 			return err
 		}
 
-		return tx.AutoMigrate(&DeploymentRequest{})
+		err = tx.AutoMigrate(&DeploymentRequest{})
+		if err != nil {
+			return err
+		}
+
+		return tx.Exec("CREATE INDEX deployment_requests_created_at_idx" +
+			" ON deployment_requests (organization_id, created_at DESC)").Error
 	},
 	Rollback: func(tx *gorm.DB) error {
 		err := tx.Migrator().DropTable("deployment_requests")
