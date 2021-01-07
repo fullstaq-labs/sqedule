@@ -105,3 +105,4 @@ export default function DeploymentRequestPage(props: IProps) {
 }
 
 DeploymentRequestPage.pageTitle = 'Deployment request';
+DeploymentRequestPage.hasBackButton = true;

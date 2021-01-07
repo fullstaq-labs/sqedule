@@ -5,6 +5,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import MenuIcon from '@material-ui/icons/Menu';
 import { IUser } from '../common/user';
 import DataLoadSpinner from './data_load_spinner';
@@ -13,14 +14,19 @@ import styles from './layout.module.css';
 
 interface IProps {
   title: string;
+  hasBackButton: boolean;
   loading: boolean;
   user: IUser;
   children: any;
 }
 
 export default function Layout(props: IProps) {
-  const { title, loading, user, children } = props;
+  const { title, hasBackButton, loading, user, children } = props;
   const [navbarOpened, setNavbarOpened] = useState(false);
+
+  function goBack() {
+    history.back();
+  }
 
   function openNavbar() {
     setNavbarOpened(true);
@@ -45,11 +51,20 @@ export default function Layout(props: IProps) {
         <div className={styles.contentWrapper}>
           <AppBar position="relative">
             <Toolbar>
-              <Hidden mdUp>
-                <IconButton edge="start" color="inherit" aria-label="Menu" onClick={openNavbar}>
-                  <MenuIcon />
-                </IconButton>
-              </Hidden>
+              {hasBackButton
+                ? (
+                  <IconButton edge="start" color="inherit" aria-label="Back" onClick={goBack}>
+                    <ArrowBackIcon />
+                  </IconButton>
+                )
+                : (
+                  <Hidden mdUp>
+                    <IconButton edge="start" color="inherit" aria-label="Menu" onClick={openNavbar}>
+                      <MenuIcon />
+                    </IconButton>
+                  </Hidden>
+                )
+              }
 
               <Typography variant="h6" noWrap style={{flexGrow: 1}}>{title}</Typography>
               <Button color="inherit">Login</Button>
