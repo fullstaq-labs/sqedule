@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import Link from 'next/link';
-import { formatDateTimeString, capitalizeFirstLetter } from '../common/utils';
+import { formatDateTimeString, humanizeUnderscoreString } from '../common/utils';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../components/data_load_error_screen';
@@ -44,7 +44,8 @@ const COLUMNS: ColDef[] = [
   {
     field: 'state',
     headerName: 'State',
-    valueFormatter: ({ value }) => capitalizeFirstLetter(value as string),
+    width: 150,
+    valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
   },
   {
     field: 'created_at',
@@ -58,7 +59,7 @@ const COLUMNS: ColDef[] = [
     type: 'dateTime',
     width: 180,
     headerName: 'Finalized at',
-    valueFormatter: ({ value }) => formatDateTimeString(value as string),
+    valueFormatter: ({ value }) => value ? formatDateTimeString(value as string) : 'N/A',
   },
 ];
 

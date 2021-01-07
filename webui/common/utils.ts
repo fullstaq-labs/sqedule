@@ -34,6 +34,14 @@ export function capitalizeFirstLetter(str: string): string {
 }
 
 /**
+ * Given an identifier in underscore format, such as "in_progress",
+ * turns it into a human-friendly format such as "In progress".
+ */
+export function humanizeUnderscoreString(str: string): string {
+  return capitalizeFirstLetter(str.replace('_', ' '));
+}
+
+/**
  * Given an error object, returns a string that describes the error.
  *
  * Normally this is taken from `error.message`. But if the error is due
