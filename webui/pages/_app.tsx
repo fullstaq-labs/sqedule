@@ -44,17 +44,43 @@ function useEffect_HideProgressBarOnRouteChange(router: NextRouter, appContext: 
     return function() {
       router.events.off('routeChangeStart', handleRouteChange);
     }
-  }, [appContext]);
+  }, [appContext.isValidatingFetchedData, appContext.setValidatingFetchedData]);
+}
+
+function useEffect_ClearPageTitleContextOnRouteChange(router: NextRouter, appContext: IAppContext) {
+  useIsomorphicLayoutEffect(function() {
+    function handleRouteChange() {
+      if (appContext.pageTitle.length > 0) {
+        appContext.setPageTitle('');
+      }
+    }
+
+    router.events.on('routeChangeStart', handleRouteChange);
+    return function() {
+      router.events.off('routeChangeStart', handleRouteChange);
+    }
+  }, [appContext.pageTitle, appContext.setPageTitle]);
 }
 
 function AppWithContext({ Component, pageProps }) {
   const appContext = useContext(AppContext);
+
+  function getPageTitle(): string | undefined {
+    if (appContext.pageTitle.length > 0) {
+      return appContext.pageTitle;
+    } else {
+      return Component.pageTitle;
+    }
+  }
+
   const router = useRouter();
-  const pageTitle = Component.pageTitle || 'Sqedule';
-  const documentTitle = Component.pageTitle ? `${Component.pageTitle} — Sqedule` : 'Sqedule';
+  const pageTitle = getPageTitle();
+  const layoutPageTitle = pageTitle || 'Sqedule';
+  const documentTitle = pageTitle ? `${pageTitle} — Sqedule` : 'Sqedule';
   const user: IUser = { full_name: 'Hongli' };
 
   useEffect_HideProgressBarOnRouteChange(router, appContext);
+  useEffect_ClearPageTitleContextOnRouteChange(router, appContext);
 
   return (
     <>
@@ -65,7 +91,7 @@ function AppWithContext({ Component, pageProps }) {
 
       <CssBaseline />
 
-      <Layout title={pageTitle} loading={appContext.isValidatingFetchedData} user={user}>
+      <Layout title={layoutPageTitle} loading={appContext.isValidatingFetchedData} user={user}>
         <Component appContext={appContext} {...pageProps} />
       </Layout>
     </>
@@ -73,10 +99,14 @@ function AppWithContext({ Component, pageProps }) {
 }
 
 export default function App({ Component, pageProps }) {
+  const [pageTitle, setPageTitle] = useState('');
   const [isValidatingFetchedData, setValidatingFetchedData] = useState(false);
   const appContextValue: IAppContext = {
-    isValidatingFetchedData: isValidatingFetchedData,
-    setValidatingFetchedData: setValidatingFetchedData,
+    pageTitle,
+    setPageTitle,
+
+    isValidatingFetchedData,
+    setValidatingFetchedData,
   };
 
   return (

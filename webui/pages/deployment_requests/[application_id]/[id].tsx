@@ -2,13 +2,11 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { formatDateTimeString, humanizeUnderscoreString } from '../../../common/utils';
-import { IAppContext, declareValidatingFetchedData } from '../../../components/app_context';
+import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../../components/app_context';
 import DataRefreshErrorSnackbar from '../../../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../../../components/data_load_error_screen';
-import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
 import Skeleton from '@material-ui/lab/Skeleton';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -28,6 +26,7 @@ export default function DeploymentRequestPage(props: IProps) {
   const id = router.query.id as string;
   const { data, error, isValidating, mutate } = useSWR(`/v1/applications/${encodeURIComponent(applicationId)}/deployment-requests/${encodeURIComponent(id)}`);
 
+  declarePageTitle(appContext, `Deployment request: ${applicationId}/${id}`);
   declareValidatingFetchedData(appContext, isValidating);
 
   if (data) {
