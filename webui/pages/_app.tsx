@@ -91,7 +91,13 @@ function AppWithContext({ Component, pageProps }) {
 
       <CssBaseline />
 
-      <Layout title={layoutPageTitle} hasBackButton={Component.hasBackButton} loading={appContext.isValidatingFetchedData} user={user}>
+      <Layout
+        navigationSection={Component.navigationSection}
+        title={layoutPageTitle}
+        hasBackButton={Component.hasBackButton}
+        loading={appContext.isValidatingFetchedData}
+        user={user}
+        >
         <Component appContext={appContext} {...pageProps} />
       </Layout>
     </>

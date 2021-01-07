@@ -9,10 +9,11 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import MenuIcon from '@material-ui/icons/Menu';
 import { IUser } from '../common/user';
 import DataLoadSpinner from './data_load_spinner';
-import Navbar from './navbar';
+import Navbar, { NavigationSection } from './navbar';
 import styles from './layout.module.css';
 
 interface IProps {
+  navigationSection?: NavigationSection;
   title: string;
   hasBackButton: boolean;
   loading: boolean;
@@ -21,7 +22,7 @@ interface IProps {
 }
 
 export default function Layout(props: IProps) {
-  const { title, hasBackButton, loading, user, children } = props;
+  const { navigationSection, title, hasBackButton, loading, user, children } = props;
   const [navbarOpened, setNavbarOpened] = useState(false);
 
   function goBack() {
@@ -41,11 +42,11 @@ export default function Layout(props: IProps) {
       <div className={styles.rootContainer}>
         <Hidden mdUp>
           {/* Mobile */}
-          <Navbar variant="temporary" open={navbarOpened} user={user} showCloseButton={true} onCloseClicked={closeNavbar} />
+          <Navbar variant="temporary" open={navbarOpened} navigationSection={navigationSection} user={user} showCloseButton={true} onCloseClicked={closeNavbar} />
         </Hidden>
         <Hidden smDown>
           {/* Desktop */}
-          <Navbar variant="permanent" open={true} user={user} />
+          <Navbar variant="permanent" open={true} navigationSection={navigationSection} user={user} />
         </Hidden>
 
         <div className={styles.contentWrapper}>

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import { formatDateTimeString, humanizeUnderscoreString } from '../../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../../components/app_context';
+import { NavigationSection } from '../../../components/navbar';
 import DataRefreshErrorSnackbar from '../../../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../../../components/data_load_error_screen';
 import Box from '@material-ui/core/Box';
@@ -104,5 +105,6 @@ export default function DeploymentRequestPage(props: IProps) {
   );
 }
 
+DeploymentRequestPage.navigationSection = NavigationSection.DeploymentRequests;
 DeploymentRequestPage.pageTitle = 'Deployment request';
 DeploymentRequestPage.hasBackButton = true;

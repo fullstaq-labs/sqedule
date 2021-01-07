@@ -2,6 +2,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { formatDateTimeString, humanizeUnderscoreString } from '../common/utils';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
+import { NavigationSection } from '../components/navbar';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../components/data_load_error_screen';
 import { DataGrid, useDataGrid } from '../components/data_grid';
@@ -119,4 +120,5 @@ export default function DeploymentRequestsPage(props: IProps) {
   );
 }
 
+DeploymentRequestsPage.navigationSection = NavigationSection.DeploymentRequests;
 DeploymentRequestsPage.pageTitle = 'Deployment requests';

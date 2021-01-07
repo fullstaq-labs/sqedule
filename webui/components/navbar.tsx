@@ -22,9 +22,15 @@ import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import { IUser } from '../common/user';
 import styles from './navbar.module.scss';
 
+export enum NavigationSection {
+  Dashboard = 'dashboard',
+  DeploymentRequests = 'deployment-requests',
+}
+
 interface IProps {
   open: boolean;
   variant?: "permanent" | "persistent" | "temporary" | undefined;
+  navigationSection?: NavigationSection;
   user: IUser;
   showCloseButton?: boolean;
   onCloseClicked?: () => void;
@@ -46,7 +52,7 @@ function useEffect_CloseNavbarOnRouteChange(router: NextRouter, onCloseClicked?:
 }
 
 export default function Navbar(props: IProps) {
-  const { open, variant, user, showCloseButton, onCloseClicked } = props;
+  const { open, variant, navigationSection, user, showCloseButton, onCloseClicked } = props;
   const router = useRouter();
 
   useEffect_CloseNavbarOnRouteChange(router, onCloseClicked);
@@ -81,7 +87,7 @@ export default function Navbar(props: IProps) {
           </ListItem>
         </Link>
         <Link href="/">
-          <ListItem button>
+          <ListItem button selected={navigationSection == NavigationSection.Dashboard}>
             <ListItemIcon><HomeIcon /></ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
@@ -98,7 +104,7 @@ export default function Navbar(props: IProps) {
           </ListItem>
         </Link>
         <Link href="/deployment_requests">
-          <ListItem button>
+          <ListItem button selected={navigationSection == NavigationSection.DeploymentRequests}>
             <ListItemIcon><AssignmentIcon /></ListItemIcon>
             <ListItemText primary="Deployment requests" />
           </ListItem>
