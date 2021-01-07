@@ -56,6 +56,7 @@ BEGIN
     n_deployment_requests := 120;
 
     IF (SELECT COUNT(*) FROM deployment_requests WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
+        -- Create (n_deployment_requests - 1) deployment requests that are finished
         INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at, finalized_at)
         SELECT
             'org1' AS organization_id,
@@ -64,7 +65,7 @@ BEGIN
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             NOW() - (INTERVAL '1 day' * series) AS updated_at,
             NOW() - (INTERVAL '1 day' * series) AS finalized_at
-        FROM generate_series(1, n_deployment_requests) series;
+        FROM generate_series(1, n_deployment_requests - 1) series;
 
         INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at)
         SELECT
@@ -72,7 +73,7 @@ BEGIN
             (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
             'app1' AS application_id,
             NOW() - (INTERVAL '1 day' * series) AS created_at
-        FROM generate_series(1, n_deployment_requests) series;
+        FROM generate_series(1, n_deployment_requests - 1) series;
 
         INSERT INTO deployment_request_rule_processed_events (organization_id, deployment_request_id, application_id, created_at, result_state)
         SELECT
@@ -81,7 +82,24 @@ BEGIN
             'app1' AS application_id,
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             'approved' AS result_state
-        FROM generate_series(1, n_deployment_requests) series;
+        FROM generate_series(1, n_deployment_requests - 1) series;
+
+
+        -- Create 1 deployment request that's in progress
+        INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at) VALUES (
+            'org1',
+            'app1',
+            'in_progress',
+            NOW(),
+            NOW()
+        );
+
+        INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at) VALUES (
+            'org1',
+            (SELECT id FROM deployment_requests WHERE state = 'in_progress' LIMIT 1),
+            'app1',
+            NOW()
+        );
     END IF;
 END $$;
 

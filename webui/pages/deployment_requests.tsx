@@ -4,13 +4,13 @@ import { formatDateTimeString, humanizeUnderscoreString } from '../common/utils'
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../components/data_load_error_screen';
+import { DataGrid, useDataGrid } from '../components/data_grid';
 import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { ColDef } from '@material-ui/data-grid';
-import { DataGrid, useDataGrid } from '../components/data_grid';
 
 interface IProps {
   appContext: IAppContext;
@@ -24,8 +24,8 @@ const COLUMNS: ColDef[] = [
     width: 120,
     renderCell: ({ row }) => (
       <Box style={{ flexGrow: 1 }}> {/* Make the content properly align right */}
-        <Link href={`/applications/${encodeURIComponent(row.application.id)}/deployment_requests/${encodeURIComponent(row.id)}`}>
-          <a>{row.id}</a>
+        <Link href={`/deployment_requests/${encodeURIComponent(row.application.id)}/${encodeURIComponent(row._orig_id)}`}>
+          <a>{row._orig_id}</a>
         </Link>
       </Box>
     ),

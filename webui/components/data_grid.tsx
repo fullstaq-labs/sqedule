@@ -32,12 +32,37 @@ export function useDataGrid(): RequestedState {
   };
 }
 
+// See "Why Material UI's DataGrid's server-side sorting is broken"
+// in the DataGrid description.
+function renameColumnInRows(rows: RowModel[]): RowModel[] {
+  return rows.map((row, index) => {
+    if (row.hasOwnProperty('id')) {
+      return { ...row, id: index, _orig_id: row.id };
+    } else {
+      return row;
+    }
+  });
+}
+
+// See "Why Material UI's DataGrid's server-side sorting is broken"
+// in the DataGrid description.
+function renameColumnInColumns(columns: Columns): Columns {
+  return columns.map(column => {
+    if (column.field == 'id') {
+      return { headerName: 'ID', ...column, field: '_orig_id' };
+    } else {
+      return column;
+    }
+  });
+}
+
 /**
  * A grid for displaying tabular data. This is the same as Material UI's
  * DataGrid, but with the following modifications suited to our use case:
  *
  *  - Always assume server-side pagination.
  *  - Don't require providing the total amount of rows. Allow "infinite paging".
+ *  - Fixes server-side sorting. But see the caveats below.
  *  - Avoid infinite loops in the page change callback.
  *
  * ## Usage
@@ -61,6 +86,37 @@ export function useDataGrid(): RequestedState {
  *       />
  *   );
  * }
+ * ~~~
+ *
+ * ## Why Material UI's DataGrid's server-side sorting is broken
+ *
+ * Material UI's DataGrid requires each row to have an `id` property. If this property is a number,
+ * then Material UI's DataGrid magically decides to sort rows based on this value, even when
+ * configured with server-side sorting.
+ *
+ * We fix this by internally transforming the rows passed to Material UI's DataGrid:
+ *
+ *  - We rename the property `id` to `_orig_id`.
+ *  - We insert fake `id` property values. The values are set to the index number of the row.
+ *
+ * ### Caveats of our fix
+ *
+ * Our fix mostly just works. The only caveat is that, if you use `valueFormatter` or `renderCell`
+ * in your column definitions, then you should refer to `row._orig_id` instead of `row.id`. For example:
+ *
+ * ~~~tsx
+ * const COLUMNS: ColDef[] = [
+ *   {
+ *     field: 'id',
+ *     type: 'number',
+ *
+ *     // WRONG: don't do this:
+ *     // renderCell: ({ row }) => <a>{row.id}</a>
+ *
+ *     // CORRECT: do this:
+ *     renderCell: ({ row }) => <a>{row._orig_id}</a>
+ *   }
+ * ]
  * ~~~
  *
  * ## How Material UI's DataGrid's page change callback is susceptible to infinite loops
@@ -131,8 +187,8 @@ export function DataGrid(props: IProps) {
     <Box className={styles.outer_container} style={{ ...style }}>
       <Box className={styles.material_grid_container}>
         <MaterialDataGrid
-          rows={rows}
-          columns={columns}
+          rows={renameColumnInRows(rows)}
+          columns={renameColumnInColumns(columns)}
           sortingMode="server"
           page={page}
           pageSize={100}
