@@ -1,0 +1,15 @@
+.definition_list_table {
+    th {
+        font-weight: bold;
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    td:last-child {
+        width: 100%;
+    }
+
+    th, td {
+        vertical-align: top;
+    }
+}
