@@ -21,7 +21,7 @@ const THEME = createMuiTheme({
 const AXIOS = axios.create({
   baseURL: 'http://localhost:3001',
   headers: {
-    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTI5Mzk4NjYsIm9taWQiOiJhZG1pbl9zYSIsIm9tdCI6InNhIiwib3JnaWQiOiJvcmcxIiwib3JpZ19pYXQiOjE2MDkyNTM0NjZ9.mIrFXNytnbAOgjdx_1U2WLqwqE_n6yYq-eFGv3e7Kf0'
+    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NDUxNzI1MjIsIm9taWQiOiJhZG1pbl9zYSIsIm9tdCI6InNhIiwib3JnaWQiOiJvcmcxIiwib3JpZ19pYXQiOjE2MTM2MzY1MjJ9.3RyBxg5VPVNTl9N5htrjOxeYMUdTlJHRGuvu87zYm1g'
   }
 });
 
