@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import Hidden from '@material-ui/core/Hidden';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -23,10 +24,11 @@ interface IProps {
 
 export default function Layout(props: IProps) {
   const { navigationSection, title, hasBackButton, loading, user, children } = props;
+  const router = useRouter();
   const [navbarOpened, setNavbarOpened] = useState(false);
 
   function goBack() {
-    history.back();
+    router.back();
   }
 
   function openNavbar() {
