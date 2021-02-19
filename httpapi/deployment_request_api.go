@@ -56,7 +56,7 @@ func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
 
 	outputList := make([]deploymentRequestJSON, 0, len(deploymentRequests))
 	for _, dr := range deploymentRequests {
-		outputList = append(outputList, createDeploymentRequestJSONFromDbModel(dr))
+		outputList = append(outputList, createDeploymentRequestJSONFromDbModel(dr, len(applicationID) == 0))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -125,7 +125,7 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest)
+	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -155,7 +155,7 @@ func (ctx Context) GetDeploymentRequest(ginctx *gin.Context) {
 		return
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest)
+	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -188,7 +188,7 @@ func (ctx Context) PatchDeploymentRequest(ginctx *gin.Context) {
 		return
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest)
+	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -214,6 +214,6 @@ func (ctx Context) DeleteDeploymentRequest(ginctx *gin.Context) {
 		return
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest)
+	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
