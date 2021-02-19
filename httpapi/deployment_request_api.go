@@ -18,7 +18,17 @@ func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
-	if !AuthorizeDeploymentRequestAction(ginctx, orgMember, dbmodels.DeploymentRequest{},
+	if len(applicationID) > 0 {
+		application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
+		if err != nil {
+			respondWithDbQueryError("application", err, ginctx)
+			return
+		}
+
+		if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionReadApplication) {
+			return
+		}
+	} else if !AuthorizeDeploymentRequestAction(ginctx, orgMember, dbmodels.DeploymentRequest{},
 		ActionReadAllDeploymentRequests) {
 
 		return
