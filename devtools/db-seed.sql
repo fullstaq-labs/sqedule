@@ -104,6 +104,40 @@ BEGIN
 END $$;
 
 
+-- Approval rulesets (and bindings) for org1
+INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
+    'org1',
+    'only afternoon',
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO approval_ruleset_major_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+    'org1',
+    'only afternoon',
+    1,
+    NOW(),
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_major_version_id, version_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
+    'org1',
+    (SELECT id FROM approval_ruleset_major_versions
+        WHERE organization_id = 'org1'
+        AND approval_ruleset_id = 'only afternoon'
+        AND version_number = 1
+        LIMIT 1),
+    1,
+    'approved',
+    NOW(),
+    'Only afternoon',
+    '',
+    false
+) ON CONFLICT DO NOTHING;
+INSERT INTO approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, mode) VALUES (
+    'org1',
+    'app1',
+    'only afternoon',
+    'enforcing'
+);
+
 DO $$
 DECLARE
     n_apps INT;

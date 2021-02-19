@@ -2,16 +2,20 @@ package dbmodels
 
 import (
 	"database/sql"
+	"reflect"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
+	"gorm.io/gorm"
 )
 
 // ApprovalRuleset ...
 type ApprovalRuleset struct {
 	BaseModel
-	ID        string    `gorm:"type:citext; primaryKey; not null"`
-	CreatedAt time.Time `gorm:"not null"`
+	ID                 string                       `gorm:"type:citext; primaryKey; not null"`
+	CreatedAt          time.Time                    `gorm:"not null"`
+	LatestMajorVersion *ApprovalRulesetMajorVersion `gorm:"-"`
+	LatestMinorVersion *ApprovalRulesetMinorVersion `gorm:"-"`
 }
 
 // ApprovalRulesetMajorVersion ...
@@ -42,4 +46,68 @@ type ApprovalRulesetMinorVersion struct {
 	GloballyApplicable bool   `gorm:"not null; default:false"`
 
 	ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// GetID ...
+func (app ApprovalRuleset) GetID() interface{} {
+	return app.ID
+}
+
+// SetLatestMajorVersion ...
+func (app *ApprovalRuleset) SetLatestMajorVersion(majorVersion IReviewableMajorVersion) {
+	app.LatestMajorVersion = majorVersion.(*ApprovalRulesetMajorVersion)
+}
+
+// SetLatestMinorVersion ...
+func (app *ApprovalRuleset) SetLatestMinorVersion(minorVersion IReviewableMinorVersion) {
+	app.LatestMinorVersion = minorVersion.(*ApprovalRulesetMinorVersion)
+}
+
+// GetID ...
+func (major ApprovalRulesetMajorVersion) GetID() interface{} {
+	return major.ID
+}
+
+// GetReviewableID ...
+func (major ApprovalRulesetMajorVersion) GetReviewableID() interface{} {
+	return major.ApprovalRulesetID
+}
+
+// AssociateWithReviewable ...
+func (major *ApprovalRulesetMajorVersion) AssociateWithReviewable(reviewable IReviewable) {
+	ruleset := reviewable.(*ApprovalRuleset)
+	major.ApprovalRulesetID = ruleset.ID
+	major.ApprovalRuleset = *ruleset
+}
+
+// GetMajorVersionID ...
+func (minor ApprovalRulesetMinorVersion) GetMajorVersionID() interface{} {
+	return minor.ApprovalRulesetMajorVersionID
+}
+
+// AssociateWithMajorVersion ...
+func (minor *ApprovalRulesetMinorVersion) AssociateWithMajorVersion(majorVersion IReviewableMajorVersion) {
+	concreteMajorVersion := majorVersion.(*ApprovalRulesetMajorVersion)
+	minor.ApprovalRulesetMajorVersionID = concreteMajorVersion.ID
+	minor.ApprovalRulesetMajorVersion = *concreteMajorVersion
+}
+
+// LoadApprovalRulesetsLatestVersions ...
+func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rulesets []*ApprovalRuleset) error {
+	reviewables := make([]IReviewable, 0, len(rulesets))
+	for _, ruleset := range rulesets {
+		reviewables = append(reviewables, ruleset)
+	}
+
+	return LoadReviewablesLatestVersions(
+		db,
+		reflect.TypeOf(string("")),
+		"approval_ruleset_id",
+		reflect.TypeOf(ApprovalRulesetMajorVersion{}),
+		reflect.TypeOf(uint64(0)),
+		"approval_ruleset_major_version_id",
+		reflect.TypeOf(ApprovalRulesetMinorVersion{}),
+		organizationID,
+		reviewables,
+	)
 }
