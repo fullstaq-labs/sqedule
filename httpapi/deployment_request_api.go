@@ -69,7 +69,7 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 
 	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
 	if err != nil {
-		respondWithDbQueryError("application versions", err, ginctx)
+		respondWithDbQueryError("application", err, ginctx)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (ctx Context) GetDeploymentRequest(ginctx *gin.Context) {
 	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
 		[]*dbmodels.Application{&deploymentRequest.Application})
 	if err != nil {
-		respondWithDbQueryError("application versions", err, ginctx)
+		respondWithDbQueryError("application", err, ginctx)
 		return
 	}
 
