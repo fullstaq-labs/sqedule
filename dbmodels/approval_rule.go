@@ -6,7 +6,14 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/approvalpolicy"
 	"github.com/fullstaq-labs/sqedule/dbmodels/retrypolicy"
+	"gorm.io/gorm"
 )
+
+// ApprovalRuleVersionKey ...
+type ApprovalRuleVersionKey struct {
+	MajorVersionID     uint64
+	MinorVersionNumber uint32
+}
 
 // ApprovalRule ...
 type ApprovalRule struct {
@@ -45,4 +52,21 @@ type ManualApprovalRule struct {
 	ApprovalRule
 	ApprovalPolicy approvalpolicy.Policy `gorm:"type:approval_policy; not null"`
 	Minimum        sql.NullInt32         `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
+}
+
+// FindAllScheduleApprovalRulesBelongingToVersions ...
+func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, organizationID string, versionKeys []ApprovalRuleVersionKey) ([]ScheduleApprovalRule, error) {
+	var result []ScheduleApprovalRule
+	var versionKeyConditions *gorm.DB = db
+
+	for _, versionKey := range versionKeys {
+		versionKeyConditions = versionKeyConditions.Or(
+			db.Where("approval_ruleset_major_version_id = ? AND approval_ruleset_minor_version_number = ?",
+				versionKey.MajorVersionID, versionKey.MinorVersionNumber),
+		)
+	}
+
+	tx := db.Where("organization_id = ?", organizationID).Where(versionKeyConditions)
+	tx = tx.Find(&result)
+	return result, tx.Error
 }

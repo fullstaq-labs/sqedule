@@ -81,8 +81,31 @@ var migration20201021000090 = gormigrate.Migration{
 			return err
 		}
 
-		return tx.AutoMigrate(&HTTPApiApprovalRule{}, &ScheduleApprovalRule{},
+		err = tx.AutoMigrate(&HTTPApiApprovalRule{}, &ScheduleApprovalRule{},
 			&ManualApprovalRule{})
+		if err != nil {
+			return err
+		}
+
+		err = tx.Exec("CREATE INDEX http_api_approval_rules_version_idx ON http_api_approval_rules " +
+			"(organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number)").Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Exec("CREATE INDEX schedule_approval_rules_version_idx ON schedule_approval_rules " +
+			"(organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number)").Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Exec("CREATE INDEX manual_approval_rules_version_idx ON manual_approval_rules " +
+			"(organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number)").Error
+		if err != nil {
+			return err
+		}
+
+		return nil
 	},
 	Rollback: func(tx *gorm.DB) error {
 		err := tx.Migrator().DropTable("http_api_approval_rules",

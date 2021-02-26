@@ -29,5 +29,6 @@ type DeploymentRequestCancelledEvent struct {
 // DeploymentRequestRuleProcessedEvent ...
 type DeploymentRequestRuleProcessedEvent struct {
 	DeploymentRequestEvent
-	ResultState deploymentrequeststate.State `gorm:"type:deployment_request_state; not null"`
+	ResultState  deploymentrequeststate.State `gorm:"type:deployment_request_state; not null"`
+	IgnoredError bool                         `gorm:"not null"`
 }

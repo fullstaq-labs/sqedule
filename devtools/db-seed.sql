@@ -75,13 +75,14 @@ BEGIN
             NOW() - (INTERVAL '1 day' * series) AS created_at
         FROM generate_series(1, n_deployment_requests - 1) series;
 
-        INSERT INTO deployment_request_rule_processed_events (organization_id, deployment_request_id, application_id, created_at, result_state)
+        INSERT INTO deployment_request_rule_processed_events (organization_id, deployment_request_id, application_id, created_at, result_state, ignored_error)
         SELECT
             'org1' AS organization_id,
             (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
             'app1' AS application_id,
             NOW() - (INTERVAL '1 day' * series) AS created_at,
-            'approved' AS result_state
+            'approved' AS result_state,
+            true AS ignored_error
         FROM generate_series(1, n_deployment_requests - 1) series;
 
 

@@ -26,3 +26,8 @@ func (t *State) Scan(value interface{}) error {
 func (t State) Value() (driver.Value, error) {
 	return string(t), nil
 }
+
+// IsFinal returns whether this is a final state.
+func (t State) IsFinal() bool {
+	return t != InProgress
+}

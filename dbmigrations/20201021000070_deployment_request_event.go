@@ -48,7 +48,8 @@ var migration20201021000070 = gormigrate.Migration{
 
 		type DeploymentRequestRuleProcessedEvent struct {
 			DeploymentRequestEvent
-			ResultState string `gorm:"type:deployment_request_state; not null"`
+			ResultState  string `gorm:"type:deployment_request_state; not null"`
+			IgnoredError bool   `gorm:"not null"`
 		}
 
 		return tx.AutoMigrate(&DeploymentRequestCreatedEvent{},
