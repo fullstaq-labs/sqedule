@@ -24,7 +24,7 @@ type ApprovalRulesetMajorVersion struct {
 	Organization      Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	ID                uint64       `gorm:"primaryKey; autoIncrement; not null"`
 	ApprovalRulesetID string       `gorm:"type:citext; index:approval_ruleset_major_version_idx,sort:desc,where:version_number IS NOT NULL,unique"`
-	VersionNumber     *uint32      `gorm:"index:approval_ruleset_major_version_idx,unique"`
+	VersionNumber     *uint32      `gorm:"type:int; index:approval_ruleset_major_version_idx,unique; check:(version_number > 0)"`
 	CreatedAt         time.Time    `gorm:"not null"`
 	UpdatedAt         time.Time    `gorm:"not null"`
 
@@ -35,7 +35,7 @@ type ApprovalRulesetMajorVersion struct {
 type ApprovalRulesetMinorVersion struct {
 	BaseModel
 	ApprovalRulesetMajorVersionID uint64            `gorm:"primaryKey; not null"`
-	VersionNumber                 uint32            `gorm:"primaryKey; not null"`
+	VersionNumber                 uint32            `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
 	ReviewState                   reviewstate.State `gorm:"type:review_state; not null"`
 	ReviewComments                sql.NullString
 	CreatedAt                     time.Time `gorm:"not null"`

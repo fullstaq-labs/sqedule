@@ -22,7 +22,7 @@ type ReleaseBackgroundJob struct {
 	ApplicationID       string            `gorm:"type:citext; primaryKey; not null"`
 	DeploymentRequestID uint64            `gorm:"primaryKey; not null"`
 	DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	LockID              uint32            `gorm:"type:int; autoIncrement; unique; not null"`
+	LockID              uint32            `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
 	CreatedAt           time.Time         `gorm:"not null"`
 }
 
@@ -40,7 +40,7 @@ type ReleaseBackgroundJobApprovalRulesetBinding struct {
 	ApprovalRulesetMajorVersionID uint64                      `gorm:"not null"`
 	ApprovalRulesetMajorVersion   ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
-	ApprovalRulesetMinorVersionNumber uint32                      `gorm:"not null"`
+	ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; not null"`
 	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
 	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`

@@ -41,7 +41,7 @@ var migration20201021000150 = gormigrate.Migration{
 		type ApplicationMinorVersion struct {
 			BaseModel
 			ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
-			VersionNumber             uint32 `gorm:"primaryKey; not null"`
+			VersionNumber             uint32 `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
 		}
 
 		type ApprovalRulesetMinorVersion struct {
@@ -96,11 +96,11 @@ var migration20201021000150 = gormigrate.Migration{
 			// Subject association
 
 			ApplicationMajorVersionID     uint64                  `gorm:"check:((CASE WHEN application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
-			ApplicationMinorVersionNumber uint32                  `gorm:"check:((application_major_version_id IS NULL) = (application_minor_version_number IS NULL))"`
+			ApplicationMinorVersionNumber uint32                  `gorm:"type:int; check:((application_major_version_id IS NULL) = (application_minor_version_number IS NULL))"`
 			ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber; references:OrganizationID,ApplicationMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 			ApprovalRulesetMajorVersionID     uint64
-			ApprovalRulesetMinorVersionNumber uint32                      `gorm:"check:((approval_ruleset_major_version_id IS NULL) = (approval_ruleset_minor_version_number IS NULL))"`
+			ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; check:((approval_ruleset_major_version_id IS NULL) = (approval_ruleset_minor_version_number IS NULL))"`
 			ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 			ManualApprovalRuleOutcomeID uint64

@@ -27,7 +27,7 @@ var migration20201021000090 = gormigrate.Migration{
 		type ApprovalRulesetMinorVersion struct {
 			BaseModel
 			ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
-			VersionNumber                 uint32 `gorm:"primaryKey; not null"`
+			VersionNumber                 uint32 `gorm:"type:int; primaryKey; not null; check:(version_number >= 0)"`
 		}
 
 		// ApprovalRule ...
@@ -35,7 +35,7 @@ var migration20201021000090 = gormigrate.Migration{
 			BaseModel
 			ID                                uint64                      `gorm:"primaryKey; autoIncrement; not null"`
 			ApprovalRulesetMajorVersionID     uint64                      `gorm:"not null"`
-			ApprovalRulesetMinorVersionNumber uint32                      `gorm:"not null"`
+			ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; not null; check:(approval_ruleset_minor_version_number >= 0)"`
 			ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 			Enabled                           bool                        `gorm:"not null; default:true"`
 			CreatedAt                         time.Time                   `gorm:"not null"`

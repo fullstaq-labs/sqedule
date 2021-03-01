@@ -43,7 +43,7 @@ var migration20210226000010 = gormigrate.Migration{
 		type ApprovalRulesetMinorVersion struct {
 			BaseModel
 			ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
-			VersionNumber                 uint32 `gorm:"primaryKey; not null"`
+			VersionNumber                 uint32 `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
 		}
 
 		type ReleaseBackgroundJob struct {
@@ -51,7 +51,7 @@ var migration20210226000010 = gormigrate.Migration{
 			ApplicationID       string            `gorm:"type:citext; primaryKey; not null"`
 			DeploymentRequestID uint64            `gorm:"primaryKey; not null"`
 			DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-			LockID              uint32            `gorm:"type:int; autoIncrement; unique; not null"`
+			LockID              uint32            `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
 			CreatedAt           time.Time         `gorm:"not null"`
 		}
 
@@ -63,7 +63,7 @@ var migration20210226000010 = gormigrate.Migration{
 			ReleaseBackgroundJob              ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,DeploymentRequestID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ApprovalRulesetID                 string               `gorm:"type:citext; primaryKey; not null"`
 			ApprovalRulesetMajorVersionID     uint64               `gorm:"not null"`
-			ApprovalRulesetMinorVersionNumber uint32               `gorm:"not null"`
+			ApprovalRulesetMinorVersionNumber uint32               `gorm:"type:int; not null"`
 			Mode                              string               `gorm:"type:approval_ruleset_binding_mode; not null"`
 		}
 
