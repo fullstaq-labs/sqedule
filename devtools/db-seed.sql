@@ -52,11 +52,13 @@ INSERT INTO application_minor_versions (organization_id, application_major_versi
 DO $$
 DECLARE
     n_deployment_requests INT;
+    n_deployment_requests_finished INT;
 BEGIN
     n_deployment_requests := 120;
+    n_deployment_requests_finished := 118;
 
     IF (SELECT COUNT(*) FROM deployment_requests WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
-        -- Create (n_deployment_requests - 1) deployment requests that are finished
+        -- Create n_deployment_requests_finished deployment requests that are finished
         INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at, finalized_at)
         SELECT
             'org1' AS organization_id,
@@ -65,7 +67,7 @@ BEGIN
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             NOW() - (INTERVAL '1 day' * series) AS updated_at,
             NOW() - (INTERVAL '1 day' * series) AS finalized_at
-        FROM generate_series(1, n_deployment_requests - 1) series;
+        FROM generate_series(1, n_deployment_requests_finished) series;
 
         INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at)
         SELECT
@@ -73,7 +75,7 @@ BEGIN
             (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
             'app1' AS application_id,
             NOW() - (INTERVAL '1 day' * series) AS created_at
-        FROM generate_series(1, n_deployment_requests - 1) series;
+        FROM generate_series(1, n_deployment_requests_finished) series;
 
         INSERT INTO deployment_request_rule_processed_events (organization_id, deployment_request_id, application_id, created_at, result_state, ignored_error)
         SELECT
@@ -83,23 +85,38 @@ BEGIN
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             'approved' AS result_state,
             true AS ignored_error
-        FROM generate_series(1, n_deployment_requests - 1) series;
+        FROM generate_series(1, n_deployment_requests_finished) series;
 
 
-        -- Create 1 deployment request that's in progress
-        INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at) VALUES (
+        -- Create 2 deployment requests that are in progress
+        WITH inserted AS (
+            INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at) VALUES (
+                'org1',
+                'app1',
+                'in_progress',
+                (current_date || ' 13:00')::timestamp with time zone,
+                NOW()
+            ) RETURNING id
+        ) INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at) VALUES (
             'org1',
+            (SELECT id FROM inserted LIMIT 1),
             'app1',
-            'in_progress',
-            NOW(),
-            NOW()
+            (current_date || ' 13:00')::timestamp with time zone
         );
 
-        INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at) VALUES (
+        WITH inserted AS (
+            INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at) VALUES (
+                'org1',
+                'app1',
+                'in_progress',
+                (current_date || ' 18:00')::timestamp with time zone,
+                NOW()
+            ) RETURNING id
+        ) INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at) VALUES (
             'org1',
-            (SELECT id FROM deployment_requests WHERE state = 'in_progress' LIMIT 1),
+            (SELECT id FROM inserted LIMIT 1),
             'app1',
-            NOW()
+            (current_date || ' 18:00')::timestamp with time zone
         );
     END IF;
 END $$;
@@ -137,7 +154,20 @@ INSERT INTO approval_ruleset_bindings (organization_id, application_id, approval
     'app1',
     'only afternoon',
     'enforcing'
-);
+) ON CONFLICT DO NOTHING;
+INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+    'org1',
+    (SELECT id FROM approval_ruleset_major_versions
+        WHERE organization_id = 'org1'
+        AND approval_ruleset_id = 'only afternoon'
+        AND version_number = 1
+        LIMIT 1),
+    1,
+    NOW(),
+    '12:00',
+    '14:00'
+) ON CONFLICT DO NOTHING;
+
 
 DO $$
 DECLARE

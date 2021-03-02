@@ -1,6 +1,8 @@
 package dbutils
 
 import (
+	"strings"
+
 	"gorm.io/gorm"
 )
 
@@ -40,4 +42,11 @@ func CreateFindOperationError(tx *gorm.DB) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+// IsUniqueConstraintError checks whether the given gorm error represents a unique key constraint error,
+// on the given constraint name.
+func IsUniqueConstraintError(err error, constraintName string) bool {
+	return strings.Index(err.Error(), "violates unique constraint \""+constraintName+"\"") != -1 &&
+		strings.Index(err.Error(), "SQLSTATE 23505") != -1
 }
