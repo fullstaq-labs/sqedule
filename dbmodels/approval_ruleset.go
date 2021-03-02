@@ -41,9 +41,10 @@ type ApprovalRulesetMinorVersion struct {
 	CreatedAt                     time.Time `gorm:"not null"`
 	Enabled                       bool      `gorm:"not null; default:true"`
 
-	DisplayName        string `gorm:"not null"`
-	Description        string `gorm:"not null"`
-	GloballyApplicable bool   `gorm:"not null; default:false"`
+	DisplayName string `gorm:"not null"`
+	Description string `gorm:"not null"`
+	// TODO: this doesn't work because of the lack of a rule binding mode. move to level of rule binding.
+	GloballyApplicable bool `gorm:"not null; default:false"`
 
 	ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
