@@ -36,7 +36,7 @@ func FindAllDeploymentRequests(db *gorm.DB, organizationID string, applicationID
 
 // FindDeploymentRequest looks up a DeploymentRequest by its ID and its application ID.
 // When not found, returns a `gorm.ErrRecordNotFound` error.
-func FindDeploymentRequest(db *gorm.DB, organizationID string, applicationID string, deploymentRequestID string) (DeploymentRequest, error) {
+func FindDeploymentRequest(db *gorm.DB, organizationID string, applicationID string, deploymentRequestID uint64) (DeploymentRequest, error) {
 	var result DeploymentRequest
 
 	tx := db.Where("organization_id = ? AND application_id = ? AND id = ?", organizationID, applicationID, deploymentRequestID)

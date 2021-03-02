@@ -3,6 +3,7 @@ package httpapi
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
@@ -133,8 +134,14 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 func (ctx Context) GetDeploymentRequest(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
-	deploymentRequestID := ginctx.Param("id")
 	applicationID := ginctx.Param("application_id")
+
+	deploymentRequestID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
+		return
+	}
 
 	deploymentRequest, err := dbmodels.FindDeploymentRequest(
 		ctx.Db.Preload("Application"),
@@ -163,8 +170,14 @@ func (ctx Context) GetDeploymentRequest(ginctx *gin.Context) {
 func (ctx Context) PatchDeploymentRequest(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
-	deploymentRequestID := ginctx.Param("id")
 	applicationID := ginctx.Param("application_id")
+
+	deploymentRequestID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
+		return
+	}
 
 	deploymentRequest, err := dbmodels.FindDeploymentRequest(ctx.Db, orgID, applicationID, deploymentRequestID)
 	if err != nil {
@@ -196,8 +209,14 @@ func (ctx Context) PatchDeploymentRequest(ginctx *gin.Context) {
 func (ctx Context) DeleteDeploymentRequest(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
-	deploymentRequestID := ginctx.Param("id")
 	applicationID := ginctx.Param("application_id")
+
+	deploymentRequestID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
+		return
+	}
 
 	deploymentRequest, err := dbmodels.FindDeploymentRequest(ctx.Db, orgID, applicationID, deploymentRequestID)
 	if err != nil {
