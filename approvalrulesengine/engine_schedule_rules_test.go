@@ -11,7 +11,7 @@ func TestParseScheduleTimeTooFewComponents(t *testing.T) {
 	inputs := []string{"", "1"}
 	for _, input := range inputs {
 		_, err := parseScheduleTime(time.Now(), input)
-		if assert.NotNil(t, err, "Input=%s", input) {
+		if assert.Error(t, err, "Input=%s", input) {
 			assert.Regexp(t, "Invalid time format", err.Error(), "Input=%s", input)
 		}
 	}
@@ -42,7 +42,7 @@ func TestParseScheduleTimeInvalidValues(t *testing.T) {
 
 	for _, input := range inputs {
 		_, err := parseScheduleTime(time.Now(), input.Value)
-		if assert.NotNil(t, err, "Input=%#v", input) {
+		if assert.Error(t, err, "Input=%#v", input) {
 			assert.Regexp(t, "Error parsing "+input.Component+" component",
 				err.Error(), "Input=%#v", input)
 		}
@@ -55,42 +55,42 @@ func TestParseScheduleTimeValidValues(t *testing.T) {
 	now := time.Now()
 
 	parsed, err = parseScheduleTime(now, "1:20")
-	if assert.Nil(t, err) {
+	if assert.NoError(t, err) {
 		assert.Equal(t, parsed.Hour(), 1)
 		assert.Equal(t, parsed.Minute(), 20)
 		assert.Equal(t, parsed.Second(), 0)
 	}
 
 	parsed, err = parseScheduleTime(now, "01:20")
-	if assert.Nil(t, err) {
+	if assert.NoError(t, err) {
 		assert.Equal(t, parsed.Hour(), 1)
 		assert.Equal(t, parsed.Minute(), 20)
 		assert.Equal(t, parsed.Second(), 0)
 	}
 
 	parsed, err = parseScheduleTime(now, "16:5")
-	if assert.Nil(t, err) {
+	if assert.NoError(t, err) {
 		assert.Equal(t, parsed.Hour(), 16)
 		assert.Equal(t, parsed.Minute(), 5)
 		assert.Equal(t, parsed.Second(), 0)
 	}
 
 	parsed, err = parseScheduleTime(now, "16:05")
-	if assert.Nil(t, err) {
+	if assert.NoError(t, err) {
 		assert.Equal(t, parsed.Hour(), 16)
 		assert.Equal(t, parsed.Minute(), 5)
 		assert.Equal(t, parsed.Second(), 0)
 	}
 
 	parsed, err = parseScheduleTime(now, "8:47:1")
-	if assert.Nil(t, err) {
+	if assert.NoError(t, err) {
 		assert.Equal(t, parsed.Hour(), 8)
 		assert.Equal(t, parsed.Minute(), 47)
 		assert.Equal(t, parsed.Second(), 1)
 	}
 
 	parsed, err = parseScheduleTime(now, "8:47:01")
-	if assert.Nil(t, err) {
+	if assert.NoError(t, err) {
 		assert.Equal(t, parsed.Hour(), 8)
 		assert.Equal(t, parsed.Minute(), 47)
 		assert.Equal(t, parsed.Second(), 1)
