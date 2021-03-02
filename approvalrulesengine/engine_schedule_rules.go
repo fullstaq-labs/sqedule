@@ -89,6 +89,7 @@ func (engine Engine) processScheduleRule(rule dbmodels.ScheduleApprovalRule, pre
 		return success, true, nil
 	}
 
+	// TODO: if there's an error, reject the deployment request because the rules have errors
 	success, err := timeIsWithinSchedule(engine.ReleaseBackgroundJob.DeploymentRequest.CreatedAt, rule)
 	return success, false, err
 }
@@ -147,7 +148,7 @@ func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprov
 			return false, fmt.Errorf("Error parsing days of week '%s': %w", rule.DaysOfWeek.String, err)
 		}
 
-		if !weekDaysListContains(parsedWeekDays, deploymentTime.Weekday()) {
+		if !parsedWeekDays[deploymentTime.Weekday()] {
 			return false, nil
 		}
 	}
@@ -158,7 +159,7 @@ func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprov
 			return false, fmt.Errorf("Error parsing days of month '%s': %w", rule.DaysOfMonth.String, err)
 		}
 
-		if !intListContains(parsedMonthDays, deploymentTime.Day()) {
+		if !parsedMonthDays[deploymentTime.Day()] {
 			return false, nil
 		}
 	}
@@ -169,7 +170,7 @@ func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprov
 			return false, fmt.Errorf("Error parsing months '%s': %w", rule.MonthsOfYear.String, err)
 		}
 
-		if !monthListContains(parsedMonths, deploymentTime.Month()) {
+		if !parsedMonths[deploymentTime.Month()] {
 			return false, nil
 		}
 	}
@@ -229,41 +230,87 @@ func parseScheduleTime(date time.Time, str string) (time.Time, error) {
 	return result, nil
 }
 
-func parseScheduleWeekDays(str string) ([]time.Weekday, error) {
-	return nil, nil // TODO
-}
-
-func parseScheduleMonthDays(str string) ([]int, error) {
-	return nil, nil // TODO
-}
-
-func parseScheduleMonths(str string) ([]time.Month, error) {
-	return nil, nil // TODO
-}
-
-func weekDaysListContains(list []time.Weekday, weekDay time.Weekday) bool {
-	for _, elem := range list {
-		if weekDay == elem {
-			return true
+func parseScheduleWeekDays(str string) (map[time.Weekday]bool, error) {
+	result := make(map[time.Weekday]bool)
+	for _, day := range strings.Split(str, " ") {
+		switch strings.ToLower(day) {
+		case "1", "mon", "monday":
+			result[time.Monday] = true
+		case "2", "tue", "tuesday":
+			result[time.Tuesday] = true
+		case "3", "wed", "wednesday":
+			result[time.Wednesday] = true
+		case "4", "thu", "thursday":
+			result[time.Thursday] = true
+		case "5", "fri", "friday":
+			result[time.Friday] = true
+		case "6", "sat", "saturday":
+			result[time.Saturday] = true
+		case "0", "7", "sun", "sunday":
+			result[time.Sunday] = true
+		case "":
+			continue
+		default:
+			return nil, fmt.Errorf("'%s' is not a recognized weekday", day)
 		}
 	}
-	return false
+	return result, nil
 }
 
-func intListContains(list []int, val int) bool {
-	for _, elem := range list {
-		if val == elem {
-			return true
+func parseScheduleMonthDays(str string) (map[int]bool, error) {
+	result := make(map[int]bool)
+	for _, day := range strings.Split(str, " ") {
+		if len(day) == 0 {
+			continue
 		}
+
+		dayInt, err := strconv.Atoi(day)
+		if err != nil {
+			return nil, fmt.Errorf("Error parsing month day '%s': %w", day, err)
+		}
+
+		if dayInt < 0 || dayInt > 31 {
+			return nil, fmt.Errorf("Month day '%s' is not a valid day", day)
+		}
+
+		result[int(dayInt)] = true
 	}
-	return false
+	return result, nil
 }
 
-func monthListContains(list []time.Month, month time.Month) bool {
-	for _, elem := range list {
-		if month == elem {
-			return true
+func parseScheduleMonths(str string) (map[time.Month]bool, error) {
+	result := make(map[time.Month]bool)
+	for _, month := range strings.Split(str, " ") {
+		switch strings.ToLower(month) {
+		case "1", "jan", "january":
+			result[time.January] = true
+		case "2", "feb", "february":
+			result[time.February] = true
+		case "3", "mar", "march":
+			result[time.March] = true
+		case "4", "apr", "april":
+			result[time.April] = true
+		case "5", "may":
+			result[time.May] = true
+		case "6", "jun", "june":
+			result[time.June] = true
+		case "7", "jul", "july":
+			result[time.July] = true
+		case "8", "aug", "august":
+			result[time.August] = true
+		case "9", "sep", "september":
+			result[time.September] = true
+		case "10", "oct", "october":
+			result[time.October] = true
+		case "11", "nov", "november":
+			result[time.November] = true
+		case "12", "dec", "december":
+			result[time.December] = true
+		case "":
+			continue
+		default:
+			return nil, fmt.Errorf("'%s' is not a recognized month", month)
 		}
 	}
-	return false
+	return result, nil
 }
