@@ -21,7 +21,7 @@ var serverFlags struct {
 	port   *int
 }
 
-// cmd represents the 'server' command
+// serverCmd represents the 'server' command
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Run the Sqedule API server",
