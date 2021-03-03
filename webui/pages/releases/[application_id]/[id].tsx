@@ -20,14 +20,14 @@ interface IProps {
   appContext: IAppContext;
 }
 
-export default function DeploymentRequestPage(props: IProps) {
+export default function ReleasePage(props: IProps) {
   const { appContext } = props;
   const router = useRouter();
   const applicationId = router.query.application_id as string;
   const id = router.query.id as string;
-  const { data, error, isValidating, mutate } = useSWR(`/v1/applications/${encodeURIComponent(applicationId)}/deployment-requests/${encodeURIComponent(id)}`);
+  const { data, error, isValidating, mutate } = useSWR(`/v1/applications/${encodeURIComponent(applicationId)}/releases/${encodeURIComponent(id)}`);
 
-  declarePageTitle(appContext, `Deployment request: ${applicationId}/${id}`);
+  declarePageTitle(appContext, `Release: ${applicationId}/${id}`);
   declareValidatingFetchedData(appContext, isValidating);
 
   if (data) {
@@ -41,7 +41,7 @@ export default function DeploymentRequestPage(props: IProps) {
                 <TableRow>
                   <TableCell component="th" scope="row">ID</TableCell>
                   <TableCell>
-                    <Link href={`/deployment_requests/${encodeURIComponent(data.application.id)}/${encodeURIComponent(data.id)}`}>
+                    <Link href={`/releases/${encodeURIComponent(data.application.id)}/${encodeURIComponent(data.id)}`}>
                       <a>{data.id}</a>
                     </Link>
                   </TableCell>
@@ -105,6 +105,6 @@ export default function DeploymentRequestPage(props: IProps) {
   );
 }
 
-DeploymentRequestPage.navigationSection = NavigationSection.DeploymentRequests;
-DeploymentRequestPage.pageTitle = 'Deployment request';
-DeploymentRequestPage.hasBackButton = true;
+ReleasePage.navigationSection = NavigationSection.Releases;
+ReleasePage.pageTitle = 'Release';
+ReleasePage.hasBackButton = true;

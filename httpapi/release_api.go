@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
-	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/dbutils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// GetAllDeploymentRequests ...
-func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
+// GetAllReleases ...
+func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
@@ -29,8 +29,8 @@ func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
 		if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionReadApplication) {
 			return
 		}
-	} else if !AuthorizeDeploymentRequestAction(ginctx, orgMember, dbmodels.DeploymentRequest{},
-		ActionReadAllDeploymentRequests) {
+	} else if !AuthorizeReleaseAction(ginctx, orgMember, dbmodels.Release{},
+		ActionReadAllReleases) {
 
 		return
 	}
@@ -40,30 +40,30 @@ func (ctx Context) GetAllDeploymentRequests(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	deploymentRequests, err := dbmodels.FindAllDeploymentRequests(
+	releases, err := dbmodels.FindAllReleases(
 		tx.Preload("Application").Order("created_at DESC"),
 		orgID, applicationID)
 	if err != nil {
-		respondWithDbQueryError("deployment requests", err, ginctx)
+		respondWithDbQueryError("releases", err, ginctx)
 		return
 	}
 
 	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
-		dbmodels.CollectDeploymentRequestApplications(deploymentRequests))
+		dbmodels.CollectReleaseApplications(releases))
 	if err != nil {
 		respondWithDbQueryError("applications", err, ginctx)
 		return
 	}
 
-	outputList := make([]deploymentRequestJSON, 0, len(deploymentRequests))
-	for _, dr := range deploymentRequests {
-		outputList = append(outputList, createDeploymentRequestJSONFromDbModel(dr, len(applicationID) == 0))
+	outputList := make([]releaseJSON, 0, len(releases))
+	for _, dr := range releases {
+		outputList = append(outputList, createReleaseJSONFromDbModel(dr, len(applicationID) == 0))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
 
-// CreateDeploymentRequest ...
-func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
+// CreateRelease ...
+func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
@@ -74,47 +74,47 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 		return
 	}
 
-	if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionCreateDeploymentRequest) {
+	if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionCreateRelease) {
 		return
 	}
 
-	var input deploymentRequestJSON
+	var input releaseJSON
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
 	}
 
-	var deploymentRequest dbmodels.DeploymentRequest
+	var release dbmodels.Release
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		deploymentRequest = dbmodels.DeploymentRequest{
+		release = dbmodels.Release{
 			BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
 			ApplicationID: applicationID,
-			State:         deploymentrequeststate.Approved, // TODO: set to InProgress when developing rules engine
+			State:         releasestate.Approved, // TODO: set to InProgress when developing rules engine
 			FinalizedAt:   sql.NullTime{Time: time.Now(), Valid: true},
 		}
-		patchDeploymentRequestDbModelFromJSON(&deploymentRequest, input)
-		if err := tx.Create(&deploymentRequest).Error; err != nil {
+		patchReleaseDbModelFromJSON(&release, input)
+		if err := tx.Create(&release).Error; err != nil {
 			return err
 		}
 
-		err = tx.Create(dbmodels.DeploymentRequestCreatedEvent{
-			DeploymentRequestEvent: dbmodels.DeploymentRequestEvent{
-				BaseModel:           dbmodels.BaseModel{OrganizationID: orgID},
-				DeploymentRequestID: deploymentRequest.ID,
-				ApplicationID:       applicationID,
+		err = tx.Create(dbmodels.ReleaseCreatedEvent{
+			ReleaseEvent: dbmodels.ReleaseEvent{
+				BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
+				ReleaseID:     release.ID,
+				ApplicationID: applicationID,
 			},
 		}).Error
 		if err != nil {
 			return err
 		}
 
-		err = tx.Create(dbmodels.DeploymentRequestRuleProcessedEvent{
-			DeploymentRequestEvent: dbmodels.DeploymentRequestEvent{
-				BaseModel:           dbmodels.BaseModel{OrganizationID: orgID},
-				DeploymentRequestID: deploymentRequest.ID,
-				ApplicationID:       applicationID,
+		err = tx.Create(dbmodels.ReleaseRuleProcessedEvent{
+			ReleaseEvent: dbmodels.ReleaseEvent{
+				BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
+				ReleaseID:     release.ID,
+				ApplicationID: applicationID,
 			},
-			ResultState: deploymentrequeststate.Approved,
+			ResultState: releasestate.Approved,
 		}).Error
 		if err != nil {
 			return err
@@ -126,113 +126,113 @@ func (ctx Context) CreateDeploymentRequest(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// GetDeploymentRequest ...
-func (ctx Context) GetDeploymentRequest(ginctx *gin.Context) {
+// GetRelease ...
+func (ctx Context) GetRelease(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
-	deploymentRequestID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
 	if err != nil {
 		ginctx.JSON(http.StatusBadRequest,
 			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
 		return
 	}
 
-	deploymentRequest, err := dbmodels.FindDeploymentRequest(
+	release, err := dbmodels.FindRelease(
 		ctx.Db.Preload("Application"),
-		orgID, applicationID, deploymentRequestID)
+		orgID, applicationID, releaseID)
 	if err != nil {
-		respondWithDbQueryError("deployment request", err, ginctx)
+		respondWithDbQueryError("release", err, ginctx)
 		return
 	}
 
 	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
-		[]*dbmodels.Application{&deploymentRequest.Application})
+		[]*dbmodels.Application{&release.Application})
 	if err != nil {
 		respondWithDbQueryError("application", err, ginctx)
 		return
 	}
 
-	if !AuthorizeDeploymentRequestAction(ginctx, orgMember, deploymentRequest, ActionReadDeploymentRequest) {
+	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionReadRelease) {
 		return
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// PatchDeploymentRequest ...
-func (ctx Context) PatchDeploymentRequest(ginctx *gin.Context) {
+// PatchRelease ...
+func (ctx Context) PatchRelease(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
-	deploymentRequestID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
 	if err != nil {
 		ginctx.JSON(http.StatusBadRequest,
 			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
 		return
 	}
 
-	deploymentRequest, err := dbmodels.FindDeploymentRequest(ctx.Db, orgID, applicationID, deploymentRequestID)
+	release, err := dbmodels.FindRelease(ctx.Db, orgID, applicationID, releaseID)
 	if err != nil {
-		respondWithDbQueryError("deployment request", err, ginctx)
+		respondWithDbQueryError("release", err, ginctx)
 		return
 	}
 
-	if !AuthorizeDeploymentRequestAction(ginctx, orgMember, deploymentRequest, ActionUpdateDeploymentRequest) {
+	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionUpdateRelease) {
 		return
 	}
 
-	var input deploymentRequestJSON
+	var input releaseJSON
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
 	}
 
-	patchDeploymentRequestDbModelFromJSON(&deploymentRequest, input)
-	if err = ctx.Db.Save(&deploymentRequest).Error; err != nil {
+	patchReleaseDbModelFromJSON(&release, input)
+	if err = ctx.Db.Save(&release).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// DeleteDeploymentRequest ...
-func (ctx Context) DeleteDeploymentRequest(ginctx *gin.Context) {
+// DeleteRelease ...
+func (ctx Context) DeleteRelease(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
-	deploymentRequestID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
 	if err != nil {
 		ginctx.JSON(http.StatusBadRequest,
 			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
 		return
 	}
 
-	deploymentRequest, err := dbmodels.FindDeploymentRequest(ctx.Db, orgID, applicationID, deploymentRequestID)
+	release, err := dbmodels.FindRelease(ctx.Db, orgID, applicationID, releaseID)
 	if err != nil {
-		respondWithDbQueryError("deployment request", err, ginctx)
+		respondWithDbQueryError("release", err, ginctx)
 		return
 	}
 
-	if !AuthorizeDeploymentRequestAction(ginctx, orgMember, deploymentRequest, ActionDeleteDeploymentRequest) {
+	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionDeleteRelease) {
 		return
 	}
 
-	if err = ctx.Db.Delete(&deploymentRequest).Error; err != nil {
+	if err = ctx.Db.Delete(&release).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	output := createDeploymentRequestJSONFromDbModel(deploymentRequest, len(applicationID) == 0)
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }

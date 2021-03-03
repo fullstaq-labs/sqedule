@@ -13,7 +13,7 @@ func init() {
 }
 
 var migration20201021000060 = gormigrate.Migration{
-	ID: "20201021000060 Deployment request",
+	ID: "20201021000060 Release request",
 	Migrate: func(tx *gorm.DB) error {
 		type Organization struct {
 			ID string `gorm:"type:citext; primaryKey; not null"`
@@ -29,12 +29,12 @@ var migration20201021000060 = gormigrate.Migration{
 			ID string `gorm:"type:citext; primaryKey; not null"`
 		}
 
-		type DeploymentRequest struct {
+		type Release struct {
 			BaseModel
 			ApplicationID  string      `gorm:"type:citext; primaryKey; not null"`
 			Application    Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 			ID             uint64      `gorm:"primaryKey; not null"`
-			State          string      `gorm:"type:deployment_request_state; not null"`
+			State          string      `gorm:"type:release_state; not null"`
 			SourceIdentity sql.NullString
 			Comments       sql.NullString
 			CreatedAt      time.Time `gorm:"not null"`
@@ -42,26 +42,26 @@ var migration20201021000060 = gormigrate.Migration{
 			FinalizedAt    sql.NullTime
 		}
 
-		err := tx.Exec("CREATE TYPE deployment_request_state AS ENUM " +
+		err := tx.Exec("CREATE TYPE release_state AS ENUM " +
 			"('in_progress', 'cancelled', 'approved', 'rejected')").Error
 		if err != nil {
 			return err
 		}
 
-		err = tx.AutoMigrate(&DeploymentRequest{})
+		err = tx.AutoMigrate(&Release{})
 		if err != nil {
 			return err
 		}
 
-		return tx.Exec("CREATE INDEX deployment_requests_created_at_idx" +
-			" ON deployment_requests (organization_id, created_at DESC)").Error
+		return tx.Exec("CREATE INDEX releases_created_at_idx" +
+			" ON releases (organization_id, created_at DESC)").Error
 	},
 	Rollback: func(tx *gorm.DB) error {
-		err := tx.Migrator().DropTable("deployment_requests")
+		err := tx.Migrator().DropTable("releases")
 		if err != nil {
 			return err
 		}
 
-		return tx.Exec("DROP TYPE deployment_request_state").Error
+		return tx.Exec("DROP TYPE release_state").Error
 	},
 }

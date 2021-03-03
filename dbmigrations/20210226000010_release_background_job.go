@@ -23,7 +23,7 @@ var migration20210226000010 = gormigrate.Migration{
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
-		type DeploymentRequest struct {
+		type Release struct {
 			BaseModel
 			ApplicationID string `gorm:"type:citext; primaryKey; not null"`
 			ID            uint64 `gorm:"primaryKey; not null"`
@@ -48,19 +48,19 @@ var migration20210226000010 = gormigrate.Migration{
 
 		type ReleaseBackgroundJob struct {
 			BaseModel
-			ApplicationID       string            `gorm:"type:citext; primaryKey; not null"`
-			DeploymentRequestID uint64            `gorm:"primaryKey; not null"`
-			DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-			LockID              uint32            `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
-			CreatedAt           time.Time         `gorm:"not null"`
+			ApplicationID string    `gorm:"type:citext; primaryKey; not null"`
+			ReleaseID     uint64    `gorm:"primaryKey; not null"`
+			Release       Release   `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+			LockID        uint32    `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
+			CreatedAt     time.Time `gorm:"not null"`
 		}
 
 		type ReleaseBackgroundJobApprovalRulesetBinding struct {
 			BaseModel
 
 			ApplicationID                     string               `gorm:"type:citext; primaryKey; not null"`
-			DeploymentRequestID               uint64               `gorm:"primaryKey; not null"`
-			ReleaseBackgroundJob              ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,DeploymentRequestID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+			ReleaseID                         uint64               `gorm:"primaryKey; not null"`
+			ReleaseBackgroundJob              ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ReleaseID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ApprovalRulesetID                 string               `gorm:"type:citext; primaryKey; not null"`
 			ApprovalRulesetMajorVersionID     uint64               `gorm:"not null"`
 			ApprovalRulesetMinorVersionNumber uint32               `gorm:"type:int; not null"`
@@ -83,8 +83,8 @@ var migration20210226000010 = gormigrate.Migration{
 
 		err = tx.Exec("ALTER TABLE ONLY release_background_job_approval_ruleset_bindings " +
 			"ADD CONSTRAINT fk_approval_ruleset_bindings_release_background_job " +
-			"FOREIGN KEY (organization_id,application_id,deployment_request_id) " +
-			"REFERENCES release_background_jobs(organization_id,application_id,deployment_request_id) " +
+			"FOREIGN KEY (organization_id,application_id,release_id) " +
+			"REFERENCES release_background_jobs(organization_id,application_id,release_id) " +
 			"ON DELETE CASCADE ON UPDATE CASCADE").Error
 		if err != nil {
 			return err

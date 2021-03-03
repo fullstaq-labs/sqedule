@@ -11,10 +11,10 @@ import (
 )
 
 var processReleaseFlags struct {
-	dbconn              databaseConnectionFlags
-	organizationID      *string
-	applicationID       *string
-	deploymentRequestID *uint64
+	dbconn         databaseConnectionFlags
+	organizationID *string
+	applicationID  *string
+	releaseID      *uint64
 }
 
 // processReleaseCmd represents the 'process-release' command
@@ -42,18 +42,18 @@ var processReleaseCmd = &cobra.Command{
 			return fmt.Errorf("Error loading Organization: %w", err)
 		}
 
-		deploymentRequest, err := dbmodels.FindDeploymentRequest(db, *processReleaseFlags.organizationID,
-			*processReleaseFlags.applicationID, *processReleaseFlags.deploymentRequestID)
+		release, err := dbmodels.FindRelease(db, *processReleaseFlags.organizationID,
+			*processReleaseFlags.applicationID, *processReleaseFlags.releaseID)
 		if err != nil {
-			return fmt.Errorf("Error loading DeploymentRequest: %w", err)
+			return fmt.Errorf("Error loading Release: %w", err)
 		}
 
-		job, err := dbmodels.FindReleaseBackgroundJob(db.Preload("DeploymentRequest"),
-			organization.ID, *processReleaseFlags.applicationID, deploymentRequest.ID)
+		job, err := dbmodels.FindReleaseBackgroundJob(db.Preload("Release"),
+			organization.ID, *processReleaseFlags.applicationID, release.ID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				job, err = dbmodels.CreateReleaseBackgroundJob(db, organization,
-					*processReleaseFlags.applicationID, deploymentRequest)
+					*processReleaseFlags.applicationID, release)
 				if err != nil {
 					return fmt.Errorf("Error creating ReleaseBackgroundJob: %w", err)
 				}
@@ -78,5 +78,5 @@ func init() {
 
 	processReleaseFlags.organizationID = processReleaseCmd.Flags().String("organization-id", "", "")
 	processReleaseFlags.applicationID = processReleaseCmd.Flags().String("application-id", "", "")
-	processReleaseFlags.deploymentRequestID = processReleaseCmd.Flags().Uint64("deployment-request-id", 0, "")
+	processReleaseFlags.releaseID = processReleaseCmd.Flags().Uint64("release-id", 0, "")
 }

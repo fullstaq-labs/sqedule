@@ -10,10 +10,10 @@ import (
 )
 
 type CreateReleaseBackgroundJobTestContext struct {
-	db                *gorm.DB
-	org               Organization
-	app               Application
-	deploymentRequest DeploymentRequest
+	db      *gorm.DB
+	org     Organization
+	app     Application
+	release Release
 }
 
 func setupCreateReleaseBackgroundJobTest() (CreateReleaseBackgroundJobTestContext, error) {
@@ -34,7 +34,7 @@ func setupCreateReleaseBackgroundJobTest() (CreateReleaseBackgroundJobTestContex
 		if err != nil {
 			return err
 		}
-		ctx.deploymentRequest, err = CreateMockDeploymentRequestWithInProgressState(tx, ctx.org, ctx.app, nil)
+		ctx.release, err = CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, nil)
 		if err != nil {
 			return err
 		}
@@ -51,7 +51,7 @@ func TestCreateReleaseBackgroundJob(t *testing.T) {
 		return
 	}
 	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		_, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.deploymentRequest, 1)
+		_, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 1)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -73,7 +73,7 @@ func TestCreateReleaseBackgroundJob_copyBindings(t *testing.T) {
 			return nil
 		}
 
-		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.deploymentRequest, 1)
+		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 1)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -85,7 +85,7 @@ func TestCreateReleaseBackgroundJob_copyBindings(t *testing.T) {
 		}
 
 		jobBindings, err := FindAllReleaseBackgroundJobApprovalRulesetBindings(tx.Order("mode"),
-			ctx.org.ID, ctx.app.ID, ctx.deploymentRequest.ID)
+			ctx.org.ID, ctx.app.ID, ctx.release.ID)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -108,13 +108,13 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 		return
 	}
 	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		deploymentRequest2, err := CreateMockDeploymentRequestWithInProgressState(tx, ctx.org, ctx.app, nil)
+		release2, err := CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, nil)
 		if !assert.NoError(t, err) {
 			return nil
 		}
 
 		// Create a job and delete it, in order to predict what the next lock ID will be.
-		job, err := CreateReleaseBackgroundJob(tx, ctx.org, ctx.app.ID, ctx.deploymentRequest)
+		job, err := CreateReleaseBackgroundJob(tx, ctx.org, ctx.app.ID, ctx.release)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -129,9 +129,9 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 			BaseModel: BaseModel{
 				OrganizationID: ctx.org.ID,
 			},
-			ApplicationID:       ctx.app.ID,
-			DeploymentRequestID: deploymentRequest2.ID,
-			LockID:              nextLockID,
+			ApplicationID: ctx.app.ID,
+			ReleaseID:     release2.ID,
+			LockID:        nextLockID,
 		}
 		err = tx.Create(&job).Error
 		if !assert.NoError(t, err) {
@@ -139,7 +139,7 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 		}
 
 		// Create another job, whose autoincremented lock ID should conflict.
-		job, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.deploymentRequest, 100)
+		job, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 100)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -158,13 +158,13 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 		return
 	}
 	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		deploymentRequest2, err := CreateMockDeploymentRequestWithInProgressState(tx, ctx.org, ctx.app, nil)
+		release2, err := CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, nil)
 		if !assert.NoError(t, err) {
 			return nil
 		}
 
 		// Create a job and delete it, in order to predict what the next lock ID will be.
-		job, err := CreateReleaseBackgroundJob(tx, ctx.org, ctx.app.ID, ctx.deploymentRequest)
+		job, err := CreateReleaseBackgroundJob(tx, ctx.org, ctx.app.ID, ctx.release)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -179,9 +179,9 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 			BaseModel: BaseModel{
 				OrganizationID: ctx.org.ID,
 			},
-			ApplicationID:       ctx.app.ID,
-			DeploymentRequestID: deploymentRequest2.ID,
-			LockID:              nextLockID,
+			ApplicationID: ctx.app.ID,
+			ReleaseID:     release2.ID,
+			LockID:        nextLockID,
 		}
 		err = tx.Create(&job).Error
 		if !assert.NoError(t, err) {
@@ -189,7 +189,7 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 		}
 
 		// Create another job, whose autoincremented lock ID should conflict.
-		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.deploymentRequest, 1)
+		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 1)
 		assert.Error(t, err, "Unable to find a free lock ID after 1 tries")
 
 		return nil

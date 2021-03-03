@@ -8,7 +8,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
 	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
-	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/dbutils"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ type ProcessScheduleRulesTestContext struct {
 	db                *gorm.DB
 	org               dbmodels.Organization
 	app               dbmodels.Application
-	deploymentRequest dbmodels.DeploymentRequest
+	release           dbmodels.Release
 	permissiveBinding dbmodels.ApprovalRulesetBinding
 	enforcingBinding  dbmodels.ApprovalRulesetBinding
 	job               dbmodels.ReleaseBackgroundJob
@@ -51,8 +51,8 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 			return err
 		}
 
-		ctx.deploymentRequest, err = dbmodels.CreateMockDeploymentRequestWithInProgressState(tx, ctx.org, ctx.app, func(dr *dbmodels.DeploymentRequest) {
-			dr.CreatedAt = time.Date(2020, time.March, 3, 12, 0, 0, 0, time.Now().Local().Location())
+		ctx.release, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, func(release *dbmodels.Release) {
+			release.CreatedAt = time.Date(2020, time.March, 3, 12, 0, 0, 0, time.Now().Local().Location())
 		})
 		if err != nil {
 			return err
@@ -63,7 +63,7 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 			return err
 		}
 
-		ctx.job, err = dbmodels.CreateMockReleaseBackgroundJob(tx, ctx.org, ctx.app, ctx.deploymentRequest)
+		ctx.job, err = dbmodels.CreateMockReleaseBackgroundJob(tx, ctx.org, ctx.app, ctx.release)
 		if err != nil {
 			return err
 		}
@@ -122,10 +122,10 @@ func TestProcessScheduleRulesSuccess(t *testing.T) {
 	}
 
 	var numProcessedEvents, numOutcomes int64
-	var event dbmodels.DeploymentRequestRuleProcessedEvent
+	var event dbmodels.ReleaseRuleProcessedEvent
 	var outcome dbmodels.ScheduleApprovalRuleOutcome
 
-	err = ctx.db.Model(&dbmodels.DeploymentRequestRuleProcessedEvent{}).Count(&numProcessedEvents).Error
+	err = ctx.db.Model(&dbmodels.ReleaseRuleProcessedEvent{}).Count(&numProcessedEvents).Error
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -144,10 +144,10 @@ func TestProcessScheduleRulesSuccess(t *testing.T) {
 
 	assert.Equal(t, int64(1), numProcessedEvents)
 	assert.Equal(t, int64(1), numOutcomes)
-	assert.Equal(t, deploymentrequeststate.Approved, event.ResultState)
+	assert.Equal(t, releasestate.Approved, event.ResultState)
 	assert.False(t, event.IgnoredError)
 	assert.True(t, outcome.Success)
-	assert.Equal(t, deploymentrequeststate.Approved, resultState)
+	assert.Equal(t, releasestate.Approved, resultState)
 	assert.Equal(t, uint(1), nprocessed)
 }
 
@@ -169,10 +169,10 @@ func TestProcessScheduleRulesError(t *testing.T) {
 	}
 
 	var numProcessedEvents, numOutcomes int64
-	var event dbmodels.DeploymentRequestRuleProcessedEvent
+	var event dbmodels.ReleaseRuleProcessedEvent
 	var outcome dbmodels.ScheduleApprovalRuleOutcome
 
-	err = ctx.db.Model(&dbmodels.DeploymentRequestRuleProcessedEvent{}).Count(&numProcessedEvents).Error
+	err = ctx.db.Model(&dbmodels.ReleaseRuleProcessedEvent{}).Count(&numProcessedEvents).Error
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -191,10 +191,10 @@ func TestProcessScheduleRulesError(t *testing.T) {
 
 	assert.Equal(t, int64(1), numProcessedEvents)
 	assert.Equal(t, int64(1), numOutcomes)
-	assert.Equal(t, deploymentrequeststate.Rejected, event.ResultState)
+	assert.Equal(t, releasestate.Rejected, event.ResultState)
 	assert.False(t, event.IgnoredError)
 	assert.False(t, outcome.Success)
-	assert.Equal(t, deploymentrequeststate.Rejected, resultState)
+	assert.Equal(t, releasestate.Rejected, resultState)
 	assert.Equal(t, uint(1), nprocessed)
 }
 
@@ -216,10 +216,10 @@ func TestProcessScheduleRulesPermissiveMode(t *testing.T) {
 	}
 
 	var numProcessedEvents, numOutcomes int64
-	var event dbmodels.DeploymentRequestRuleProcessedEvent
+	var event dbmodels.ReleaseRuleProcessedEvent
 	var outcome dbmodels.ScheduleApprovalRuleOutcome
 
-	err = ctx.db.Model(&dbmodels.DeploymentRequestRuleProcessedEvent{}).Count(&numProcessedEvents).Error
+	err = ctx.db.Model(&dbmodels.ReleaseRuleProcessedEvent{}).Count(&numProcessedEvents).Error
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -238,10 +238,10 @@ func TestProcessScheduleRulesPermissiveMode(t *testing.T) {
 
 	assert.Equal(t, int64(1), numProcessedEvents)
 	assert.Equal(t, int64(1), numOutcomes)
-	assert.Equal(t, deploymentrequeststate.Approved, event.ResultState)
+	assert.Equal(t, releasestate.Approved, event.ResultState)
 	assert.True(t, event.IgnoredError)
 	assert.False(t, outcome.Success)
-	assert.Equal(t, deploymentrequeststate.Approved, resultState)
+	assert.Equal(t, releasestate.Approved, resultState)
 	assert.Equal(t, uint(1), nprocessed)
 }
 
@@ -256,7 +256,7 @@ func TestProcessScheduleRulesEmptyRuleset(t *testing.T) {
 		return
 	}
 
-	assert.Equal(t, deploymentrequeststate.Approved, resultState)
+	assert.Equal(t, releasestate.Approved, resultState)
 	assert.Equal(t, uint(0), nprocessed)
 }
 
@@ -276,7 +276,7 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.deploymentRequest.ID)
+	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.release.ID)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -290,10 +290,10 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 	}
 
 	var numProcessedEvents, numOutcomes int64
-	var event dbmodels.DeploymentRequestRuleProcessedEvent
+	var event dbmodels.ReleaseRuleProcessedEvent
 	var outcome dbmodels.ScheduleApprovalRuleOutcome
 
-	err = ctx.db.Model(&dbmodels.DeploymentRequestRuleProcessedEvent{}).Count(&numProcessedEvents).Error
+	err = ctx.db.Model(&dbmodels.ReleaseRuleProcessedEvent{}).Count(&numProcessedEvents).Error
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -312,10 +312,10 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 
 	assert.Equal(t, int64(1), numProcessedEvents)
 	assert.Equal(t, int64(1), numOutcomes)
-	assert.Equal(t, deploymentrequeststate.Approved, event.ResultState)
+	assert.Equal(t, releasestate.Approved, event.ResultState)
 	assert.False(t, event.IgnoredError)
 	assert.True(t, outcome.Success)
-	assert.Equal(t, deploymentrequeststate.Approved, resultState)
+	assert.Equal(t, releasestate.Approved, resultState)
 	assert.Equal(t, uint(1), nprocessed)
 }
 

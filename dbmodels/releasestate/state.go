@@ -1,4 +1,4 @@
-package deploymentrequeststate
+package releasestate
 
 import "database/sql/driver"
 

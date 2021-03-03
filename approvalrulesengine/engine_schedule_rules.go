@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
-	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +29,7 @@ func (engine Engine) loadScheduleRules(db *gorm.DB, majorVersionIndex map[uint64
 }
 
 func (engine Engine) fetchScheduleRulePreviousOutcomes() (map[uint64]bool, error) {
-	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(engine.Db, engine.Organization.ID, engine.ReleaseBackgroundJob.DeploymentRequestID)
+	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(engine.Db, engine.Organization.ID, engine.ReleaseBackgroundJob.ReleaseID)
 	if err != nil {
 		return nil, err
 	}
@@ -37,32 +37,32 @@ func (engine Engine) fetchScheduleRulePreviousOutcomes() (map[uint64]bool, error
 	return indexScheduleRuleOutcomes(outcomes), nil
 }
 
-func (engine Engine) processScheduleRules(rulesets []ruleset, previousOutcomes map[uint64]bool, nAlreadyProcessed uint, totalRules uint) (deploymentrequeststate.State, uint, error) {
+func (engine Engine) processScheduleRules(rulesets []ruleset, previousOutcomes map[uint64]bool, nAlreadyProcessed uint, totalRules uint) (releasestate.State, uint, error) {
 	var nprocessed uint = 0
 
 	for _, ruleset := range rulesets {
 		for _, rule := range ruleset.scheduleRules {
 			success, outcomeAlreadyRecorded, err := engine.processScheduleRule(rule, previousOutcomes)
 			if err != nil {
-				return deploymentrequeststate.Rejected, nprocessed,
+				return releasestate.Rejected, nprocessed,
 					maybeFormatRuleProcessingError(err, "Error processing schedule rule org=%s, ID=%d: %w",
 						engine.Organization.ID, rule.ID, err)
 			}
 
 			nprocessed++
-			resultState, ignoredError := determineDeploymentRequestStateFromOutcome(success, ruleset.mode, isLastRule(nAlreadyProcessed, nprocessed, totalRules))
+			resultState, ignoredError := determineReleaseStateFromOutcome(success, ruleset.mode, isLastRule(nAlreadyProcessed, nprocessed, totalRules))
 			engine.Db.Logger.Info(context.Background(),
 				"Processed schedule rule: org=%s, ID=%d, success=%t, ignoredError=%t, resultState=%s",
 				engine.Organization.ID, rule.ID, success, ignoredError, resultState)
 			if !outcomeAlreadyRecorded {
 				event, err := engine.createRuleProcessedEvent(resultState, ignoredError)
 				if err != nil {
-					return deploymentrequeststate.Rejected, nprocessed,
-						fmt.Errorf("Error recording deployment request event: %w", err)
+					return releasestate.Rejected, nprocessed,
+						fmt.Errorf("Error recording release event: %w", err)
 				}
 				err = engine.createScheduleRuleOutcome(rule, event, success)
 				if err != nil {
-					return deploymentrequeststate.Rejected, nprocessed,
+					return releasestate.Rejected, nprocessed,
 						fmt.Errorf("Error recording schedule approval rule outcome: %w", err)
 				}
 			}
@@ -72,15 +72,15 @@ func (engine Engine) processScheduleRules(rulesets []ruleset, previousOutcomes m
 		}
 	}
 
-	return determineDeploymentRequestStateAfterProcessingRules(nAlreadyProcessed, nprocessed, totalRules),
+	return determineReleaseStateAfterProcessingRules(nAlreadyProcessed, nprocessed, totalRules),
 		nprocessed, nil
 }
 
-func determineDeploymentRequestStateAfterProcessingRules(nAlreadyProcessed uint, nprocessed uint, totalRules uint) deploymentrequeststate.State {
+func determineReleaseStateAfterProcessingRules(nAlreadyProcessed uint, nprocessed uint, totalRules uint) releasestate.State {
 	if isLastRule(nAlreadyProcessed, nprocessed, totalRules) {
-		return deploymentrequeststate.Approved
+		return releasestate.Approved
 	}
-	return deploymentrequeststate.InProgress
+	return releasestate.InProgress
 }
 
 func (engine Engine) processScheduleRule(rule dbmodels.ScheduleApprovalRule, previousOutcomes map[uint64]bool) (bool, bool, error) {
@@ -89,19 +89,19 @@ func (engine Engine) processScheduleRule(rule dbmodels.ScheduleApprovalRule, pre
 		return success, true, nil
 	}
 
-	// TODO: if there's an error, reject the deployment request because the rules have errors
-	success, err := timeIsWithinSchedule(engine.ReleaseBackgroundJob.DeploymentRequest.CreatedAt, rule)
+	// TODO: if there's an error, reject the release because the rules have errors
+	success, err := timeIsWithinSchedule(engine.ReleaseBackgroundJob.Release.CreatedAt, rule)
 	return success, false, err
 }
 
-func (engine Engine) createScheduleRuleOutcome(rule dbmodels.ScheduleApprovalRule, event dbmodels.DeploymentRequestRuleProcessedEvent, success bool) error {
+func (engine Engine) createScheduleRuleOutcome(rule dbmodels.ScheduleApprovalRule, event dbmodels.ReleaseRuleProcessedEvent, success bool) error {
 	outcome := dbmodels.ScheduleApprovalRuleOutcome{
 		ApprovalRuleOutcome: dbmodels.ApprovalRuleOutcome{
 			BaseModel: dbmodels.BaseModel{
 				OrganizationID: engine.Organization.ID,
 			},
-			DeploymentRequestRuleProcessedEventID: event.DeploymentRequestEvent.ID,
-			Success:                               success,
+			ReleaseRuleProcessedEventID: event.ReleaseEvent.ID,
+			Success:                     success,
 		},
 		ScheduleApprovalRuleID: rule.ApprovalRule.ID,
 	}

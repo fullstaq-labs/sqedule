@@ -24,21 +24,21 @@ var migration20201021000100 = gormigrate.Migration{
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
-		type DeploymentRequest struct {
+		type Release struct {
 			BaseModel
 			ApplicationID string `gorm:"type:citext; primaryKey; not null"`
 			ID            uint64 `gorm:"primaryKey; not null"`
 		}
 
-		type DeploymentRequestEvent struct {
+		type ReleaseEvent struct {
 			BaseModel
-			ID                  uint64            `gorm:"primaryKey; not null"`
-			DeploymentRequestID uint64            `gorm:"not null"`
-			DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,DeploymentRequestID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ID        uint64  `gorm:"primaryKey; not null"`
+			ReleaseID uint64  `gorm:"not null"`
+			Release   Release `gorm:"foreignKey:OrganizationID,ReleaseID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
-		type DeploymentRequestRuleProcessedEvent struct {
-			DeploymentRequestEvent
+		type ReleaseRuleProcessedEvent struct {
+			ReleaseEvent
 		}
 
 		// ApprovalRule ...
@@ -65,11 +65,11 @@ var migration20201021000100 = gormigrate.Migration{
 		// ApprovalRuleOutcome ...
 		type ApprovalRuleOutcome struct {
 			BaseModel
-			ID                                    uint64                              `gorm:"primaryKey; autoIncrement; not null"`
-			DeploymentRequestRuleProcessedEventID uint64                              `gorm:"not null"`
-			DeploymentRequestRuleProcessedEvent   DeploymentRequestRuleProcessedEvent `gorm:"foreignKey:OrganizationID,DeploymentRequestRuleProcessedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-			Success                               bool                                `gorm:"not null"`
-			CreatedAt                             time.Time                           `gorm:"not null"`
+			ID                          uint64                    `gorm:"primaryKey; autoIncrement; not null"`
+			ReleaseRuleProcessedEventID uint64                    `gorm:"not null"`
+			ReleaseRuleProcessedEvent   ReleaseRuleProcessedEvent `gorm:"foreignKey:OrganizationID,ReleaseRuleProcessedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			Success                     bool                      `gorm:"not null"`
+			CreatedAt                   time.Time                 `gorm:"not null"`
 		}
 
 		// HTTPApiApprovalRuleOutcome ...

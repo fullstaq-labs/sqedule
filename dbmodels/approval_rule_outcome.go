@@ -10,11 +10,11 @@ import (
 // ApprovalRuleOutcome ...
 type ApprovalRuleOutcome struct {
 	BaseModel
-	ID                                    uint64                              `gorm:"primaryKey; autoIncrement; not null"`
-	DeploymentRequestRuleProcessedEventID uint64                              `gorm:"not null"`
-	DeploymentRequestRuleProcessedEvent   DeploymentRequestRuleProcessedEvent `gorm:"foreignKey:OrganizationID,DeploymentRequestRuleProcessedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	Success                               bool                                `gorm:"not null"`
-	CreatedAt                             time.Time                           `gorm:"not null"`
+	ID                          uint64                    `gorm:"primaryKey; autoIncrement; not null"`
+	ReleaseRuleProcessedEventID uint64                    `gorm:"not null"`
+	ReleaseRuleProcessedEvent   ReleaseRuleProcessedEvent `gorm:"foreignKey:OrganizationID,ReleaseRuleProcessedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Success                     bool                      `gorm:"not null"`
+	CreatedAt                   time.Time                 `gorm:"not null"`
 }
 
 // HTTPApiApprovalRuleOutcome ...
@@ -43,15 +43,15 @@ type ManualApprovalRuleOutcome struct {
 }
 
 // FindAllScheduleApprovalRuleOutcomes ...
-func FindAllScheduleApprovalRuleOutcomes(db *gorm.DB, organizationID string, deploymentRequestID uint64) ([]ScheduleApprovalRuleOutcome, error) {
+func FindAllScheduleApprovalRuleOutcomes(db *gorm.DB, organizationID string, releaseID uint64) ([]ScheduleApprovalRuleOutcome, error) {
 	var result []ScheduleApprovalRuleOutcome
 
 	tx := db.
-		Joins("LEFT JOIN deployment_request_rule_processed_events "+
-			"ON deployment_request_rule_processed_events.organization_id = schedule_approval_rule_outcomes.organization_id "+
-			"AND deployment_request_rule_processed_events.id = schedule_approval_rule_outcomes.deployment_request_rule_processed_event_id").
-		Where("schedule_approval_rule_outcomes.organization_id = ? AND deployment_request_rule_processed_events.deployment_request_id = ?",
-			organizationID, deploymentRequestID)
+		Joins("LEFT JOIN release_rule_processed_events "+
+			"ON release_rule_processed_events.organization_id = schedule_approval_rule_outcomes.organization_id "+
+			"AND release_rule_processed_events.id = schedule_approval_rule_outcomes.release_rule_processed_event_id").
+		Where("schedule_approval_rule_outcomes.organization_id = ? AND release_rule_processed_events.release_id = ?",
+			organizationID, releaseID)
 	tx = tx.Find(&result)
 	return result, tx.Error
 }

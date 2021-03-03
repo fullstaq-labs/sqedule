@@ -71,7 +71,7 @@ It assumes that the API server is listening on http://localhost:3001.
 
 ## Example: making an API request
 
-This example shows how you can request a list of deployment requests from the API server. We assume that:
+This example shows how you can request a list of releases from the API server. We assume that:
 
  * You have [httpie](https://httpie.io/) installed.
  * You have the seed data loaded.
@@ -103,10 +103,10 @@ Copy the token and put it in a shell variable, like this:
 AUTH_TOKEN='<SOME TOKEN>'
 ~~~
 
-Now you can request a list of deployment requests:
+Now you can request a list of releases:
 
 ~~~bash
-http localhost:3001/v1/deployment-requests Authorization:"Bearer $AUTH_TOKEN"
+http localhost:3001/v1/releases Authorization:"Bearer $AUTH_TOKEN"
 ~~~
 
 ~~~

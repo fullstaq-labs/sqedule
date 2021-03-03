@@ -51,15 +51,15 @@ INSERT INTO application_minor_versions (organization_id, application_major_versi
 -- Deployment requests for org1
 DO $$
 DECLARE
-    n_deployment_requests INT;
-    n_deployment_requests_finished INT;
+    n_releases INT;
+    n_releases_finished INT;
 BEGIN
-    n_deployment_requests := 120;
-    n_deployment_requests_finished := 118;
+    n_releases := 120;
+    n_releases_finished := 118;
 
-    IF (SELECT COUNT(*) FROM deployment_requests WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
-        -- Create n_deployment_requests_finished deployment requests that are finished
-        INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at, finalized_at)
+    IF (SELECT COUNT(*) FROM releases WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
+        -- Create n_releases_finished releases that are finished
+        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at, finalized_at)
         SELECT
             'org1' AS organization_id,
             'app1' AS application_id,
@@ -67,37 +67,37 @@ BEGIN
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             NOW() - (INTERVAL '1 day' * series) AS updated_at,
             NOW() - (INTERVAL '1 day' * series) AS finalized_at
-        FROM generate_series(1, n_deployment_requests_finished) series;
+        FROM generate_series(1, n_releases_finished) series;
 
-        INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at)
+        INSERT INTO release_created_events (organization_id, release_id, application_id, created_at)
         SELECT
             'org1' AS organization_id,
-            (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
+            (SELECT id FROM releases OFFSET series - 1 LIMIT 1) AS release_id,
             'app1' AS application_id,
             NOW() - (INTERVAL '1 day' * series) AS created_at
-        FROM generate_series(1, n_deployment_requests_finished) series;
+        FROM generate_series(1, n_releases_finished) series;
 
-        INSERT INTO deployment_request_rule_processed_events (organization_id, deployment_request_id, application_id, created_at, result_state, ignored_error)
+        INSERT INTO release_rule_processed_events (organization_id, release_id, application_id, created_at, result_state, ignored_error)
         SELECT
             'org1' AS organization_id,
-            (SELECT id FROM deployment_requests OFFSET series - 1 LIMIT 1) AS deployment_request_id,
+            (SELECT id FROM releases OFFSET series - 1 LIMIT 1) AS release_id,
             'app1' AS application_id,
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             'approved' AS result_state,
             true AS ignored_error
-        FROM generate_series(1, n_deployment_requests_finished) series;
+        FROM generate_series(1, n_releases_finished) series;
 
 
-        -- Create 2 deployment requests that are in progress
+        -- Create 2 releases that are in progress
         WITH inserted AS (
-            INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at) VALUES (
+            INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
                 'org1',
                 'app1',
                 'in_progress',
                 (current_date || ' 13:00')::timestamp with time zone,
                 NOW()
             ) RETURNING id
-        ) INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at) VALUES (
+        ) INSERT INTO release_created_events (organization_id, release_id, application_id, created_at) VALUES (
             'org1',
             (SELECT id FROM inserted LIMIT 1),
             'app1',
@@ -105,14 +105,14 @@ BEGIN
         );
 
         WITH inserted AS (
-            INSERT INTO deployment_requests (organization_id, application_id, state, created_at, updated_at) VALUES (
+            INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
                 'org1',
                 'app1',
                 'in_progress',
                 (current_date || ' 18:00')::timestamp with time zone,
                 NOW()
             ) RETURNING id
-        ) INSERT INTO deployment_request_created_events (organization_id, deployment_request_id, application_id, created_at) VALUES (
+        ) INSERT INTO release_created_events (organization_id, release_id, application_id, created_at) VALUES (
             'org1',
             (SELECT id FROM inserted LIMIT 1),
             'app1',

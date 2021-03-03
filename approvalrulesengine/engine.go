@@ -8,7 +8,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
 	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
-	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"gorm.io/gorm"
 )
 
@@ -50,29 +50,29 @@ func (engine *Engine) Run() error {
 	err = engine.finalizeJob(resultState)
 	if err != nil {
 		return fmt.Errorf("Error finalizing release background job (ID=%d) to state %s: %w",
-			engine.ReleaseBackgroundJob.DeploymentRequestID, resultState, err)
+			engine.ReleaseBackgroundJob.ReleaseID, resultState, err)
 	}
 	return nil
 }
 
-func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (deploymentrequeststate.State, error) {
-	var finalResultState deploymentrequeststate.State = deploymentrequeststate.InProgress
+func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (releasestate.State, error) {
+	var finalResultState releasestate.State = releasestate.InProgress
 	var finalError error
-	var resultState deploymentrequeststate.State
+	var resultState releasestate.State
 	var nprocessed uint = 0
 	var n uint
 
 	manualApprovalRulePreviousOutcomes, err := engine.fetchManualApprovalRulePreviousOutcomes()
 	if err != nil {
-		return deploymentrequeststate.Rejected, fmt.Errorf("Error loading state: %w", err)
+		return releasestate.Rejected, fmt.Errorf("Error loading state: %w", err)
 	}
 	scheduleRulePreviousOutcomes, err := engine.fetchScheduleRulePreviousOutcomes()
 	if err != nil {
-		return deploymentrequeststate.Rejected, fmt.Errorf("Error loading state: %w", err)
+		return releasestate.Rejected, fmt.Errorf("Error loading state: %w", err)
 	}
 	httpAPIRulePreviousOutcomes, err := engine.fetchHTTPApiRulePreviousOutcomes()
 	if err != nil {
-		return deploymentrequeststate.Rejected, fmt.Errorf("Error loading state: %w", err)
+		return releasestate.Rejected, fmt.Errorf("Error loading state: %w", err)
 	}
 
 	err = engine.Db.Transaction(func(tx *gorm.DB) error {
@@ -80,7 +80,7 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (deploym
 			// Process manual approval rules
 			resultState, n, err = engine.processManualApprovalRules(rulesets, manualApprovalRulePreviousOutcomes, nprocessed, totalRules)
 			if err != nil {
-				finalResultState = deploymentrequeststate.Rejected
+				finalResultState = releasestate.Rejected
 				// Error message already mentions the fact that it's about processing rules.
 				finalError = err
 				return nil
@@ -95,7 +95,7 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (deploym
 			// Process schedule rules
 			resultState, n, err = engine.processScheduleRules(rulesets, scheduleRulePreviousOutcomes, nprocessed, totalRules)
 			if err != nil {
-				finalResultState = deploymentrequeststate.Rejected
+				finalResultState = releasestate.Rejected
 				// Error message already mentions the fact that it's about processing rules.
 				finalError = err
 				return nil
@@ -109,10 +109,10 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (deploym
 		return nil
 	})
 	if err != nil {
-		return deploymentrequeststate.Rejected, err
+		return releasestate.Rejected, err
 	}
 	if finalError != nil {
-		return deploymentrequeststate.Rejected, finalError
+		return releasestate.Rejected, finalError
 	}
 
 	if !finalResultState.IsFinal() {
@@ -120,7 +120,7 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (deploym
 		resultState, n, err = engine.processHTTPApiRules(rulesets, httpAPIRulePreviousOutcomes, nprocessed, totalRules)
 		if err != nil {
 			// Error message already mentions the fact that it's about processing rules.
-			return deploymentrequeststate.Rejected, err
+			return releasestate.Rejected, err
 		}
 		nprocessed += n
 		if resultState.IsFinal() {
@@ -198,16 +198,16 @@ func (engine Engine) loadRuleBindingsAndTheirRulesets() ([]dbmodels.ReleaseBackg
 		engine.Db.Preload("ApprovalRulesetMinorVersion"),
 		engine.Organization.ID,
 		engine.ReleaseBackgroundJob.ApplicationID,
-		engine.ReleaseBackgroundJob.DeploymentRequestID)
+		engine.ReleaseBackgroundJob.ReleaseID)
 }
 
-func (engine *Engine) finalizeJob(resultState deploymentrequeststate.State) error {
+func (engine *Engine) finalizeJob(resultState releasestate.State) error {
 	return engine.Db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
-		deploymentRequest := &engine.ReleaseBackgroundJob.DeploymentRequest
-		deploymentRequest.State = resultState
-		deploymentRequest.FinalizedAt = sql.NullTime{Time: now, Valid: true}
-		savetx := tx.Model(deploymentRequest).Updates(map[string]interface{}{
+		release := &engine.ReleaseBackgroundJob.Release
+		release.State = resultState
+		release.FinalizedAt = sql.NullTime{Time: now, Valid: true}
+		savetx := tx.Model(release).Updates(map[string]interface{}{
 			"state":        resultState,
 			"finalized_at": now,
 		})
@@ -219,21 +219,21 @@ func (engine *Engine) finalizeJob(resultState deploymentrequeststate.State) erro
 	})
 }
 
-func (engine Engine) createRuleProcessedEvent(resultState deploymentrequeststate.State, ignoredError bool) (dbmodels.DeploymentRequestRuleProcessedEvent, error) {
-	event := dbmodels.DeploymentRequestRuleProcessedEvent{
-		DeploymentRequestEvent: dbmodels.DeploymentRequestEvent{
+func (engine Engine) createRuleProcessedEvent(resultState releasestate.State, ignoredError bool) (dbmodels.ReleaseRuleProcessedEvent, error) {
+	event := dbmodels.ReleaseRuleProcessedEvent{
+		ReleaseEvent: dbmodels.ReleaseEvent{
 			BaseModel: dbmodels.BaseModel{
 				OrganizationID: engine.Organization.ID,
 			},
-			DeploymentRequestID: engine.ReleaseBackgroundJob.DeploymentRequest.ID,
-			ApplicationID:       engine.ReleaseBackgroundJob.ApplicationID,
+			ReleaseID:     engine.ReleaseBackgroundJob.Release.ID,
+			ApplicationID: engine.ReleaseBackgroundJob.ApplicationID,
 		},
 		ResultState:  resultState,
 		IgnoredError: ignoredError,
 	}
 	tx := engine.Db.Create(&event)
 	if tx.Error != nil {
-		return dbmodels.DeploymentRequestRuleProcessedEvent{}, tx.Error
+		return dbmodels.ReleaseRuleProcessedEvent{}, tx.Error
 	}
 
 	return event, nil
@@ -250,12 +250,12 @@ func isLastRule(nAlreadyProcessed uint, nprocessed uint, totalRules uint) bool {
 	return nAlreadyProcessed+nprocessed == totalRules
 }
 
-func determineDeploymentRequestStateFromOutcome(ruleProcessedSuccessfully bool, mode approvalrulesetbindingmode.Mode, isLastRule bool) (state deploymentrequeststate.State, ignoredError bool) {
+func determineReleaseStateFromOutcome(ruleProcessedSuccessfully bool, mode approvalrulesetbindingmode.Mode, isLastRule bool) (state releasestate.State, ignoredError bool) {
 	if ruleProcessedSuccessfully || mode == approvalrulesetbindingmode.Permissive {
 		if isLastRule {
-			return deploymentrequeststate.Approved, !ruleProcessedSuccessfully
+			return releasestate.Approved, !ruleProcessedSuccessfully
 		}
-		return deploymentrequeststate.InProgress, !ruleProcessedSuccessfully
+		return releasestate.InProgress, !ruleProcessedSuccessfully
 	}
-	return deploymentrequeststate.Rejected, false
+	return releasestate.Rejected, false
 }

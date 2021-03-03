@@ -25,7 +25,7 @@ const COLUMNS: ColDef[] = [
     width: 120,
     renderCell: ({ row }) => (
       <Box style={{ flexGrow: 1 }}> {/* Make the content properly align right */}
-        <Link href={`/deployment_requests/${encodeURIComponent(row.application.id)}/${encodeURIComponent(row._orig_id)}`}>
+        <Link href={`/releases/${encodeURIComponent(row.application.id)}/${encodeURIComponent(row._orig_id)}`}>
           <a>{row._orig_id}</a>
         </Link>
       </Box>
@@ -64,10 +64,10 @@ const COLUMNS: ColDef[] = [
   },
 ];
 
-export default function DeploymentRequestsPage(props: IProps) {
+export default function ReleasesPage(props: IProps) {
   const { appContext } = props;
   const dataGridState = useDataGrid();
-  const { data, error, isValidating, mutate } = useSWR(`/v1/deployment-requests?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);
+  const { data, error, isValidating, mutate } = useSWR(`/v1/releases?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);
 
   declareValidatingFetchedData(appContext, isValidating);
 
@@ -77,7 +77,7 @@ export default function DeploymentRequestsPage(props: IProps) {
         <Container maxWidth="md">
           <Box px={2} py={2} textAlign="center">
             <Typography variant="h5" color="textSecondary">
-              There are no deployment requests.
+              There are no releases.
             </Typography>
           </Box>
         </Container>
@@ -120,5 +120,5 @@ export default function DeploymentRequestsPage(props: IProps) {
   );
 }
 
-DeploymentRequestsPage.navigationSection = NavigationSection.DeploymentRequests;
-DeploymentRequestsPage.pageTitle = 'Deployment requests';
+ReleasesPage.navigationSection = NavigationSection.Releases;
+ReleasesPage.pageTitle = 'Releases';

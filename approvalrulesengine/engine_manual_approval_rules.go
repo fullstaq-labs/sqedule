@@ -2,7 +2,7 @@ package approvalrulesengine
 
 import (
 	"github.com/fullstaq-labs/sqedule/dbmodels"
-	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +25,7 @@ func (engine Engine) loadManualApprovalRules(db *gorm.DB, majorVersionIndex map[
 
 func (engine Engine) fetchManualApprovalRulePreviousOutcomes() (map[uint64]bool, error) {
 	// TODO
-	// outcomes, err := dbmodels.FindAllManualApprovalRuleOutcomes(engine.Db, engine.Organization.ID, engine.DeploymentRequest.ID)
+	// outcomes, err := dbmodels.FindAllManualApprovalRuleOutcomes(engine.Db, engine.Organization.ID, engine.Release.ID)
 	// if err != nil {
 	// 	return nil, err
 	// }
@@ -34,12 +34,12 @@ func (engine Engine) fetchManualApprovalRulePreviousOutcomes() (map[uint64]bool,
 	return indexManualApprovalRuleOutcomes(outcomes), nil
 }
 
-func (engine Engine) processManualApprovalRules(rulesets []ruleset, previousOutcomes map[uint64]bool, nAlreadyProcessed uint, totalRules uint) (deploymentrequeststate.State, uint, error) {
+func (engine Engine) processManualApprovalRules(rulesets []ruleset, previousOutcomes map[uint64]bool, nAlreadyProcessed uint, totalRules uint) (releasestate.State, uint, error) {
 	var nprocessed uint = 0
 
 	// TODO
 
-	return determineDeploymentRequestStateAfterProcessingRules(nAlreadyProcessed, nprocessed, totalRules),
+	return determineReleaseStateAfterProcessingRules(nAlreadyProcessed, nprocessed, totalRules),
 		nprocessed, nil
 }
 

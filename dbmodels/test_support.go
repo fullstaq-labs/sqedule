@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
-	"github.com/fullstaq-labs/sqedule/dbmodels/deploymentrequeststate"
+	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -68,18 +68,18 @@ func CreateMockApplicationWithOneVersion(db *gorm.DB, organization Organization)
 	return result, nil
 }
 
-// CreateMockDeploymentRequestWithInProgressState ...
-func CreateMockDeploymentRequestWithInProgressState(db *gorm.DB, organization Organization, application Application,
-	customizeFunc func(*DeploymentRequest)) (DeploymentRequest, error) {
+// CreateMockReleaseWithInProgressState ...
+func CreateMockReleaseWithInProgressState(db *gorm.DB, organization Organization, application Application,
+	customizeFunc func(*Release)) (Release, error) {
 
-	result := DeploymentRequest{
+	result := Release{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
 		ApplicationID: application.ID,
 		Application:   application,
-		State:         deploymentrequeststate.InProgress,
+		State:         releasestate.InProgress,
 	}
 	if customizeFunc != nil {
 		customizeFunc(&result)
@@ -202,16 +202,16 @@ func CreateMockApprovalRulesetsAndBindingsWith2Modes1Version(db *gorm.DB, organi
 }
 
 // CreateMockReleaseBackgroundJob ...
-func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app Application, deploymentRequest DeploymentRequest) (ReleaseBackgroundJob, error) {
+func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app Application, release Release) (ReleaseBackgroundJob, error) {
 	result := ReleaseBackgroundJob{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
-		ApplicationID:       app.ID,
-		LockID:              1,
-		DeploymentRequestID: deploymentRequest.ID,
-		DeploymentRequest:   deploymentRequest,
+		ApplicationID: app.ID,
+		LockID:        1,
+		ReleaseID:     release.ID,
+		Release:       release,
 	}
 	tx := db.Omit(clause.Associations).Create(&result)
 	if tx.Error != nil {

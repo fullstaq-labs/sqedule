@@ -19,8 +19,8 @@ const (
 	ActionUpdateApplication
 	// ActionDeleteApplication ...
 	ActionDeleteApplication
-	// ActionCreateDeploymentRequest ...
-	ActionCreateDeploymentRequest
+	// ActionCreateRelease ...
+	ActionCreateRelease
 )
 
 // GetApplicationAuthorizations returns which actions an OrganizationMember is
@@ -40,7 +40,7 @@ func GetApplicationAuthorizations(orgMember dbmodels.IOrganizationMember,
 	result[ActionReadApplication] = true
 	result[ActionUpdateApplication] = true
 	result[ActionDeleteApplication] = true
-	result[ActionCreateDeploymentRequest] = true
+	result[ActionCreateRelease] = true
 
 	return result
 }

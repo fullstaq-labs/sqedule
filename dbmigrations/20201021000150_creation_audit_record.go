@@ -50,28 +50,28 @@ var migration20201021000150 = gormigrate.Migration{
 			VersionNumber                 uint32 `gorm:"primaryKey; not null"`
 		}
 
-		type DeploymentRequestEvent struct {
+		type ReleaseEvent struct {
 			BaseModel
 			ID uint64 `gorm:"primaryKey; not null"`
 		}
 
-		type DeploymentRequestCreatedEvent struct {
-			DeploymentRequestEvent
+		type ReleaseCreatedEvent struct {
+			ReleaseEvent
 		}
 
-		type DeploymentRequestCancelledEvent struct {
-			DeploymentRequestEvent
+		type ReleaseCancelledEvent struct {
+			ReleaseEvent
 		}
 
-		type DeploymentRequestRuleProcessedEvent struct {
-			DeploymentRequestEvent
+		type ReleaseRuleProcessedEvent struct {
+			ReleaseEvent
 		}
 
 		type ApprovalRuleOutcome struct {
 			BaseModel
-			ID                                    uint64                              `gorm:"primaryKey; autoIncrement; not null"`
-			DeploymentRequestRuleProcessedEventID uint64                              `gorm:"not null"`
-			DeploymentRequestRuleProcessedEvent   DeploymentRequestRuleProcessedEvent `gorm:"foreignKey:OrganizationID,DeploymentRequestRuleProcessedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ID                          uint64                    `gorm:"primaryKey; autoIncrement; not null"`
+			ReleaseRuleProcessedEventID uint64                    `gorm:"not null"`
+			ReleaseRuleProcessedEvent   ReleaseRuleProcessedEvent `gorm:"foreignKey:OrganizationID,ReleaseRuleProcessedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
 		type ManualApprovalRuleOutcome struct {
@@ -95,7 +95,7 @@ var migration20201021000150 = gormigrate.Migration{
 
 			// Subject association
 
-			ApplicationMajorVersionID     uint64                  `gorm:"check:((CASE WHEN application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN deployment_request_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
+			ApplicationMajorVersionID     uint64                  `gorm:"check:((CASE WHEN application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
 			ApplicationMinorVersionNumber uint32                  `gorm:"type:int; check:((application_major_version_id IS NULL) = (application_minor_version_number IS NULL))"`
 			ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber; references:OrganizationID,ApplicationMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
@@ -106,11 +106,11 @@ var migration20201021000150 = gormigrate.Migration{
 			ManualApprovalRuleOutcomeID uint64
 			ManualApprovalRuleOutcome   ManualApprovalRuleOutcome `gorm:"foreignKey:OrganizationID,ManualApprovalRuleOutcomeID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
-			DeploymentRequestCreatedEventID uint64
-			DeploymentRequestCreatedEvent   DeploymentRequestCreatedEvent `gorm:"foreignKey:OrganizationID,DeploymentRequestCreatedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ReleaseCreatedEventID uint64
+			ReleaseCreatedEvent   ReleaseCreatedEvent `gorm:"foreignKey:OrganizationID,ReleaseCreatedEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
-			DeploymentRequestCancelledEventID uint64
-			DeploymentRequestCancelledEvent   DeploymentRequestCancelledEvent `gorm:"foreignKey:OrganizationID,DeploymentRequestCancelledEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ReleaseCancelledEventID uint64
+			ReleaseCancelledEvent   ReleaseCancelledEvent `gorm:"foreignKey:OrganizationID,ReleaseCancelledEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
 		return tx.AutoMigrate(&CreationAuditRecord{})

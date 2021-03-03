@@ -50,13 +50,13 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	rg.GET("organizations/:id", ctx.GetOrganization)
 	rg.PATCH("organizations/:id", ctx.PatchOrganization)
 
-	// DeploymentRequests
-	rg.GET("deployment-requests", ctx.GetAllDeploymentRequests)
-	rg.GET("applications/:application_id/deployment-requests", ctx.GetAllDeploymentRequests)
-	rg.POST("applications/:application_id/deployment-requests", ctx.CreateDeploymentRequest)
-	rg.GET("applications/:application_id/deployment-requests/:id", ctx.GetDeploymentRequest)
-	rg.PATCH("applications/:application_id/deployment-requests/:id", ctx.PatchDeploymentRequest)
-	rg.DELETE("applications/:application_id/deployment-requests/:id", ctx.DeleteDeploymentRequest)
+	// Releases
+	rg.GET("releases", ctx.GetAllReleases)
+	rg.GET("applications/:application_id/releases", ctx.GetAllReleases)
+	rg.POST("applications/:application_id/releases", ctx.CreateRelease)
+	rg.GET("applications/:application_id/releases/:id", ctx.GetRelease)
+	rg.PATCH("applications/:application_id/releases/:id", ctx.PatchRelease)
+	rg.DELETE("applications/:application_id/releases/:id", ctx.DeleteRelease)
 
 	// Approval rulesets
 	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.GetAllApprovalRulesetBindings)

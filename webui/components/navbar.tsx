@@ -24,7 +24,7 @@ import styles from './navbar.module.scss';
 
 export enum NavigationSection {
   Dashboard = 'dashboard',
-  DeploymentRequests = 'deployment-requests',
+  Releases = 'releases',
 }
 
 interface IProps {
@@ -103,10 +103,10 @@ export default function Navbar(props: IProps) {
             <ListItemText primary="Applications" />
           </ListItem>
         </Link>
-        <Link href="/deployment_requests">
-          <ListItem button selected={navigationSection == NavigationSection.DeploymentRequests}>
+        <Link href="/releases">
+          <ListItem button selected={navigationSection == NavigationSection.Releases}>
             <ListItemIcon><AssignmentIcon /></ListItemIcon>
-            <ListItemText primary="Deployment requests" />
+            <ListItemText primary="Releases" />
           </ListItem>
         </Link>
         <Link href="/approvals">

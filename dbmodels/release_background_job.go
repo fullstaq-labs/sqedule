@@ -23,11 +23,11 @@ var ReleaseBackgroundJobMaxLockID uint32 = uint32(math.Pow(2, 31)) - 1
 // ReleaseBackgroundJob ...
 type ReleaseBackgroundJob struct {
 	BaseModel
-	ApplicationID       string            `gorm:"type:citext; primaryKey; not null"`
-	DeploymentRequestID uint64            `gorm:"primaryKey; not null"`
-	DeploymentRequest   DeploymentRequest `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	LockID              uint32            `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
-	CreatedAt           time.Time         `gorm:"not null"`
+	ApplicationID string    `gorm:"type:citext; primaryKey; not null"`
+	ReleaseID     uint64    `gorm:"primaryKey; not null"`
+	Release       Release   `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	LockID        uint32    `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
+	CreatedAt     time.Time `gorm:"not null"`
 }
 
 // ReleaseBackgroundJobApprovalRulesetBinding ...
@@ -35,8 +35,8 @@ type ReleaseBackgroundJobApprovalRulesetBinding struct {
 	BaseModel
 
 	ApplicationID        string               `gorm:"type:citext; primaryKey; not null"`
-	DeploymentRequestID  uint64               `gorm:"primaryKey; not null"`
-	ReleaseBackgroundJob ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,DeploymentRequestID; references:OrganizationID,ApplicationID,DeploymentRequestID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ReleaseID            uint64               `gorm:"primaryKey; not null"`
+	ReleaseBackgroundJob ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ReleaseID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
 	ApprovalRulesetID string          `gorm:"type:citext; primaryKey; not null"`
 	ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -52,13 +52,13 @@ type ReleaseBackgroundJobApprovalRulesetBinding struct {
 
 // CreateReleaseBackgroundJob ...
 func CreateReleaseBackgroundJob(db *gorm.DB, organization Organization, applicationID string,
-	deploymentRequest DeploymentRequest) (ReleaseBackgroundJob, error) {
-	job, _, err := createReleaseBackgroundJobWithDebug(db, organization, applicationID, deploymentRequest, 1000)
+	release Release) (ReleaseBackgroundJob, error) {
+	job, _, err := createReleaseBackgroundJobWithDebug(db, organization, applicationID, release, 1000)
 	return job, err
 }
 
 func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization, applicationID string,
-	deploymentRequest DeploymentRequest, maxTries uint) (ReleaseBackgroundJob, uint, error) {
+	release Release, maxTries uint) (ReleaseBackgroundJob, uint, error) {
 	var job ReleaseBackgroundJob
 	var numTry uint = 0
 	var created bool = false
@@ -87,9 +87,9 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 					OrganizationID: organization.ID,
 					Organization:   organization,
 				},
-				ApplicationID:       applicationID,
-				DeploymentRequestID: deploymentRequest.ID,
-				DeploymentRequest:   deploymentRequest,
+				ApplicationID: applicationID,
+				ReleaseID:     release.ID,
+				Release:       release,
 			}
 			if numTry > 0 {
 				// We were unable to obtain a free lock ID through auto-incrementation.
@@ -108,7 +108,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 						OrganizationID: organization.ID,
 					},
 					ApplicationID:                     applicationID,
-					DeploymentRequestID:               deploymentRequest.ID,
+					ReleaseID:                         release.ID,
 					ApprovalRulesetID:                 binding.ApprovalRulesetID,
 					ApprovalRulesetMajorVersionID:     binding.ApprovalRuleset.LatestMajorVersion.ID,
 					ApprovalRulesetMinorVersionNumber: binding.ApprovalRuleset.LatestMinorVersion.VersionNumber,
@@ -142,21 +142,21 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 	return ReleaseBackgroundJob{}, numTry, fmt.Errorf("Unable to find a free lock ID after %d tries", maxTries)
 }
 
-// FindReleaseBackgroundJob looks up a ReleaseBackgroundJob by its application ID and deployment request ID.
+// FindReleaseBackgroundJob looks up a ReleaseBackgroundJob by its application ID and release ID.
 // When not found, returns a `gorm.ErrRecordNotFound` error.
-func FindReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID string, deploymentRequestID uint64) (ReleaseBackgroundJob, error) {
+func FindReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID string, releaseID uint64) (ReleaseBackgroundJob, error) {
 	var result ReleaseBackgroundJob
 
-	tx := db.Where("organization_id = ? AND application_id = ? AND deployment_request_id = ?", organizationID, applicationID, deploymentRequestID)
+	tx := db.Where("organization_id = ? AND application_id = ? AND release_id = ?", organizationID, applicationID, releaseID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
 // FindAllReleaseBackgroundJobApprovalRulesetBindings ...
-func FindAllReleaseBackgroundJobApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string, deploymentRequestID uint64) ([]ReleaseBackgroundJobApprovalRulesetBinding, error) {
+func FindAllReleaseBackgroundJobApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string, releaseID uint64) ([]ReleaseBackgroundJobApprovalRulesetBinding, error) {
 	var result []ReleaseBackgroundJobApprovalRulesetBinding
-	tx := db.Where("organization_id = ? AND application_id = ? AND deployment_request_id = ?",
-		organizationID, applicationID, deploymentRequestID)
+	tx := db.Where("organization_id = ? AND application_id = ? AND release_id = ?",
+		organizationID, applicationID, releaseID)
 	tx = tx.Find(&result)
 	return result, tx.Error
 }
