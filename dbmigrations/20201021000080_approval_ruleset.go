@@ -34,8 +34,8 @@ var migration20201021000080 = gormigrate.Migration{
 			OrganizationID    string       `gorm:"type:citext; primaryKey; not null; index:approval_ruleset_major_version_idx,unique"`
 			Organization      Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 			ID                uint64       `gorm:"primaryKey; autoIncrement; not null"`
-			ApprovalRulesetID string       `gorm:"type:citext; index:approval_ruleset_major_version_idx,sort:desc,where:version_number IS NOT NULL,unique"`
-			VersionNumber     *uint32      `gorm:"type:int; index:approval_ruleset_major_version_idx,unique; check:(version_number > 0)"`
+			ApprovalRulesetID string       `gorm:"type:citext; not null; index:approval_ruleset_major_version_idx,unique"`
+			VersionNumber     *uint32      `gorm:"type:int; index:approval_ruleset_major_version_idx,sort:desc,where:version_number IS NOT NULL,unique; check:(version_number > 0)"`
 			CreatedAt         time.Time    `gorm:"not null"`
 			UpdatedAt         time.Time    `gorm:"not null"`
 
