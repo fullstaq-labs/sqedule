@@ -68,7 +68,7 @@ func TestCreateReleaseBackgroundJob_copyBindings(t *testing.T) {
 		return
 	}
 	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		permissiveBinding, enforcingBinding, err := CreateMockApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.org, ctx.app)
+		permissiveBinding, enforcingBinding, err := CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.org, ctx.app)
 		if !assert.NoError(t, err) {
 			return nil
 		}

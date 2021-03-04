@@ -21,8 +21,8 @@ type ProcessScheduleRulesTestContext struct {
 	org               dbmodels.Organization
 	app               dbmodels.Application
 	release           dbmodels.Release
-	permissiveBinding dbmodels.ApprovalRulesetBinding
-	enforcingBinding  dbmodels.ApprovalRulesetBinding
+	permissiveBinding dbmodels.ApplicationApprovalRulesetBinding
+	enforcingBinding  dbmodels.ApplicationApprovalRulesetBinding
 	job               dbmodels.ReleaseBackgroundJob
 	engine            Engine
 	rulesets          []ruleset
@@ -58,7 +58,7 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 			return err
 		}
 
-		ctx.permissiveBinding, ctx.enforcingBinding, err = dbmodels.CreateMockApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.org, ctx.app)
+		ctx.permissiveBinding, ctx.enforcingBinding, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.org, ctx.app)
 		if err != nil {
 			return err
 		}

@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetAllApprovalRulesetBindings ...
-func (ctx Context) GetAllApprovalRulesetBindings(ginctx *gin.Context) {
+// GetAllApplicationApprovalRulesetBindings ...
+func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
@@ -29,24 +29,31 @@ func (ctx Context) GetAllApprovalRulesetBindings(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	bindings, err := dbmodels.FindAllApprovalRulesetBindings(
+	bindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(
 		tx.Preload("Application").Preload("ApprovalRuleset"),
 		orgID, applicationID)
 	if err != nil {
-		respondWithDbQueryError("approval ruleset bindings", err, ginctx)
+		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+		dbmodels.MakeApplicationApprovalRulesetBindingPointerArray(bindings))
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding latest versions", err, ginctx)
 		return
 	}
 
 	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
-		dbmodels.CollectApprovalRulesetBindingRulesets(bindings))
+		dbmodels.CollectApplicationApprovalRulesetBindingRulesets(bindings))
 	if err != nil {
 		respondWithDbQueryError("approval rulesets", err, ginctx)
 		return
 	}
 
-	outputList := make([]approvalRulesetBindingJSON, 0, len(bindings))
+	outputList := make([]applicationApprovalRulesetBindingJSON, 0, len(bindings))
 	for _, binding := range bindings {
-		outputList = append(outputList, createApprovalRulesetBindingJSONFromDbModel(binding, false))
+		outputList = append(outputList, createApplicationApprovalRulesetBindingJSONFromDbModel(binding, false))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }

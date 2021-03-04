@@ -66,13 +66,18 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 
 	// Load related ruleset bindings
 
-	bindings, err := FindAllApprovalRulesetBindings(db.Preload("ApprovalRuleset"),
+	bindings, err := FindAllApplicationApprovalRulesetBindings(db.Preload("ApprovalRuleset"),
 		organization.ID, applicationID)
 	if err != nil {
 		return ReleaseBackgroundJob{}, 0, err
 	}
+	err = LoadApplicationApprovalRulesetBindingsLatestVersions(db, organization.ID,
+		MakeApplicationApprovalRulesetBindingPointerArray(bindings))
+	if err != nil {
+		return ReleaseBackgroundJob{}, 0, err
+	}
 	err = LoadApprovalRulesetsLatestVersions(db, organization.ID,
-		CollectApprovalRulesetBindingRulesets(bindings))
+		CollectApplicationApprovalRulesetBindingRulesets(bindings))
 	if err != nil {
 		return ReleaseBackgroundJob{}, 0, err
 	}
@@ -112,7 +117,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 					ApprovalRulesetID:                 binding.ApprovalRulesetID,
 					ApprovalRulesetMajorVersionID:     binding.ApprovalRuleset.LatestMajorVersion.ID,
 					ApprovalRulesetMinorVersionNumber: binding.ApprovalRuleset.LatestMinorVersion.VersionNumber,
-					Mode:                              binding.Mode,
+					Mode:                              binding.LatestMinorVersion.Mode,
 				}
 				savetx = tx.Create(&jobBinding)
 				if savetx.Error != nil {

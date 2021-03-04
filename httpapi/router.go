@@ -59,5 +59,5 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	rg.DELETE("applications/:application_id/releases/:id", ctx.DeleteRelease)
 
 	// Approval rulesets
-	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.GetAllApprovalRulesetBindings)
+	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.GetAllApplicationApprovalRulesetBindings)
 }

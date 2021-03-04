@@ -2,13 +2,14 @@ package dbmodels
 
 import (
 	"reflect"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 // IReviewable ...
 type IReviewable interface {
-	GetID() interface{}
+	GetPrimaryKey() interface{}
 	SetLatestMajorVersion(majorVersion IReviewableMajorVersion)
 	SetLatestMinorVersion(minorVersion IReviewableMinorVersion)
 }
@@ -16,7 +17,7 @@ type IReviewable interface {
 // IReviewableMajorVersion ...
 type IReviewableMajorVersion interface {
 	GetID() interface{}
-	GetReviewableID() interface{}
+	GetReviewablePrimaryKey() interface{}
 	AssociateWithReviewable(reviewable IReviewable)
 }
 
@@ -24,6 +25,11 @@ type IReviewableMajorVersion interface {
 type IReviewableMinorVersion interface {
 	GetMajorVersionID() interface{}
 	AssociateWithMajorVersion(majorVersion IReviewableMajorVersion)
+}
+
+// IReviewableCompositeKey ...
+type IReviewableCompositeKey interface {
+	GormValue() interface{}
 }
 
 // LoadReviewablesLatestVersions loads the latest MajorVersion and MinorVersion records associated
@@ -34,8 +40,13 @@ type IReviewableMinorVersion interface {
 //
 // Parameters:
 //
-//  - `idColumnType` is the type of the IReviewable's `ID` field.
-//  - `idColumnNameInMajorVersionTable` is the foreign key column, in the MajorVersion's table, that refers to the IReviewable's `ID` field.
+//  - `primaryKeyType` is the type of the IReviewable's (possibly composite) primary key (excluding OrganizationID).
+//    When the primary key is singular, this is the type of the `ID` field.
+//    When the primary key is composite, then this should be a struct that contains the two keys. Furthermore, this struct must implement `IReviewableCompositeKey`.
+//  - `primaryKeyColumnNamesInMajorVersionTable` are the (possibly composite) foreign key columns, in the MajorVersion's table, that refer to the IReviewable's primary key (excluding OrganizationID).
+//  - `primaryKeyGormValueType` is the type of the IReviewable's (possibly composite) primary key when passed as a value to a GORM `Where()` clause.
+//    When the primary key is singular, this should be the same as `primaryKeyType`.
+//    When the primary key is composite, this should be the type that's returned by primaryKeyType's `IReviewableCompositeKey.GormValue()` method.
 //  - `majorVersionType` is the type of the MajorVersion struct. It must implement IReviewableMajorVersion.
 //  - `majorVersionIDColumnType` is the type of the MajorVersion's `ID` field.
 //  - `majorVersionIDColumnNameInMinorVersionTable` is the foreign key column, in the MinorVersion's table, that refers to the MajorVersion's `ID` field.
@@ -43,8 +54,9 @@ type IReviewableMinorVersion interface {
 //  - `organizationID` is the organization in which you want to query the records.
 //  - `reviewables` is the list of IReviewables for which you want to load their latest major and minor version records.
 func LoadReviewablesLatestVersions(db *gorm.DB,
-	idColumnType reflect.Type,
-	idColumnNameInMajorVersionTable string,
+	primaryKeyType reflect.Type,
+	primaryKeyColumnNamesInMajorVersionTable []string,
+	primaryKeyGormValueType reflect.Type,
 	majorVersionType reflect.Type,
 	majorVersionIDColumnType reflect.Type,
 	majorVersionIDColumnNameInMinorVersionTable string,
@@ -58,23 +70,28 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 		return nil
 	}
 
-	// Example reviewableIndex type: make(map[string][]*Application)
-	// Example reviewableIds type: make([]string, 0, len(applications))
-	reviewableIndex, reviewableIds := buildReviewablesIndexAndIDList(idColumnType, reviewables)
+	// reviewableIndex type: map[actualPrimaryKeyType][]*Application
+	// reviewableIds type  : []actualPrimaryKeyGormValueType
+	// reviewableIds length: len(applications)
+	reviewableIndex, reviewableIds := buildReviewablesIndexAndIDList(primaryKeyType, primaryKeyGormValueType,
+		len(primaryKeyColumnNamesInMajorVersionTable) > 1, reviewables)
 
 	/****** Load associated major versions ******/
 
-	// Example type: *[]ApplicationMajorVersion
+	// Type: *[]actualMajorVersionType
 	majorVersions := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(majorVersionType), 0, 0))
-	// Example type: map[uint64]*ApplicationMajorVersion
+	// Type: map[actualMajorVersionIDColumnType]*actualMajorVersionType
 	majorIndex := reflect.MakeMap(reflect.MapOf(majorVersionIDColumnType, reflect.PtrTo(majorVersionType)))
-	// Example type: []uint64
+	// Type: []actualMajorVersionIDColumnType
 	majorIds := reflect.MakeSlice(reflect.SliceOf(majorVersionIDColumnType), 0, 0)
+	primaryKeyColumnNamesInMajorVersionTableAsCommaString := strings.Join(primaryKeyColumnNamesInMajorVersionTable, ",")
 	tx := db.
-		Select("DISTINCT ON (organization_id, "+idColumnNameInMajorVersionTable+") *").
-		Where("organization_id = ? AND "+idColumnNameInMajorVersionTable+" IN ? AND version_number IS NOT NULL",
+		// DISTINCT ON only works on PostgreSQL. When we want to support other databases, have a look at this alternative:
+		// https://stackoverflow.com/a/3800572/20816
+		Select("DISTINCT ON (organization_id, "+primaryKeyColumnNamesInMajorVersionTableAsCommaString+") *").
+		Where("organization_id = ? AND ("+primaryKeyColumnNamesInMajorVersionTableAsCommaString+") IN (?) AND version_number IS NOT NULL",
 			organizationID, reviewableIds.Interface()).
-		Order("organization_id, " + idColumnNameInMajorVersionTable + ", version_number DESC").
+		Order("organization_id, " + primaryKeyColumnNamesInMajorVersionTableAsCommaString + ", version_number DESC").
 		Find(majorVersions.Interface())
 	if tx.Error != nil {
 		return tx.Error
@@ -83,7 +100,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	for i := 0; i < nversions; i++ {
 		majorVersion := reflectMakePtr(majorVersions.Elem().Index(i)).Interface().(IReviewableMajorVersion)
 		majorVersionID := reflect.ValueOf(majorVersion.GetID())
-		reviewableID := majorVersion.GetReviewableID()
+		reviewableID := majorVersion.GetReviewablePrimaryKey()
 		// Example type: []*Application
 		reviewables := reviewableIndex.MapIndex(reflect.ValueOf(reviewableID))
 
@@ -101,7 +118,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 
 	/****** Load associated Minor versions ******/
 
-	// Example type: *[]ApplicationMinorVersion
+	// Type: *[]actualMinorVersionType
 	minorVersions := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(minorVersionType), 0, 0))
 	tx = db.
 		Select("DISTINCT ON (organization_id, "+majorVersionIDColumnNameInMinorVersionTable+") *").
@@ -114,13 +131,17 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	}
 	nversions = minorVersions.Elem().Len()
 	for i := 0; i < nversions; i++ {
+		// Type: actualMinorVersionType
 		minorVersion := reflectMakePtr(minorVersions.Elem().Index(i)).Interface().(IReviewableMinorVersion)
 
-		majorVersion := majorIndex.MapIndex(reflect.ValueOf(minorVersion.GetMajorVersionID())).Interface().(IReviewableMajorVersion)
+		majorVersionID := reflect.ValueOf(minorVersion.GetMajorVersionID())
+		// Type: actualMajorVersionType
+		majorVersion := majorIndex.MapIndex(majorVersionID).Interface().(IReviewableMajorVersion)
 		minorVersion.AssociateWithMajorVersion(majorVersion)
 
+		reviewablePrimaryKey := reflect.ValueOf(majorVersion.GetReviewablePrimaryKey())
 		// Example type: []*Application
-		reviewables := reviewableIndex.MapIndex(reflect.ValueOf(majorVersion.GetReviewableID()))
+		reviewables := reviewableIndex.MapIndex(reviewablePrimaryKey)
 		for i := 0; i < reviewables.Len(); i++ {
 			reviewable := reviewables.Index(i).Interface().(IReviewable)
 			reviewable.SetLatestMinorVersion(minorVersion)
@@ -131,24 +152,29 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 }
 
 // buildReviewablesIndexAndIdList returns two things:
-// 1. An index, that maps each IReviewable ID, to a list of matching IReviewables.
-// 2. A list of all unique IReviewable IDs.
+// 1. An index, that maps each IReviewable primary key, to a list of matching IReviewables.
+// 2. A list of all unique IReviewable primary keys.
 //
 // For example, given a list of `dbmodels.Application`s, it returns something like
 // `(map[string][]*dbmodels.Application, []string)`
-func buildReviewablesIndexAndIDList(idColumnType reflect.Type, reviewables []IReviewable) (reflect.Value, reflect.Value) {
-	index := reflect.MakeMap(reflect.MapOf(idColumnType, reflect.TypeOf([]IReviewable{})))
-	ids := reflect.MakeSlice(reflect.SliceOf(idColumnType), 0, len(reviewables))
+func buildReviewablesIndexAndIDList(primaryKeyType reflect.Type, primaryKeyGormValueType reflect.Type, primaryKeyIsComposite bool, reviewables []IReviewable) (reflect.Value, reflect.Value) {
+	index := reflect.MakeMap(reflect.MapOf(primaryKeyType, reflect.TypeOf([]IReviewable{})))
+	ids := reflect.MakeSlice(reflect.SliceOf(primaryKeyGormValueType), 0, len(reviewables))
 
 	for _, reviewable := range reviewables {
-		id := reflect.ValueOf(reviewable.GetID())
+		id := reflect.ValueOf(reviewable.GetPrimaryKey())
 
 		// Type: []IReviewable
 		indexElem := index.MapIndex(id)
 		if !indexElem.IsValid() {
 			indexElem = reflect.ValueOf(make([]IReviewable, 0))
 			index.SetMapIndex(id, indexElem)
-			ids = reflect.Append(ids, id)
+			if primaryKeyIsComposite {
+				compositeKey := id.Interface().(IReviewableCompositeKey)
+				ids = reflect.Append(ids, reflect.ValueOf(compositeKey.GormValue()))
+			} else {
+				ids = reflect.Append(ids, id)
+			}
 		}
 
 		indexElem = reflect.Append(indexElem, reflect.ValueOf(reviewable))

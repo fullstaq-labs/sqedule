@@ -57,50 +57,6 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// GetID ...
-func (app Application) GetID() interface{} {
-	return app.ID
-}
-
-// SetLatestMajorVersion ...
-func (app *Application) SetLatestMajorVersion(majorVersion IReviewableMajorVersion) {
-	app.LatestMajorVersion = majorVersion.(*ApplicationMajorVersion)
-}
-
-// SetLatestMinorVersion ...
-func (app *Application) SetLatestMinorVersion(minorVersion IReviewableMinorVersion) {
-	app.LatestMinorVersion = minorVersion.(*ApplicationMinorVersion)
-}
-
-// GetID ...
-func (major ApplicationMajorVersion) GetID() interface{} {
-	return major.ID
-}
-
-// GetReviewableID ...
-func (major ApplicationMajorVersion) GetReviewableID() interface{} {
-	return major.ApplicationID
-}
-
-// AssociateWithReviewable ...
-func (major *ApplicationMajorVersion) AssociateWithReviewable(reviewable IReviewable) {
-	application := reviewable.(*Application)
-	major.ApplicationID = application.ID
-	major.Application = *application
-}
-
-// GetMajorVersionID ...
-func (minor ApplicationMinorVersion) GetMajorVersionID() interface{} {
-	return minor.ApplicationMajorVersionID
-}
-
-// AssociateWithMajorVersion ...
-func (minor *ApplicationMinorVersion) AssociateWithMajorVersion(majorVersion IReviewableMajorVersion) {
-	concreteMajorVersion := majorVersion.(*ApplicationMajorVersion)
-	minor.ApplicationMajorVersionID = concreteMajorVersion.ID
-	minor.ApplicationMajorVersion = *concreteMajorVersion
-}
-
 // LoadApplicationsLatestVersions ...
 func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applications []*Application) error {
 	reviewables := make([]IReviewable, 0, len(applications))
@@ -110,10 +66,11 @@ func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applicat
 
 	return LoadReviewablesLatestVersions(
 		db,
-		reflect.TypeOf(""),
-		"application_id",
+		reflect.TypeOf(Application{}.ID),
+		[]string{"application_id"},
+		reflect.TypeOf(Application{}.ID),
 		reflect.TypeOf(ApplicationMajorVersion{}),
-		reflect.TypeOf(uint64(0)),
+		reflect.TypeOf(ApplicationMajorVersion{}.ID),
 		"application_major_version_id",
 		reflect.TypeOf(ApplicationMinorVersion{}),
 		organizationID,
