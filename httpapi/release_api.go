@@ -97,6 +97,26 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 
+		appRuleBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(ctx.Db, orgID, applicationID)
+		if err != nil {
+			return err
+		}
+		err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+			dbmodels.MakeApplicationApprovalRulesetBindingPointerArray(appRuleBindings))
+		if err != nil {
+			return err
+		}
+		err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
+			dbmodels.CollectApplicationApprovalRulesetBindingRulesets(appRuleBindings))
+		if err != nil {
+			return err
+		}
+
+		_, err = dbmodels.CreateReleaseApprovalRulesetBindings(ctx.Db, release.ID, appRuleBindings)
+		if err != nil {
+			return err
+		}
+
 		err = tx.Create(dbmodels.ReleaseCreatedEvent{
 			ReleaseEvent: dbmodels.ReleaseEvent{
 				BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},

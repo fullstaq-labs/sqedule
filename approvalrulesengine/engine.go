@@ -158,8 +158,7 @@ func (engine Engine) loadRules() ([]ruleset, uint, error) {
 	// maps an ApprovalRulesetMajorVersion ID to its ruleset struct
 	majorVersionIndex := make(map[uint64]*ruleset, len(bindings))
 	versionKeys := make([]dbmodels.ApprovalRuleVersionKey, 0, len(bindings))
-	for i := range bindings {
-		binding := bindings[i]
+	for i, binding := range bindings {
 		result[i].mode = binding.Mode
 		majorVersionIndex[binding.ApprovalRulesetMajorVersionID] = &result[i]
 		versionKeys = append(versionKeys, dbmodels.ApprovalRuleVersionKey{
@@ -193,8 +192,8 @@ func (engine Engine) loadRules() ([]ruleset, uint, error) {
 	return result, totalRules, nil
 }
 
-func (engine Engine) loadRuleBindingsAndTheirRulesets() ([]dbmodels.ReleaseBackgroundJobApprovalRulesetBinding, error) {
-	return dbmodels.FindAllReleaseBackgroundJobApprovalRulesetBindings(
+func (engine Engine) loadRuleBindingsAndTheirRulesets() ([]dbmodels.ReleaseApprovalRulesetBinding, error) {
+	return dbmodels.FindAllReleaseApprovalRulesetBindings(
 		engine.Db.Preload("ApprovalRulesetMinorVersion"),
 		engine.Organization.ID,
 		engine.ReleaseBackgroundJob.ApplicationID,

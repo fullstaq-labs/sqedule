@@ -28,7 +28,6 @@ type ProcessScheduleRulesTestContext struct {
 	rulesets          []ruleset
 	permissiveRuleset *ruleset
 	enforcingRuleset  *ruleset
-	baseApprovalRule  dbmodels.ApprovalRule
 }
 
 func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
@@ -94,13 +93,6 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 	}
 	ctx.permissiveRuleset = &ctx.rulesets[0]
 	ctx.enforcingRuleset = &ctx.rulesets[1]
-	ctx.baseApprovalRule = dbmodels.ApprovalRule{
-		BaseModel: dbmodels.BaseModel{
-			OrganizationID: ctx.org.ID,
-			Organization:   ctx.org,
-		},
-		Enabled: true,
-	}
 	return ctx, nil
 }
 
@@ -110,11 +102,14 @@ func TestProcessScheduleRulesSuccess(t *testing.T) {
 		return
 	}
 
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, dbmodels.ScheduleApprovalRule{
-		ApprovalRule: ctx.baseApprovalRule,
-		BeginTime:    sql.NullString{String: "0:00:00", Valid: true},
-		EndTime:      sql.NullString{String: "23:59:59", Valid: true},
-	})
+	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		nil)
+	if !assert.NoError(t, err) {
+		return
+	}
+	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
 
 	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -157,11 +152,17 @@ func TestProcessScheduleRulesError(t *testing.T) {
 		return
 	}
 
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, dbmodels.ScheduleApprovalRule{
-		ApprovalRule: ctx.baseApprovalRule,
-		BeginTime:    sql.NullString{String: "0:00:00", Valid: true},
-		EndTime:      sql.NullString{String: "0:00:01", Valid: true},
-	})
+	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		func(r *dbmodels.ScheduleApprovalRule) {
+			r.BeginTime = sql.NullString{String: "0:00:00", Valid: true}
+			r.EndTime = sql.NullString{String: "0:00:01", Valid: true}
+		})
+	if !assert.NoError(t, err) {
+		return
+	}
+	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
 
 	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -204,11 +205,17 @@ func TestProcessScheduleRulesPermissiveMode(t *testing.T) {
 		return
 	}
 
-	ctx.permissiveRuleset.scheduleRules = append(ctx.permissiveRuleset.scheduleRules, dbmodels.ScheduleApprovalRule{
-		ApprovalRule: ctx.baseApprovalRule,
-		BeginTime:    sql.NullString{String: "0:00:00", Valid: true},
-		EndTime:      sql.NullString{String: "0:00:01", Valid: true},
-	})
+	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+		ctx.permissiveBinding.ApprovalRuleset.LatestMajorVersion.ID,
+		*ctx.permissiveBinding.ApprovalRuleset.LatestMinorVersion,
+		func(r *dbmodels.ScheduleApprovalRule) {
+			r.BeginTime = sql.NullString{String: "0:00:00", Valid: true}
+			r.EndTime = sql.NullString{String: "0:00:01", Valid: true}
+		})
+	if !assert.NoError(t, err) {
+		return
+	}
+	ctx.permissiveRuleset.scheduleRules = append(ctx.permissiveRuleset.scheduleRules, rule)
 
 	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -266,11 +273,14 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 		return
 	}
 
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, dbmodels.ScheduleApprovalRule{
-		ApprovalRule: ctx.baseApprovalRule,
-		BeginTime:    sql.NullString{String: "0:00:00", Valid: true},
-		EndTime:      sql.NullString{String: "23:59:59", Valid: true},
-	})
+	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		nil)
+	if !assert.NoError(t, err) {
+		return
+	}
+	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
 
 	_, _, err = ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {

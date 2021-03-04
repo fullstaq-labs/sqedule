@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/dbutils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -30,26 +29,6 @@ type ReleaseBackgroundJob struct {
 	CreatedAt     time.Time `gorm:"not null"`
 }
 
-// ReleaseBackgroundJobApprovalRulesetBinding ...
-type ReleaseBackgroundJobApprovalRulesetBinding struct {
-	BaseModel
-
-	ApplicationID        string               `gorm:"type:citext; primaryKey; not null"`
-	ReleaseID            uint64               `gorm:"primaryKey; not null"`
-	ReleaseBackgroundJob ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ReleaseID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-
-	ApprovalRulesetID string          `gorm:"type:citext; primaryKey; not null"`
-	ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-
-	ApprovalRulesetMajorVersionID uint64                      `gorm:"not null"`
-	ApprovalRulesetMajorVersion   ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-
-	ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; not null"`
-	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-
-	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
-}
-
 // CreateReleaseBackgroundJob ...
 func CreateReleaseBackgroundJob(db *gorm.DB, organization Organization, applicationID string,
 	release Release) (ReleaseBackgroundJob, error) {
@@ -63,24 +42,6 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 	var numTry uint = 0
 	var created bool = false
 	var err error
-
-	// Load related ruleset bindings
-
-	bindings, err := FindAllApplicationApprovalRulesetBindings(db.Preload("ApprovalRuleset"),
-		organization.ID, applicationID)
-	if err != nil {
-		return ReleaseBackgroundJob{}, 0, err
-	}
-	err = LoadApplicationApprovalRulesetBindingsLatestVersions(db, organization.ID,
-		MakeApplicationApprovalRulesetBindingPointerArray(bindings))
-	if err != nil {
-		return ReleaseBackgroundJob{}, 0, err
-	}
-	err = LoadApprovalRulesetsLatestVersions(db, organization.ID,
-		CollectApplicationApprovalRulesetBindingRulesets(bindings))
-	if err != nil {
-		return ReleaseBackgroundJob{}, 0, err
-	}
 
 	// Keep trying to create a job (and its related job ruleset bindings)
 	// until we've successfully picked a unique lock ID or encountered an error.
@@ -104,25 +65,6 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 			savetx := tx.Omit(clause.Associations).Create(&job)
 			if savetx.Error != nil {
 				return savetx.Error
-			}
-
-			// Create release job ruleset bindings
-			for _, binding := range bindings {
-				jobBinding := ReleaseBackgroundJobApprovalRulesetBinding{
-					BaseModel: BaseModel{
-						OrganizationID: organization.ID,
-					},
-					ApplicationID:                     applicationID,
-					ReleaseID:                         release.ID,
-					ApprovalRulesetID:                 binding.ApprovalRulesetID,
-					ApprovalRulesetMajorVersionID:     binding.ApprovalRuleset.LatestMajorVersion.ID,
-					ApprovalRulesetMinorVersionNumber: binding.ApprovalRuleset.LatestMinorVersion.VersionNumber,
-					Mode:                              binding.LatestMinorVersion.Mode,
-				}
-				savetx = tx.Create(&jobBinding)
-				if savetx.Error != nil {
-					return savetx.Error
-				}
 			}
 
 			return nil
@@ -155,13 +97,4 @@ func FindReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID 
 	tx := db.Where("organization_id = ? AND application_id = ? AND release_id = ?", organizationID, applicationID, releaseID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
-}
-
-// FindAllReleaseBackgroundJobApprovalRulesetBindings ...
-func FindAllReleaseBackgroundJobApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string, releaseID uint64) ([]ReleaseBackgroundJobApprovalRulesetBinding, error) {
-	var result []ReleaseBackgroundJobApprovalRulesetBinding
-	tx := db.Where("organization_id = ? AND application_id = ? AND release_id = ?",
-		organizationID, applicationID, releaseID)
-	tx = tx.Find(&result)
-	return result, tx.Error
 }

@@ -3,7 +3,6 @@ package dbmodels
 import (
 	"testing"
 
-	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/dbutils"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -56,46 +55,6 @@ func TestCreateReleaseBackgroundJob(t *testing.T) {
 			return nil
 		}
 		assert.Equal(t, uint(1), numTries)
-
-		return nil
-	})
-	assert.NoError(t, txerr)
-}
-
-func TestCreateReleaseBackgroundJob_copyBindings(t *testing.T) {
-	ctx, err := setupCreateReleaseBackgroundJobTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		permissiveBinding, enforcingBinding, err := CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.org, ctx.app)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 1)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		var count int64
-		err = tx.Model(ReleaseBackgroundJobApprovalRulesetBinding{}).Count(&count).Error
-		if !assert.Equal(t, int64(2), count) {
-			return nil
-		}
-
-		jobBindings, err := FindAllReleaseBackgroundJobApprovalRulesetBindings(tx.Order("mode"),
-			ctx.org.ID, ctx.app.ID, ctx.release.ID)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-		if !assert.Equal(t, 2, len(jobBindings)) {
-			return nil
-		}
-		assert.Equal(t, permissiveBinding.ApprovalRulesetID, jobBindings[0].ApprovalRulesetID)
-		assert.Equal(t, enforcingBinding.ApprovalRulesetID, jobBindings[1].ApprovalRulesetID)
-		assert.Equal(t, approvalrulesetbindingmode.Permissive, jobBindings[0].Mode)
-		assert.Equal(t, approvalrulesetbindingmode.Enforcing, jobBindings[1].Mode)
 
 		return nil
 	})

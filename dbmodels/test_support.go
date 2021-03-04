@@ -1,6 +1,7 @@
 package dbmodels
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
@@ -281,6 +282,34 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 	tx := db.Omit(clause.Associations).Create(&result)
 	if tx.Error != nil {
 		return ReleaseBackgroundJob{}, tx.Error
+	}
+	return result, nil
+}
+
+// CreateMockScheduleApprovalRuleWholeDay ...
+func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organization, rulesetMajorVersionID uint64,
+	rulesetMinorVersion ApprovalRulesetMinorVersion, customizeFunc func(*ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
+
+	result := ScheduleApprovalRule{
+		ApprovalRule: ApprovalRule{
+			BaseModel: BaseModel{
+				OrganizationID: organization.ID,
+				Organization:   organization,
+			},
+			ApprovalRulesetMajorVersionID:     rulesetMajorVersionID,
+			ApprovalRulesetMinorVersionNumber: rulesetMinorVersion.VersionNumber,
+			ApprovalRulesetMinorVersion:       rulesetMinorVersion,
+			Enabled:                           true,
+		},
+		BeginTime: sql.NullString{String: "0:00:00", Valid: true},
+		EndTime:   sql.NullString{String: "23:59:59", Valid: true},
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	tx := db.Omit(clause.Associations).Create(&result)
+	if tx.Error != nil {
+		return ScheduleApprovalRule{}, tx.Error
 	}
 	return result, nil
 }

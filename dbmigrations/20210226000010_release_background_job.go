@@ -55,71 +55,9 @@ var migration20210226000010 = gormigrate.Migration{
 			CreatedAt     time.Time `gorm:"not null"`
 		}
 
-		type ReleaseBackgroundJobApprovalRulesetBinding struct {
-			BaseModel
-
-			ApplicationID                     string               `gorm:"type:citext; primaryKey; not null"`
-			ReleaseID                         uint64               `gorm:"primaryKey; not null"`
-			ReleaseBackgroundJob              ReleaseBackgroundJob `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ReleaseID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-			ApprovalRulesetID                 string               `gorm:"type:citext; primaryKey; not null"`
-			ApprovalRulesetMajorVersionID     uint64               `gorm:"not null"`
-			ApprovalRulesetMinorVersionNumber uint32               `gorm:"type:int; not null"`
-			Mode                              string               `gorm:"type:approval_ruleset_binding_mode; not null"`
-		}
-
-		err := tx.AutoMigrate(&ReleaseBackgroundJob{}, &ReleaseBackgroundJobApprovalRulesetBinding{})
-		if err != nil {
-			return err
-		}
-
-		err = tx.Exec("ALTER TABLE ONLY release_background_job_approval_ruleset_bindings " +
-			"ADD CONSTRAINT fk_approval_ruleset_bindings_organization " +
-			"FOREIGN KEY (organization_id) " +
-			"REFERENCES organizations(id) " +
-			"ON DELETE CASCADE ON UPDATE CASCADE").Error
-		if err != nil {
-			return err
-		}
-
-		err = tx.Exec("ALTER TABLE ONLY release_background_job_approval_ruleset_bindings " +
-			"ADD CONSTRAINT fk_approval_ruleset_bindings_release_background_job " +
-			"FOREIGN KEY (organization_id,application_id,release_id) " +
-			"REFERENCES release_background_jobs(organization_id,application_id,release_id) " +
-			"ON DELETE CASCADE ON UPDATE CASCADE").Error
-		if err != nil {
-			return err
-		}
-
-		err = tx.Exec("ALTER TABLE ONLY release_background_job_approval_ruleset_bindings " +
-			"ADD CONSTRAINT fk_approval_ruleset_bindings_approval_ruleset " +
-			"FOREIGN KEY (organization_id,approval_ruleset_id) " +
-			"REFERENCES approval_rulesets(organization_id,id) " +
-			"ON DELETE CASCADE ON UPDATE CASCADE").Error
-		if err != nil {
-			return err
-		}
-
-		err = tx.Exec("ALTER TABLE ONLY release_background_job_approval_ruleset_bindings " +
-			"ADD CONSTRAINT fk_approval_ruleset_bindings_approval_ruleset_major_version " +
-			"FOREIGN KEY (organization_id,approval_ruleset_major_version_id) " +
-			"REFERENCES approval_ruleset_major_versions(organization_id,id) " +
-			"ON DELETE CASCADE ON UPDATE CASCADE").Error
-		if err != nil {
-			return err
-		}
-
-		err = tx.Exec("ALTER TABLE ONLY release_background_job_approval_ruleset_bindings " +
-			"ADD CONSTRAINT fk_approval_ruleset_bindings_approval_ruleset_minor_version " +
-			"FOREIGN KEY (organization_id,approval_ruleset_major_version_id,approval_ruleset_minor_version_number) " +
-			"REFERENCES approval_ruleset_minor_versions(organization_id,approval_ruleset_major_version_id,version_number) " +
-			"ON DELETE CASCADE ON UPDATE CASCADE").Error
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return tx.AutoMigrate(&ReleaseBackgroundJob{})
 	},
 	Rollback: func(tx *gorm.DB) error {
-		return tx.Migrator().DropTable("release_background_jobs", "release_background_job_approval_ruleset_bindings")
+		return tx.Migrator().DropTable("release_background_jobs")
 	},
 }
