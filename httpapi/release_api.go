@@ -224,35 +224,3 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
 	ginctx.JSON(http.StatusOK, output)
 }
-
-// DeleteRelease ...
-func (ctx Context) DeleteRelease(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
-	applicationID := ginctx.Param("application_id")
-
-	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
-	if err != nil {
-		ginctx.JSON(http.StatusBadRequest,
-			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
-		return
-	}
-
-	release, err := dbmodels.FindRelease(ctx.Db, orgID, applicationID, releaseID)
-	if err != nil {
-		respondWithDbQueryError("release", err, ginctx)
-		return
-	}
-
-	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionDeleteRelease) {
-		return
-	}
-
-	if err = ctx.Db.Delete(&release).Error; err != nil {
-		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
-	ginctx.JSON(http.StatusOK, output)
-}
