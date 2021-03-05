@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/approvalrulesetbindingmode"
+	"github.com/fullstaq-labs/sqedule/dbmodels/organizationmemberrole"
 	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
 	"gorm.io/gorm"
@@ -21,8 +22,33 @@ func CreateMockOrganization(db *gorm.DB) (Organization, error) {
 	return result, tx.Error
 }
 
-// CreateMockApplicationWithOneVersion ...
-func CreateMockApplicationWithOneVersion(db *gorm.DB, organization Organization) (Application, error) {
+// CreateMockServiceAccountWithAdminRole ...
+func CreateMockServiceAccountWithAdminRole(db *gorm.DB, organization Organization,
+	customizeFunc func(sa *ServiceAccount)) (ServiceAccount, error) {
+
+	result := ServiceAccount{
+		OrganizationMember: OrganizationMember{
+			BaseModel: BaseModel{
+				OrganizationID: organization.ID,
+				Organization:   organization,
+			},
+			Role: organizationmemberrole.Admin,
+		},
+		Name:       "sa1",
+		SecretHash: "unauthenticatable",
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	savetx := db.Omit(clause.Associations).Create(&result)
+	if savetx.Error != nil {
+		return ServiceAccount{}, savetx.Error
+	}
+	return result, nil
+}
+
+// CreateMockApplicationWith1Version ...
+func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization) (Application, error) {
 	result := Application{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,

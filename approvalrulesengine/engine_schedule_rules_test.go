@@ -45,7 +45,7 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 			return err
 		}
 
-		ctx.app, err = dbmodels.CreateMockApplicationWithOneVersion(tx, ctx.org)
+		ctx.app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.org)
 		if err != nil {
 			return err
 		}

@@ -9,7 +9,7 @@ import (
 
 // GetCurrentOrganization ...
 func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
 	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionReadOrganization) {
@@ -28,7 +28,7 @@ func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 
 // PatchCurrentOrganization ...
 func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
 	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionUpdateOrganization) {
@@ -59,7 +59,7 @@ func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 
 // GetOrganization ...
 func (ctx Context) GetOrganization(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
 
 	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionReadOrganization) {
@@ -78,7 +78,7 @@ func (ctx Context) GetOrganization(ginctx *gin.Context) {
 
 // PatchOrganization ...
 func (ctx Context) PatchOrganization(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
 
 	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionUpdateOrganization) {

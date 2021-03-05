@@ -1,21 +1,20 @@
 package httpapi
 
 import (
-	"database/sql"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels"
 	"github.com/fullstaq-labs/sqedule/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/dbutils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // GetAllReleases ...
 func (ctx Context) GetAllReleases(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
@@ -64,7 +63,7 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 
 // CreateRelease ...
 func (ctx Context) CreateRelease(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
@@ -89,8 +88,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		release = dbmodels.Release{
 			BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
 			ApplicationID: applicationID,
-			State:         releasestate.Approved, // TODO: set to InProgress when developing rules engine
-			FinalizedAt:   sql.NullTime{Time: time.Now(), Valid: true},
+			State:         releasestate.InProgress,
 		}
 		patchReleaseDbModelFromJSON(&release, input)
 		if err := tx.Create(&release).Error; err != nil {
@@ -117,25 +115,21 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 
-		err = tx.Create(dbmodels.ReleaseCreatedEvent{
+		createdEvent := dbmodels.ReleaseCreatedEvent{
 			ReleaseEvent: dbmodels.ReleaseEvent{
 				BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
 				ReleaseID:     release.ID,
 				ApplicationID: applicationID,
 			},
-		}).Error
+		}
+		err = tx.Create(&createdEvent).Error
 		if err != nil {
 			return err
 		}
 
-		err = tx.Create(dbmodels.ReleaseRuleProcessedEvent{
-			ReleaseEvent: dbmodels.ReleaseEvent{
-				BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
-				ReleaseID:     release.ID,
-				ApplicationID: applicationID,
-			},
-			ResultState: releasestate.Approved,
-		}).Error
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ReleaseCreatedEventID = &createdEvent.ID
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
 		if err != nil {
 			return err
 		}
@@ -144,6 +138,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	})
 	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
@@ -152,7 +147,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 
 // GetRelease ...
 func (ctx Context) GetRelease(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
@@ -188,7 +183,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 
 // PatchRelease ...
 func (ctx Context) PatchRelease(ginctx *gin.Context) {
-	orgMember := getAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 

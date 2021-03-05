@@ -6,9 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserTypeShortName is returned by `User.GetTypeShortName()`.
-const UserTypeShortName = "user"
-
 // User ...
 type User struct {
 	OrganizationMember
@@ -28,10 +25,10 @@ func FindUserByEmail(db *gorm.DB, organizationID string, email string) (User, er
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// TypeShortName returns a name of the concrete type. This name is short,
+// Type returns a name of the concrete type. This name is short,
 // suitable for machine use, not user display purposes.
-func (user User) TypeShortName() string {
-	return UserTypeShortName
+func (user User) Type() OrganizationMemberType {
+	return UserType
 }
 
 // ID returns the primary key's value, i.e. that of `User.Email`

@@ -30,7 +30,7 @@ func setupLoadReviewablesLatestVersionsTest() (LoadReviewablesLatestVersionsTest
 		if err != nil {
 			return err
 		}
-		ctx.app, err = CreateMockApplicationWithOneVersion(tx, ctx.org)
+		ctx.app, err = CreateMockApplicationWith1Version(tx, ctx.org)
 		if err != nil {
 			return err
 		}

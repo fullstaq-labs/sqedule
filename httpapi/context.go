@@ -1,8 +1,11 @@
 package httpapi
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 // Context ...
 type Context struct {
-	Db *gorm.DB
+	Db                    *gorm.DB
+	UseTestAuthentication bool
 }

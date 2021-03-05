@@ -11,7 +11,7 @@ import (
 
 // SetupRouter ...
 func (ctx Context) SetupRouter(engine *gin.Engine) error {
-	authMiddleware, err := ctx.createAuthMiddleware()
+	jwtAuthMiddleware, err := ctx.createJwtAuthMiddleware()
 	if err != nil {
 		return fmt.Errorf("error setting up authentication middleware: %w", err)
 	}
@@ -30,10 +30,12 @@ func (ctx Context) SetupRouter(engine *gin.Engine) error {
 
 	v1 := engine.Group("/v1")
 	authenticatedGroup := v1.Group("/")
-	authenticatedGroup.Use(authMiddleware.MiddlewareFunc())
+	if !ctx.UseTestAuthentication {
+		authenticatedGroup.Use(jwtAuthMiddleware.MiddlewareFunc())
+	}
 	authenticatedGroup.Use(ctx.lookupAndRequireAuthenticatedOrganizationMember)
 
-	ctx.setupUnauthenticatedRoutes(v1, authMiddleware)
+	ctx.setupUnauthenticatedRoutes(v1, jwtAuthMiddleware)
 	ctx.setupAuthenticatedRoutes(authenticatedGroup)
 	return nil
 }

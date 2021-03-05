@@ -6,9 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ServiceAccountTypeShortName is returned by `ServiceAccount.GetTypeShortName()`.
-const ServiceAccountTypeShortName = "sa"
-
 // ServiceAccount ...
 type ServiceAccount struct {
 	OrganizationMember
@@ -26,10 +23,10 @@ func FindServiceAccountByName(db *gorm.DB, organizationID string, name string) (
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// TypeShortName returns a name of the concrete type. This name is short,
+// Type returns a name of the concrete type. This name is short,
 // suitable for machine use, not user display purposes.
-func (sa ServiceAccount) TypeShortName() string {
-	return ServiceAccountTypeShortName
+func (sa ServiceAccount) Type() OrganizationMemberType {
+	return ServiceAccountType
 }
 
 // ID returns the primary key's value, i.e. that of `User.Email`
