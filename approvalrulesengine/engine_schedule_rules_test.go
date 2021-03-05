@@ -329,6 +329,71 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 	assert.Equal(t, uint(1), nprocessed)
 }
 
+func TestProcessScheduleRulesRerunFail(t *testing.T) {
+	ctx, err := setupProcessScheduleRulesTest()
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		func(r *dbmodels.ScheduleApprovalRule) {
+			r.BeginTime = sql.NullString{String: "1:00", Valid: true}
+			r.EndTime = sql.NullString{String: "1:01", Valid: true}
+		})
+	if !assert.NoError(t, err) {
+		return
+	}
+	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
+
+	_, _, err = ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
+	if !assert.NoError(t, err) {
+		return
+	}
+	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.release.ID)
+	if !assert.NoError(t, err) {
+		return
+	}
+	if !assert.Equal(t, 1, len(outcomes)) {
+		return
+	}
+
+	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, indexScheduleRuleOutcomes(outcomes), 0, 1)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	var numProcessedEvents, numOutcomes int64
+	var event dbmodels.ReleaseRuleProcessedEvent
+	var outcome dbmodels.ScheduleApprovalRuleOutcome
+
+	err = ctx.db.Model(&dbmodels.ReleaseRuleProcessedEvent{}).Count(&numProcessedEvents).Error
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = ctx.db.Model(&dbmodels.ScheduleApprovalRuleOutcome{}).Count(&numOutcomes).Error
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = ctx.db.Take(&event).Error
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = ctx.db.Take(&outcome).Error
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.Equal(t, int64(1), numProcessedEvents)
+	assert.Equal(t, int64(1), numOutcomes)
+	assert.Equal(t, releasestate.Rejected, event.ResultState)
+	assert.False(t, event.IgnoredError)
+	assert.False(t, outcome.Success)
+	assert.Equal(t, releasestate.Rejected, resultState)
+	assert.Equal(t, uint(1), nprocessed)
+}
+
 // Test parseScheduleTime()
 
 func TestParseScheduleTimeTooFewComponents(t *testing.T) {
