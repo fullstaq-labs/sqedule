@@ -60,7 +60,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 			if numTry > 0 {
 				// We were unable to obtain a free lock ID through auto-incrementation.
 				// So pick a random one instead.
-				job.LockID = rand.Uint32() % ReleaseBackgroundJobMaxLockID
+				job.LockID = uint32(uint64(rand.Uint32()) % (uint64(ReleaseBackgroundJobMaxLockID) + 1))
 			}
 			savetx := tx.Omit(clause.Associations).Create(&job)
 			if savetx.Error != nil {
