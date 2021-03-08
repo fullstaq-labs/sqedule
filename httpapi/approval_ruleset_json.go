@@ -7,39 +7,30 @@ import (
 )
 
 type approvalRulesetJSON struct {
-	ID                       string    `json:"id"`
-	LatestMajorVersionNumber uint32    `json:"latest_major_version_number"`
-	LatestMinorVersionNumber uint32    `json:"latest_minor_version_number"`
-	DisplayName              string    `json:"display_name"`
-	Description              string    `json:"description"`
-	GloballyApplicable       bool      `json:"globally_applicable"`
-	ReviewState              string    `json:"review_state"`
-	ReviewComments           *string   `json:"review_comments"`
-	Enabled                  bool      `json:"enabled"`
-	CreatedAt                time.Time `json:"created_at"`
-	UpdatedAt                time.Time `json:"updated_at"`
+	ID                 string    `json:"id"`
+	MajorVersionNumber *uint32   `json:"major_version_number"`
+	MinorVersionNumber uint32    `json:"minor_version_number"`
+	DisplayName        string    `json:"display_name"`
+	Description        string    `json:"description"`
+	GloballyApplicable bool      `json:"globally_applicable"`
+	ReviewState        string    `json:"review_state"`
+	ReviewComments     *string   `json:"review_comments"`
+	Enabled            bool      `json:"enabled"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
-func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset) approvalRulesetJSON {
-	if ruleset.LatestMajorVersion == nil {
-		panic("Given approval ruleset must have an associated latest major version")
-	}
-	if ruleset.LatestMajorVersion.VersionNumber == nil {
-		panic("Given approval ruleset's associated latest major version must be finalized")
-	}
-	if ruleset.LatestMinorVersion == nil {
-		panic("Given approval ruleset must have an associated latest minor version")
-	}
+func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) approvalRulesetJSON {
 	result := approvalRulesetJSON{
-		ID:                       ruleset.ID,
-		LatestMajorVersionNumber: *ruleset.LatestMajorVersion.VersionNumber,
-		LatestMinorVersionNumber: ruleset.LatestMinorVersion.VersionNumber,
-		DisplayName:              ruleset.LatestMinorVersion.DisplayName,
-		Description:              ruleset.LatestMinorVersion.Description,
-		GloballyApplicable:       ruleset.LatestMinorVersion.GloballyApplicable,
-		ReviewState:              string(ruleset.LatestMinorVersion.ReviewState),
-		CreatedAt:                ruleset.CreatedAt,
-		UpdatedAt:                ruleset.LatestMinorVersion.CreatedAt,
+		ID:                 ruleset.ID,
+		MajorVersionNumber: majorVersion.VersionNumber,
+		MinorVersionNumber: minorVersion.VersionNumber,
+		DisplayName:        minorVersion.DisplayName,
+		Description:        minorVersion.Description,
+		GloballyApplicable: minorVersion.GloballyApplicable,
+		ReviewState:        string(minorVersion.ReviewState),
+		CreatedAt:          ruleset.CreatedAt,
+		UpdatedAt:          minorVersion.CreatedAt,
 	}
 	return result
 }

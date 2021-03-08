@@ -56,7 +56,8 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 
 	outputList := make([]releaseJSON, 0, len(releases))
 	for _, dr := range releases {
-		outputList = append(outputList, createReleaseJSONFromDbModel(dr, len(applicationID) == 0))
+		outputList = append(outputList,
+			createReleaseJSONFromDbModel(dr, len(applicationID) == 0, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -141,7 +142,8 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
+	var bindings []dbmodels.ReleaseApprovalRulesetBinding
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -177,7 +179,17 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
+	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(
+		ctx.Db.Preload("ApprovalRuleset").
+			Preload("ApprovalRulesetMajorVersion").
+			Preload("ApprovalRulesetMinorVersion"),
+		orgID, applicationID, release.ID)
+	if err != nil {
+		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)
+		return
+	}
+
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -210,12 +222,22 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
+	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(
+		ctx.Db.Preload("ApprovalRuleset").
+			Preload("ApprovalRulesetMajorVersion").
+			Preload("ApprovalRulesetMinorVersion"),
+		orgID, applicationID, release.ID)
+	if err != nil {
+		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)
+		return
+	}
+
 	patchReleaseDbModelFromJSON(&release, input)
 	if err = ctx.Db.Save(&release).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0)
+	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

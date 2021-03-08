@@ -293,6 +293,34 @@ func CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(db *gorm
 	return ruleset1Binding, ruleset2Binding, nil
 }
 
+// CreateMockReleaseRulesetBindingWithEnforcingMode1Version ...
+func CreateMockReleaseRulesetBindingWithEnforcingMode1Version(db *gorm.DB, organization Organization, release Release,
+	ruleset ApprovalRuleset, rulesetMajorVersion ApprovalRulesetMajorVersion, rulesetMinorVersion ApprovalRulesetMinorVersion,
+	customizeFunc func(*ReleaseApprovalRulesetBinding)) (ReleaseApprovalRulesetBinding, error) {
+
+	result := ReleaseApprovalRulesetBinding{
+		BaseModel: BaseModel{
+			OrganizationID: organization.ID,
+			Organization:   organization,
+		},
+		ApplicationID:                     release.ApplicationID,
+		ReleaseID:                         release.ID,
+		Release:                           release,
+		ApprovalRulesetID:                 ruleset.ID,
+		ApprovalRuleset:                   ruleset,
+		ApprovalRulesetMajorVersionID:     rulesetMajorVersion.ID,
+		ApprovalRulesetMajorVersion:       rulesetMajorVersion,
+		ApprovalRulesetMinorVersionNumber: rulesetMinorVersion.VersionNumber,
+		ApprovalRulesetMinorVersion:       rulesetMinorVersion,
+		Mode:                              approvalrulesetbindingmode.Enforcing,
+	}
+	savetx := db.Omit(clause.Associations).Create(&result)
+	if savetx.Error != nil {
+		return ReleaseApprovalRulesetBinding{}, savetx.Error
+	}
+	return result, nil
+}
+
 // CreateMockReleaseBackgroundJob ...
 func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app Application, release Release) (ReleaseBackgroundJob, error) {
 	result := ReleaseBackgroundJob{

@@ -22,11 +22,23 @@ func createApplicationApprovalRulesetBindingJSONFromDbModel(binding dbmodels.App
 	if binding.LatestMinorVersion == nil {
 		panic("Given binding must have an associated latest minor version")
 	}
+
+	if binding.ApprovalRuleset.LatestMajorVersion == nil {
+		panic("Given approval ruleset must have an associated latest major version")
+	}
+	if binding.ApprovalRuleset.LatestMajorVersion.VersionNumber == nil {
+		panic("Given approval ruleset's associated latest major version must be finalized")
+	}
+	if binding.ApprovalRuleset.LatestMinorVersion == nil {
+		panic("Given approval ruleset must have an associated latest minor version")
+	}
+
 	result := applicationApprovalRulesetBindingJSON{
 		LatestMajorVersionNumber: *binding.LatestMajorVersion.VersionNumber,
 		LatestMinorVersionNumber: binding.LatestMinorVersion.VersionNumber,
-		ApprovalRuleset:          createApprovalRulesetJSONFromDbModel(binding.ApprovalRuleset),
-		Mode:                     string(binding.LatestMinorVersion.Mode),
+		ApprovalRuleset: createApprovalRulesetJSONFromDbModel(binding.ApprovalRuleset,
+			*binding.ApprovalRuleset.LatestMajorVersion, *binding.ApprovalRuleset.LatestMinorVersion),
+		Mode: string(binding.LatestMinorVersion.Mode),
 	}
 	if includeApplication {
 		appJSON := createApplicationJSONFromDbModel(binding.Application)
