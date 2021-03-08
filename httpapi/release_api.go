@@ -17,6 +17,7 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
+	includeAppJSON := len(applicationID) == 0
 
 	if len(applicationID) > 0 {
 		application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
@@ -39,25 +40,30 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if includeAppJSON {
+		tx = tx.Preload("Application")
+	}
 	releases, err := dbmodels.FindAllReleases(
-		tx.Preload("Application").Order("created_at DESC"),
+		tx.Order("created_at DESC"),
 		orgID, applicationID)
 	if err != nil {
 		respondWithDbQueryError("releases", err, ginctx)
 		return
 	}
 
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
-		dbmodels.CollectReleaseApplications(releases))
-	if err != nil {
-		respondWithDbQueryError("applications", err, ginctx)
-		return
+	if includeAppJSON {
+		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+			dbmodels.CollectReleaseApplications(releases))
+		if err != nil {
+			respondWithDbQueryError("application versions", err, ginctx)
+			return
+		}
 	}
 
 	outputList := make([]releaseJSON, 0, len(releases))
-	for _, dr := range releases {
+	for _, release := range releases {
 		outputList = append(outputList,
-			createReleaseJSONFromDbModel(dr, len(applicationID) == 0, nil))
+			createReleaseJSONFromDbModel(release, len(applicationID) == 0, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -67,6 +73,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
+	includeAppJSON := len(applicationID) == 0
 
 	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
 	if err != nil {
@@ -82,6 +89,14 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
+	}
+
+	if includeAppJSON {
+		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&application})
+		if err != nil {
+			respondWithDbQueryError("application versions", err, ginctx)
+			return
+		}
 	}
 
 	var release dbmodels.Release
@@ -143,7 +158,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	}
 
 	var bindings []dbmodels.ReleaseApprovalRulesetBinding
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0, &bindings)
+	output := createReleaseJSONFromDbModel(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -152,6 +167,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
+	includeAppJSON := len(applicationID) == 0
 
 	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
 	if err != nil {
@@ -168,11 +184,13 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
-		[]*dbmodels.Application{&release.Application})
-	if err != nil {
-		respondWithDbQueryError("application", err, ginctx)
-		return
+	if includeAppJSON {
+		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+			[]*dbmodels.Application{&release.Application})
+		if err != nil {
+			respondWithDbQueryError("application versions", err, ginctx)
+			return
+		}
 	}
 
 	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionReadRelease) {
@@ -189,7 +207,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0, &bindings)
+	output := createReleaseJSONFromDbModel(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -198,6 +216,7 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
+	includeAppJSON := len(applicationID) == 0
 
 	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
 	if err != nil {
@@ -222,6 +241,14 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
+	if includeAppJSON {
+		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&release.Application})
+		if err != nil {
+			respondWithDbQueryError("application versions", err, ginctx)
+			return
+		}
+	}
+
 	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(
 		ctx.Db.Preload("ApprovalRuleset").
 			Preload("ApprovalRulesetMajorVersion").
@@ -238,6 +265,6 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, len(applicationID) == 0, &bindings)
+	output := createReleaseJSONFromDbModel(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

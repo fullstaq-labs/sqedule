@@ -53,7 +53,8 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 
 	outputList := make([]applicationApprovalRulesetBindingJSON, 0, len(bindings))
 	for _, binding := range bindings {
-		outputList = append(outputList, createApplicationApprovalRulesetBindingJSONFromDbModel(binding, false))
+		outputList = append(outputList, createApplicationApprovalRulesetBindingJSONFromDbModel(binding,
+			*binding.LatestMajorVersion, *binding.LatestMinorVersion, false))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }

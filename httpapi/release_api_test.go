@@ -21,7 +21,7 @@ func TestGetRelease(t *testing.T) {
 	var app dbmodels.Application
 	var release dbmodels.Release
 	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org)
+		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func TestGetRelease(t *testing.T) {
 		return
 	}
 
-	req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications/%s/releases/%d", app.ID, release.ID), gin.H{})
+	req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications/%s/releases/%d", app.ID, release.ID), nil)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -62,6 +62,7 @@ func TestGetRelease(t *testing.T) {
 		return
 	}
 
+	assert.Nil(t, body["application"])
 	assert.Equal(t, "in_progress", body["state"])
 	assert.Nil(t, body["finalized_at"])
 	if !assert.NotEmpty(t, body["approval_ruleset_bindings"]) {
@@ -90,7 +91,7 @@ func TestCreateRelease(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	app, err := dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org)
+	app, err := dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org, nil, nil)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -108,6 +109,8 @@ func TestCreateRelease(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+
+	assert.Nil(t, body["application"])
 	assert.Equal(t, "in_progress", body["state"])
 	assert.Nil(t, body["finalized_at"])
 	assert.Empty(t, body["approval_ruleset_bindings"])

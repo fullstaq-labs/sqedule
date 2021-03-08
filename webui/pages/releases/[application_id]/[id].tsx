@@ -25,15 +25,26 @@ export default function ReleasePage(props: IProps) {
   const router = useRouter();
   const applicationId = router.query.application_id as string;
   const id = router.query.id as string;
-  const { data, error, isValidating, mutate } = useSWR(`/v1/applications/${encodeURIComponent(applicationId)}/releases/${encodeURIComponent(id)}`);
+  const { data: appData, error: appError, isValidating: appDataIsValidating, mutate: appDataMutate } =
+    useSWR(`/v1/applications/${encodeURIComponent(applicationId)}`);
+  const { data: releaseData, error: releaseError, isValidating: releaseIsValidating, mutate: releaseMutate } =
+    useSWR(`/v1/applications/${encodeURIComponent(applicationId)}/releases/${encodeURIComponent(id)}`);
+  const hasAllData = appData && releaseData;
+  const firstError = appError || releaseError;
+  const isValidating = appDataIsValidating || releaseIsValidating;
 
   declarePageTitle(appContext, `Release: ${applicationId}/${id}`);
   declareValidatingFetchedData(appContext, isValidating);
 
-  if (data) {
+  function mutateAll() {
+    appDataMutate();
+    releaseMutate();
+  }
+
+  if (hasAllData) {
     return (
       <>
-        <DataRefreshErrorSnackbar error={error} refreshing={isValidating} onReload={mutate} />
+        <DataRefreshErrorSnackbar error={firstError} refreshing={isValidating} onReload={mutateAll} />
         <Box mx={2} my={2} style={{ flexGrow: 1 }}>
           <TableContainer component={Paper} className={styles.definition_list_table}>
             <Table>
@@ -41,38 +52,38 @@ export default function ReleasePage(props: IProps) {
                 <TableRow>
                   <TableCell component="th" scope="row">ID</TableCell>
                   <TableCell>
-                    <Link href={`/releases/${encodeURIComponent(data.application.id)}/${encodeURIComponent(data.id)}`}>
-                      <a>{data.id}</a>
+                    <Link href={`/releases/${encodeURIComponent(appData.id)}/${encodeURIComponent(releaseData.id)}`}>
+                      <a>{releaseData.id}</a>
                     </Link>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">Application</TableCell>
                   <TableCell>
-                    <Link href={`/applications/${encodeURIComponent(data.application.id)}`}>
-                      <a>{data.application.display_name}</a>
+                    <Link href={`/applications/${encodeURIComponent(appData.id)}`}>
+                      <a>{appData.display_name}</a>
                     </Link>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">State</TableCell>
-                  <TableCell>{humanizeUnderscoreString(data.state as string)}</TableCell>
+                  <TableCell>{humanizeUnderscoreString(releaseData.state as string)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">Created at</TableCell>
-                  <TableCell>{formatDateTimeString(data.created_at as string)}</TableCell>
+                  <TableCell>{formatDateTimeString(releaseData.created_at as string)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">Finalized at</TableCell>
-                  <TableCell>{data.finalized_at ? formatDateTimeString(data.finalized_at as string) : 'N/A'}</TableCell>
+                  <TableCell>{releaseData.finalized_at ? formatDateTimeString(releaseData.finalized_at as string) : 'N/A'}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">Source identity</TableCell>
-                  <TableCell>{data.source_identity || 'N/A'}</TableCell>
+                  <TableCell>{releaseData.source_identity || 'N/A'}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">Comments</TableCell>
-                  <TableCell>{data.comments || 'N/A'}</TableCell>
+                  <TableCell>{releaseData.comments || 'N/A'}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -84,8 +95,8 @@ export default function ReleasePage(props: IProps) {
     );
   }
 
-  if (error) {
-    return <DataLoadErrorScreen error={error} onReload={mutate} />;
+  if (firstError) {
+    return <DataLoadErrorScreen error={firstError} onReload={mutateAll} />;
   }
 
   return (

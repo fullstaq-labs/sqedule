@@ -47,6 +47,14 @@ type ApplicationMinorVersion struct {
 	ApplicationMajorVersion ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
+// FindAllApplications ...
+func FindAllApplications(db *gorm.DB, organizationID string) ([]Application, error) {
+	var result []Application
+	tx := db.Where("organization_id = ?", organizationID)
+	tx = tx.Find(&result)
+	return result, tx.Error
+}
+
 // FindApplication looks up an Application by its ID.
 // When not found, returns a `gorm.ErrRecordNotFound` error.
 func FindApplication(db *gorm.DB, organizationID string, id string) (Application, error) {
@@ -55,6 +63,15 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	tx := db.Where("organization_id = ? AND id = ?", organizationID, id)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
+}
+
+// MakeApplicationPointerArray ...
+func MakeApplicationPointerArray(apps []Application) []*Application {
+	result := make([]*Application, 0, len(apps))
+	for i := range apps {
+		result = append(result, &apps[i])
+	}
+	return result
 }
 
 // LoadApplicationsLatestVersions ...

@@ -29,7 +29,7 @@ func setupCreateReleaseBackgroundJobTest() (CreateReleaseBackgroundJobTestContex
 		if err != nil {
 			return err
 		}
-		ctx.app, err = CreateMockApplicationWith1Version(tx, ctx.org)
+		ctx.app, err = CreateMockApplicationWith1Version(tx, ctx.org, nil, nil)
 		if err != nil {
 			return err
 		}

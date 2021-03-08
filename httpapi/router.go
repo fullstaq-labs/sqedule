@@ -52,6 +52,10 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 	rg.GET("organizations/:id", ctx.GetOrganization)
 	rg.PATCH("organizations/:id", ctx.PatchOrganization)
 
+	// Applications
+	rg.GET("applications", ctx.GetAllApplications)
+	rg.GET("applications/:application_id", ctx.GetApplication)
+
 	// Releases
 	rg.GET("releases", ctx.GetAllReleases)
 	rg.GET("applications/:application_id/releases", ctx.GetAllReleases)

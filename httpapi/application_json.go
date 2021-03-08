@@ -7,33 +7,36 @@ import (
 )
 
 type applicationJSON struct {
-	ID                       string    `json:"id"`
-	LatestMajorVersionNumber uint32    `json:"latest_major_version_number"`
-	LatestMinorVersionNumber uint32    `json:"latest_minor_version_number"`
-	DisplayName              *string   `json:"display_name"`
-	Enabled                  *bool     `json:"enabled"`
-	CreatedAt                time.Time `json:"created_at"`
-	UpdatedAt                time.Time `json:"updated_at"`
+	ID                      string                                   `json:"id"`
+	MajorVersionNumber      *uint32                                  `json:"major_version_number"`
+	MinorVersionNumber      uint32                                   `json:"minor_version_number"`
+	DisplayName             *string                                  `json:"display_name"`
+	Enabled                 *bool                                    `json:"enabled"`
+	CreatedAt               time.Time                                `json:"created_at"`
+	UpdatedAt               time.Time                                `json:"updated_at"`
+	ApprovalRulesetBindings *[]applicationApprovalRulesetBindingJSON `json:"approval_ruleset_bindings,omitempty"`
 }
 
-func createApplicationJSONFromDbModel(application dbmodels.Application) applicationJSON {
-	if application.LatestMajorVersion == nil {
-		panic("Given application must have an associated latest major version")
-	}
-	if application.LatestMajorVersion.VersionNumber == nil {
-		panic("Given application's associated latest major version must be finalized")
-	}
-	if application.LatestMinorVersion == nil {
-		panic("Given application must have an associated latest minor version")
-	}
+func createApplicationJSONFromDbModel(application dbmodels.Application, majorVersion dbmodels.ApplicationMajorVersion, minorVersion dbmodels.ApplicationMinorVersion,
+	rulesetBindings *[]dbmodels.ApplicationApprovalRulesetBinding) applicationJSON {
+
 	result := applicationJSON{
-		ID:                       application.ID,
-		LatestMajorVersionNumber: *application.LatestMajorVersion.VersionNumber,
-		LatestMinorVersionNumber: application.LatestMinorVersion.VersionNumber,
-		DisplayName:              &application.LatestMinorVersion.DisplayName,
-		Enabled:                  &application.LatestMinorVersion.Enabled,
-		CreatedAt:                application.CreatedAt,
-		UpdatedAt:                application.LatestMinorVersion.CreatedAt,
+		ID:                 application.ID,
+		MajorVersionNumber: majorVersion.VersionNumber,
+		MinorVersionNumber: minorVersion.VersionNumber,
+		DisplayName:        &minorVersion.DisplayName,
+		Enabled:            &minorVersion.Enabled,
+		CreatedAt:          application.CreatedAt,
+		UpdatedAt:          minorVersion.CreatedAt,
+	}
+	if rulesetBindings != nil {
+		rulesetBindingsJSON := make([]applicationApprovalRulesetBindingJSON, 0, len(*rulesetBindings))
+		for _, rulesetBinding := range *rulesetBindings {
+			rulesetBindingsJSON = append(rulesetBindingsJSON,
+				createApplicationApprovalRulesetBindingJSONFromDbModel(rulesetBinding,
+					*rulesetBinding.LatestMajorVersion, *rulesetBinding.LatestMinorVersion, false))
+		}
+		result.ApprovalRulesetBindings = &rulesetBindingsJSON
 	}
 	return result
 }

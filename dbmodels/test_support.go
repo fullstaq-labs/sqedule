@@ -48,13 +48,16 @@ func CreateMockServiceAccountWithAdminRole(db *gorm.DB, organization Organizatio
 }
 
 // CreateMockApplicationWith1Version ...
-func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization) (Application, error) {
+func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, customizeFunc func(*Application), minorVersionCustomizeFunc func(*ApplicationMinorVersion)) (Application, error) {
 	result := Application{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
 		ID: "app1",
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
 	}
 	savetx := db.Omit(clause.Associations).Create(&result)
 	if savetx.Error != nil {
@@ -84,6 +87,9 @@ func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization) (
 		VersionNumber:             1,
 		ReviewState:               reviewstate.Approved,
 		DisplayName:               "App 1",
+	}
+	if minorVersionCustomizeFunc != nil {
+		minorVersionCustomizeFunc(&minorVersion)
 	}
 	savetx = db.Omit(clause.Associations).Create(&minorVersion)
 	if savetx.Error != nil {

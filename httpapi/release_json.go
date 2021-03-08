@@ -8,15 +8,15 @@ import (
 )
 
 type releaseJSON struct {
-	Application     *applicationJSON                     `json:"application,omitempty"`
-	ID              uint64                               `json:"id"`
-	State           string                               `json:"state"`
-	SourceIdentity  *string                              `json:"source_identity"`
-	Comments        *string                              `json:"comments"`
-	CreatedAt       time.Time                            `json:"created_at"`
-	UpdatedAt       time.Time                            `json:"updated_at"`
-	FinalizedAt     *time.Time                           `json:"finalized_at"`
-	RulesetBindings *[]releaseApprovalRulesetBindingJSON `json:"approval_ruleset_bindings,omitempty"`
+	Application             *applicationJSON                     `json:"application,omitempty"`
+	ID                      uint64                               `json:"id"`
+	State                   string                               `json:"state"`
+	SourceIdentity          *string                              `json:"source_identity"`
+	Comments                *string                              `json:"comments"`
+	CreatedAt               time.Time                            `json:"created_at"`
+	UpdatedAt               time.Time                            `json:"updated_at"`
+	FinalizedAt             *time.Time                           `json:"finalized_at"`
+	ApprovalRulesetBindings *[]releaseApprovalRulesetBindingJSON `json:"approval_ruleset_bindings,omitempty"`
 }
 
 func createReleaseJSONFromDbModel(release dbmodels.Release, includeApplication bool,
@@ -29,7 +29,18 @@ func createReleaseJSONFromDbModel(release dbmodels.Release, includeApplication b
 		UpdatedAt: release.UpdatedAt,
 	}
 	if includeApplication {
-		applicationJSON := createApplicationJSONFromDbModel(release.Application)
+		if release.Application.LatestMajorVersion == nil {
+			panic("Associated application must have an associated latest major version")
+		}
+		if release.Application.LatestMajorVersion.VersionNumber == nil {
+			panic("Associated application's associated latest major version must be finalized")
+		}
+		if release.Application.LatestMinorVersion == nil {
+			panic("Associated application must have an associated latest minor version")
+		}
+		applicationJSON := createApplicationJSONFromDbModel(release.Application,
+			*release.Application.LatestMajorVersion, *release.Application.LatestMinorVersion,
+			nil)
 		result.Application = &applicationJSON
 	}
 	if release.SourceIdentity.Valid {
@@ -47,7 +58,7 @@ func createReleaseJSONFromDbModel(release dbmodels.Release, includeApplication b
 			rulesetBindingsJSON = append(rulesetBindingsJSON,
 				createReleaseApprovalRulesetBindingJSONFromDbModel(rulesetBinding))
 		}
-		result.RulesetBindings = &rulesetBindingsJSON
+		result.ApprovalRulesetBindings = &rulesetBindingsJSON
 	}
 	return result
 }
