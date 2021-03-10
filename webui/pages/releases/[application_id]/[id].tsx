@@ -276,6 +276,13 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     valueGetter: ({ row }) => `${row.approval_ruleset.major_version_number}.${row.approval_ruleset.minor_version_number}`,
   },
   {
+    field: 'enabled',
+    headerName: 'Enabled',
+    width: 120,
+    valueGetter: ({ row }) => row.approval_ruleset.enabled,
+    valueFormatter: ({ value }) => (value as boolean) ? '✅' : '❌',
+  },
+  {
     field: 'mode',
     headerName: 'Mode',
     width: 120,
