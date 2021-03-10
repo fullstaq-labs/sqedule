@@ -36,7 +36,7 @@ export default function ReleasePage(props: IProps) {
   const theme = useTheme();
   const viewIsLarge = useMediaQuery(theme.breakpoints.up('md'));
   const [tabIndex, setTabIndex] = useState(0);
-  const rulesetBindingDataGridState = useDataGrid();
+  const approvalRulesetsDataGridState = useDataGrid();
 
   const router = useRouter();
   const applicationId = router.query.application_id as string;
@@ -85,7 +85,7 @@ export default function ReleasePage(props: IProps) {
         indicatorColor="primary"
         textColor="primary"
       >
-        <Tab label="Info" id="tab-info" aria-controls="tab-panel-info" />
+        <Tab label="General" id="tab-general" aria-controls="tab-panel-general" />
         <Tab label="Approval rulesets" id="tab-approval-rulesets" arial-controls="tab-panel-approval-rulesets" />
         <Tab label="Events" id="tab-events" arial-controls="tab-panel-events" />
       </Tabs>
@@ -109,8 +109,8 @@ export default function ReleasePage(props: IProps) {
             />
         </TabPanel>
         <TabPanel value={tabIndex} index={1} id="approval-rulesets" style={{ flexGrow: 1 }}>
-          <ApprovalRulesetTabContents
-            dataGridState={rulesetBindingDataGridState}
+          <ApprovalRulesetsTabContents
+            dataGridState={approvalRulesetsDataGridState}
             data={releaseData}
             error={releaseError}
             mutate={releaseDataMutate}
@@ -307,14 +307,14 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
   },
 ];
 
-interface IApprovalRulesetTabContentsProps {
+interface IApprovalRulesetsTabContentsProps {
   dataGridState: DataGridRequestedState;
   data: any;
   error: any;
   mutate: () => void;
 }
 
-function ApprovalRulesetTabContents(props: IApprovalRulesetTabContentsProps) {
+function ApprovalRulesetsTabContents(props: IApprovalRulesetsTabContentsProps) {
   const { dataGridState, data } = props;
 
   function addID(rulesetBinding: any) {
