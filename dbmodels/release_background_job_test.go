@@ -50,7 +50,7 @@ func TestCreateReleaseBackgroundJob(t *testing.T) {
 		return
 	}
 	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		_, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 1)
+		_, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org.ID, ctx.app.ID, ctx.release, 1)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -73,7 +73,7 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 		}
 
 		// Create a job and delete it, in order to predict what the next lock ID will be.
-		job, err := CreateReleaseBackgroundJob(tx, ctx.org, ctx.app.ID, ctx.release)
+		job, err := CreateReleaseBackgroundJob(tx, ctx.org.ID, ctx.app.ID, ctx.release)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -98,7 +98,7 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 		}
 
 		// Create another job, whose autoincremented lock ID should conflict.
-		job, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 100)
+		job, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org.ID, ctx.app.ID, ctx.release, 100)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -123,7 +123,7 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 		}
 
 		// Create a job and delete it, in order to predict what the next lock ID will be.
-		job, err := CreateReleaseBackgroundJob(tx, ctx.org, ctx.app.ID, ctx.release)
+		job, err := CreateReleaseBackgroundJob(tx, ctx.org.ID, ctx.app.ID, ctx.release)
 		if !assert.NoError(t, err) {
 			return nil
 		}
@@ -148,7 +148,7 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 		}
 
 		// Create another job, whose autoincremented lock ID should conflict.
-		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org, ctx.app.ID, ctx.release, 1)
+		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org.ID, ctx.app.ID, ctx.release, 1)
 		assert.Error(t, err, "Unable to find a free lock ID after 1 tries")
 
 		return nil

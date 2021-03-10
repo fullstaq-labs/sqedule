@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -148,6 +149,11 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
 		if err != nil {
 			return err
+		}
+
+		_, err = dbmodels.CreateReleaseBackgroundJob(tx, orgID, applicationID, release)
+		if err != nil {
+			return fmt.Errorf("Error creating background job for processing this Release: %w", err)
 		}
 
 		return nil

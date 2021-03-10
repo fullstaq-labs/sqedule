@@ -126,11 +126,13 @@ func TestCreateRelease(t *testing.T) {
 	assert.Equal(t, 0, len(bindings))
 
 	var creationEvent dbmodels.ReleaseCreatedEvent
-	err = dbutils.CreateFindOperationError(ctx.db.Take(&creationEvent))
+	tx := ctx.db.Take(&creationEvent)
+	err = dbutils.CreateFindOperationError(tx)
 	assert.NoError(t, err)
 
 	var creationRecord dbmodels.CreationAuditRecord
-	err = dbutils.CreateFindOperationError(ctx.db.Take(&creationRecord))
+	tx = ctx.db.Take(&creationRecord)
+	err = dbutils.CreateFindOperationError(tx)
 	if assert.NoError(t, err) {
 		assert.False(t, creationRecord.OrganizationMemberIP.Valid)
 		assert.Equal(t, ctx.serviceAccount.Name, creationRecord.ServiceAccountName.String)
@@ -138,4 +140,7 @@ func TestCreateRelease(t *testing.T) {
 			assert.Equal(t, creationEvent.ID, *creationRecord.ReleaseCreatedEventID)
 		}
 	}
+
+	_, err = dbmodels.FindReleaseBackgroundJob(ctx.db, ctx.org.ID, app.ID, releases[0].ID)
+	assert.NoError(t, err)
 }

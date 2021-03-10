@@ -30,13 +30,13 @@ type ReleaseBackgroundJob struct {
 }
 
 // CreateReleaseBackgroundJob ...
-func CreateReleaseBackgroundJob(db *gorm.DB, organization Organization, applicationID string,
+func CreateReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID string,
 	release Release) (ReleaseBackgroundJob, error) {
-	job, _, err := createReleaseBackgroundJobWithDebug(db, organization, applicationID, release, 1000)
+	job, _, err := createReleaseBackgroundJobWithDebug(db, organizationID, applicationID, release, 1000)
 	return job, err
 }
 
-func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization, applicationID string,
+func createReleaseBackgroundJobWithDebug(db *gorm.DB, organizationID string, applicationID string,
 	release Release, maxTries uint) (ReleaseBackgroundJob, uint, error) {
 	var job ReleaseBackgroundJob
 	var numTry uint = 0
@@ -50,8 +50,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organization Organization,
 		err = db.Transaction(func(tx *gorm.DB) error {
 			job = ReleaseBackgroundJob{
 				BaseModel: BaseModel{
-					OrganizationID: organization.ID,
-					Organization:   organization,
+					OrganizationID: organizationID,
 				},
 				ApplicationID: applicationID,
 				ReleaseID:     release.ID,

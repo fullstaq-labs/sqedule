@@ -52,7 +52,7 @@ var processReleaseCmd = &cobra.Command{
 			organization.ID, *processReleaseFlags.applicationID, release.ID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				job, err = dbmodels.CreateReleaseBackgroundJob(db, organization,
+				job, err = dbmodels.CreateReleaseBackgroundJob(db, organization.ID,
 					*processReleaseFlags.applicationID, release)
 				if err != nil {
 					return fmt.Errorf("Error creating ReleaseBackgroundJob: %w", err)
