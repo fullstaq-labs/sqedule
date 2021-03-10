@@ -80,3 +80,18 @@ export function paginateArray<T>(ary: Array<T>, page: number, perPage: number): 
   const startIndex = (page - 1) * perPage;
   return ary.slice(startIndex, startIndex + perPage + 1);
 }
+
+export function formatReviewStateString(state: string) {
+  switch (state) {
+    case 'draft':
+      return '🖋\xa0 Draft';
+    case 'reviewing':
+      return '🕐\xa0 Reviewing';
+    case 'approved':
+      return '✅\xa0 Approved';
+    case 'rejected':
+      return '❌\xa0 Rejected';
+    default:
+      return humanizeUnderscoreString(state);
+  }
+}

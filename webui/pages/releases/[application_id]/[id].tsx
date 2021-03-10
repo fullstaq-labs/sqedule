@@ -4,7 +4,7 @@ import SwipeableViews from 'react-swipeable-views';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { formatStateString } from '../../releases';
-import { formatDateTimeString, humanizeUnderscoreString, paginateArray } from '../../../common/utils';
+import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatReviewStateString } from '../../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../../components/app_context';
 import { NavigationSection } from '../../../components/navbar';
 import DataRefreshErrorSnackbar from '../../../components/data_refresh_error_snackbar';
@@ -284,16 +284,23 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     valueFormatter: ({ value }) => (value as boolean) ? '✅' : '❌',
   },
   {
+    field: 'review_state',
+    headerName: 'Review state',
+    width: 150,
+    valueGetter: ({ row }) => row.approval_ruleset.review_state,
+    valueFormatter: ({ value }) => formatReviewStateString(value as string),
+  },
+  {
     field: 'mode',
     headerName: 'Mode',
     width: 120,
     valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
   },
   {
-    field: 'date',
+    field: 'updated_at',
     type: 'dateTime',
     width: 180,
-    headerName: 'Date',
+    headerName: 'Updated at',
     valueGetter: ({ row }) => row.approval_ruleset.created_at,
     valueFormatter: ({ value }) => formatDateTimeString(value as string),
   },
