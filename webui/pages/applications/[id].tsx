@@ -263,9 +263,9 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     ),
   },
   {
-    field: 'version',
-    headerName: 'Version',
-    width: 120,
+    field: 'latest_version',
+    headerName: 'Latest version',
+    width: 130,
     valueGetter: ({ row }) => `${row.approval_ruleset.major_version_number}.${row.approval_ruleset.minor_version_number}`,
   },
   {
