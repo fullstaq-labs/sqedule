@@ -48,80 +48,6 @@ INSERT INTO application_minor_versions (organization_id, application_major_versi
 ) ON CONFLICT DO NOTHING;
 
 
--- Deployment requests for org1
-DO $$
-DECLARE
-    n_releases INT;
-    n_releases_finished INT;
-BEGIN
-    n_releases := 120;
-    n_releases_finished := 118;
-
-    IF (SELECT COUNT(*) FROM releases WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
-        -- Create n_releases_finished releases that are finished
-        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at, finalized_at)
-        SELECT
-            'org1' AS organization_id,
-            'app1' AS application_id,
-            'approved' AS state,
-            NOW() - (INTERVAL '1 day' * series) AS created_at,
-            NOW() - (INTERVAL '1 day' * series) AS updated_at,
-            NOW() - (INTERVAL '1 day' * series) AS finalized_at
-        FROM generate_series(1, n_releases_finished) series;
-
-        INSERT INTO release_created_events (organization_id, release_id, application_id, created_at)
-        SELECT
-            'org1' AS organization_id,
-            (SELECT id FROM releases OFFSET series - 1 LIMIT 1) AS release_id,
-            'app1' AS application_id,
-            NOW() - (INTERVAL '1 day' * series) AS created_at
-        FROM generate_series(1, n_releases_finished) series;
-
-        INSERT INTO release_rule_processed_events (organization_id, release_id, application_id, created_at, result_state, ignored_error)
-        SELECT
-            'org1' AS organization_id,
-            (SELECT id FROM releases OFFSET series - 1 LIMIT 1) AS release_id,
-            'app1' AS application_id,
-            NOW() - (INTERVAL '1 day' * series) AS created_at,
-            'approved' AS result_state,
-            true AS ignored_error
-        FROM generate_series(1, n_releases_finished) series;
-
-
-        -- Create 2 releases that are in progress
-        WITH inserted AS (
-            INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
-                'org1',
-                'app1',
-                'in_progress',
-                (current_date || ' 13:00')::timestamp with time zone,
-                NOW()
-            ) RETURNING id
-        ) INSERT INTO release_created_events (organization_id, release_id, application_id, created_at) VALUES (
-            'org1',
-            (SELECT id FROM inserted LIMIT 1),
-            'app1',
-            (current_date || ' 13:00')::timestamp with time zone
-        );
-
-        WITH inserted AS (
-            INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
-                'org1',
-                'app1',
-                'in_progress',
-                (current_date || ' 18:00')::timestamp with time zone,
-                NOW()
-            ) RETURNING id
-        ) INSERT INTO release_created_events (organization_id, release_id, application_id, created_at) VALUES (
-            'org1',
-            (SELECT id FROM inserted LIMIT 1),
-            'app1',
-            (current_date || ' 18:00')::timestamp with time zone
-        );
-    END IF;
-END $$;
-
-
 -- Approval rulesets (and bindings) for org1
 INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
     'org1',
@@ -186,6 +112,104 @@ INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_ver
     '12:00',
     '14:00'
 ) ON CONFLICT DO NOTHING;
+
+
+-- Deployment requests for org1
+DO $$
+DECLARE
+    n_releases INT;
+    n_releases_finished INT;
+BEGIN
+    n_releases := 120;
+    n_releases_finished := 118;
+
+    IF (SELECT COUNT(*) FROM releases WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
+        -- Create n_releases_finished releases that are finished
+        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at, finalized_at)
+        SELECT
+            'org1' AS organization_id,
+            'app1' AS application_id,
+            'approved' AS state,
+            NOW() - (INTERVAL '1 day' * series) AS created_at,
+            NOW() - (INTERVAL '1 day' * series) AS updated_at,
+            NOW() - (INTERVAL '1 day' * series) AS finalized_at
+        FROM generate_series(1, n_releases_finished) series;
+
+        INSERT INTO release_created_events (organization_id, release_id, application_id, created_at)
+        SELECT
+            'org1' AS organization_id,
+            (SELECT id FROM releases OFFSET series - 1 LIMIT 1) AS release_id,
+            'app1' AS application_id,
+            NOW() - (INTERVAL '1 day' * series) AS created_at
+        FROM generate_series(1, n_releases_finished) series;
+
+        INSERT INTO release_rule_processed_events (organization_id, release_id, application_id, created_at, result_state, ignored_error)
+        SELECT
+            'org1' AS organization_id,
+            (SELECT id FROM releases OFFSET series - 1 LIMIT 1) AS release_id,
+            'app1' AS application_id,
+            NOW() - (INTERVAL '1 day' * series) AS created_at,
+            'approved' AS result_state,
+            true AS ignored_error
+        FROM generate_series(1, n_releases_finished) series;
+
+
+        -- Create 2 releases that are in progress
+        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
+            'org1',
+            'app1',
+            'in_progress',
+            (current_date || ' 13:00')::timestamp with time zone,
+            NOW()
+        );
+        INSERT INTO release_created_events (organization_id, release_id, application_id, created_at) VALUES (
+            'org1',
+            (SELECT currval('releases_id_seq')),
+            'app1',
+            (current_date || ' 13:00')::timestamp with time zone
+        );
+        INSERT INTO release_approval_ruleset_bindings (organization_id, application_id, release_id, approval_ruleset_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, mode) VALUES (
+            'org1',
+            'app1',
+            (SELECT currval('releases_id_seq')),
+            'only afternoon',
+            (SELECT id FROM approval_ruleset_major_versions
+                WHERE organization_id = 'org1'
+                AND approval_ruleset_id = 'only afternoon'
+                AND version_number = 1
+                LIMIT 1),
+            1,
+            'enforcing'
+        );
+
+        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
+            'org1',
+            'app1',
+            'in_progress',
+            (current_date || ' 18:00')::timestamp with time zone,
+            NOW()
+        );
+        INSERT INTO release_created_events (organization_id, release_id, application_id, created_at) VALUES (
+            'org1',
+            (SELECT currval('releases_id_seq')),
+            'app1',
+            (current_date || ' 18:00')::timestamp with time zone
+        );
+        INSERT INTO release_approval_ruleset_bindings (organization_id, application_id, release_id, approval_ruleset_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, mode) VALUES (
+            'org1',
+            'app1',
+            (SELECT currval('releases_id_seq')),
+            'only afternoon',
+            (SELECT id FROM approval_ruleset_major_versions
+                WHERE organization_id = 'org1'
+                AND approval_ruleset_id = 'only afternoon'
+                AND version_number = 1
+                LIMIT 1),
+            1,
+            'enforcing'
+        );
+    END IF;
+END $$;
 
 
 DO $$
