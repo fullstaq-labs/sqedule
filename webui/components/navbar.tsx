@@ -14,6 +14,7 @@ import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
 import HomeIcon from '@material-ui/icons/Home';
 import AppsIcon from '@material-ui/icons/Apps';
 import AssignmentIcon from '@material-ui/icons/Assignment';
+import GavelIcon from '@material-ui/icons/Gavel';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import BusinessIcon from '@material-ui/icons/Business';
 import AccountBoxIcon from '@material-ui/icons/AccountBox';
@@ -24,7 +25,10 @@ import styles from './navbar.module.scss';
 
 export enum NavigationSection {
   Dashboard = 'dashboard',
+  Applications = 'applications',
   Releases = 'releases',
+  ApprovalRulesets = 'approval-rulesets',
+  ManualApprovals = 'manual-approvals',
 }
 
 interface IProps {
@@ -98,7 +102,7 @@ export default function Navbar(props: IProps) {
 
       <List component="nav">
         <Link href="/applications">
-          <ListItem button>
+          <ListItem button selected={navigationSection == NavigationSection.Applications}>
             <ListItemIcon><AppsIcon /></ListItemIcon>
             <ListItemText primary="Applications" />
           </ListItem>
@@ -109,10 +113,16 @@ export default function Navbar(props: IProps) {
             <ListItemText primary="Releases" />
           </ListItem>
         </Link>
-        <Link href="/approvals">
-          <ListItem button>
+        <Link href="/approval-rulesets">
+          <ListItem button selected={navigationSection == NavigationSection.ApprovalRulesets}>
+            <ListItemIcon><GavelIcon /></ListItemIcon>
+            <ListItemText primary="Approval rulesets" />
+          </ListItem>
+        </Link>
+        <Link href="/manual-approvals">
+          <ListItem button selected={navigationSection == NavigationSection.ManualApprovals}>
             <ListItemIcon><ThumbsUpDownIcon /></ListItemIcon>
-            <ListItemText primary="Approvals" />
+            <ListItemText primary="Manual approvals" />
           </ListItem>
         </Link>
       </List>
