@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import Link from 'next/link';
-import { formatDateTimeString, humanizeUnderscoreString } from '../common/utils';
+import { formatDateTimeString, formatReviewStateString } from '../common/utils';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import { NavigationSection } from '../components/navbar';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
@@ -48,8 +48,13 @@ const COLUMNS: ColDef[] = [
     field: 'enabled',
     headerName: 'Enabled',
     width: 110,
-    valueGetter: ({ row }) => row.enabled,
     valueFormatter: ({ value }) => (value as boolean) ? '✅' : '❌',
+  },
+  {
+    field: 'review_state',
+    headerName: 'Review state',
+    width: 150,
+    valueFormatter: ({ value }) => formatReviewStateString(value as string),
   },
   {
     field: 'created_at',

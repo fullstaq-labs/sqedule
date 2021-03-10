@@ -12,6 +12,8 @@ type applicationJSON struct {
 	MinorVersionNumber      uint32                                   `json:"minor_version_number"`
 	DisplayName             *string                                  `json:"display_name"`
 	Enabled                 *bool                                    `json:"enabled"`
+	ReviewState             string                                   `json:"review_state"`
+	ReviewComments          *string                                  `json:"review_comments"`
 	CreatedAt               time.Time                                `json:"created_at"`
 	UpdatedAt               time.Time                                `json:"updated_at"`
 	ApprovalRulesetBindings *[]applicationApprovalRulesetBindingJSON `json:"approval_ruleset_bindings,omitempty"`
@@ -20,12 +22,19 @@ type applicationJSON struct {
 func createApplicationJSONFromDbModel(application dbmodels.Application, majorVersion dbmodels.ApplicationMajorVersion, minorVersion dbmodels.ApplicationMinorVersion,
 	rulesetBindings *[]dbmodels.ApplicationApprovalRulesetBinding) applicationJSON {
 
+	var reviewComments *string
+	if minorVersion.ReviewComments.Valid {
+		reviewComments = &minorVersion.ReviewComments.String
+	}
+
 	result := applicationJSON{
 		ID:                 application.ID,
 		MajorVersionNumber: majorVersion.VersionNumber,
 		MinorVersionNumber: minorVersion.VersionNumber,
 		DisplayName:        &minorVersion.DisplayName,
 		Enabled:            &minorVersion.Enabled,
+		ReviewState:        string(minorVersion.ReviewState),
+		ReviewComments:     reviewComments,
 		CreatedAt:          application.CreatedAt,
 		UpdatedAt:          minorVersion.CreatedAt,
 	}
