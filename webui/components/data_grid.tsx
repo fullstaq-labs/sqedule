@@ -162,7 +162,7 @@ export function DataGrid(props: IProps) {
   }
 
   function isNextDisabled() {
-    return rows.length == 0;
+    return rows.length < DEFAULT_PAGE_SIZE;
   }
 
   function handlePrevPage() {
