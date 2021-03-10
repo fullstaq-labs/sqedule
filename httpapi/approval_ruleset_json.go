@@ -21,6 +21,11 @@ type approvalRulesetJSON struct {
 }
 
 func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) approvalRulesetJSON {
+	var reviewComments *string
+	if minorVersion.ReviewComments.Valid {
+		reviewComments = &minorVersion.ReviewComments.String
+	}
+
 	result := approvalRulesetJSON{
 		ID:                 ruleset.ID,
 		MajorVersionNumber: majorVersion.VersionNumber,
@@ -29,6 +34,8 @@ func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majo
 		Description:        minorVersion.Description,
 		GloballyApplicable: minorVersion.GloballyApplicable,
 		ReviewState:        string(minorVersion.ReviewState),
+		ReviewComments:     reviewComments,
+		Enabled:            minorVersion.Enabled,
 		CreatedAt:          ruleset.CreatedAt,
 		UpdatedAt:          minorVersion.CreatedAt,
 	}
