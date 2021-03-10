@@ -46,7 +46,7 @@ const COLUMNS: ColDef[] = [
     field: 'state',
     headerName: 'State',
     width: 150,
-    valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
+    valueFormatter: ({ value }) => formatStateString(value as string),
   },
   {
     field: 'created_at',
@@ -122,3 +122,19 @@ export default function ReleasesPage(props: IProps) {
 
 ReleasesPage.navigationSection = NavigationSection.Releases;
 ReleasesPage.pageTitle = 'Releases';
+
+
+export function formatStateString(state: string) {
+  switch (state) {
+    case 'in_progress':
+      return '🕐\xa0 In progress';
+    case 'cancelled':
+      return '❕\xa0 Cancelled';
+    case 'approved':
+      return '✅\xa0 Approved';
+    case 'rejected':
+      return '❌\xa0 Rejected';
+    default:
+      return humanizeUnderscoreString(state);
+  }
+}

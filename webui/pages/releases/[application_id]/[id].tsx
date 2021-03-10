@@ -3,12 +3,13 @@ import { useRouter } from 'next/router';
 import SwipeableViews from 'react-swipeable-views';
 import Link from 'next/link';
 import useSWR from 'swr';
+import { formatStateString } from '../../releases';
 import { formatDateTimeString, humanizeUnderscoreString, paginateArray } from '../../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../../components/app_context';
 import { NavigationSection } from '../../../components/navbar';
 import DataRefreshErrorSnackbar from '../../../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../../../components/data_load_error_screen';
-import { DataGrid, useDataGrid, RequestedState as DataGridRequestedState, RequestedState } from '../../../components/data_grid';
+import { DataGrid, useDataGrid, RequestedState as DataGridRequestedState } from '../../../components/data_grid';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import Box from '@material-ui/core/Box';
@@ -202,7 +203,7 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">State</TableCell>
-              <TableCell>{humanizeUnderscoreString(releaseData.state as string)}</TableCell>
+              <TableCell>{formatStateString(releaseData.state as string)}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Created at</TableCell>
