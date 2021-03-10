@@ -13,6 +13,7 @@ import { DataGrid, useDataGrid, RequestedState as DataGridRequestedState } from 
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import Box from '@material-ui/core/Box';
+import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import Skeleton from '@material-ui/lab/Skeleton';
 import Tabs from '@material-ui/core/Tabs';
@@ -321,6 +322,18 @@ function ApprovalRulesetTabContents(props: IApprovalRulesetTabContentsProps) {
   }
 
   if (data) {
+    if (data.approval_ruleset_bindings.length == 0 && dataGridState.requestedPage == 1) {
+      return (
+        <Container maxWidth="md">
+          <Box px={2} py={2} textAlign="center">
+            <Typography variant="h5" color="textSecondary">
+              There are no approval rulesets bound to this release.
+            </Typography>
+          </Box>
+        </Container>
+      );
+    }
+
     const rulesetBindings =
       paginateArray(data.approval_ruleset_bindings, dataGridState.requestedPage, dataGridState.requestedPageSize).
       map(addID);
