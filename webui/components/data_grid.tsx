@@ -7,7 +7,7 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { useIsomorphicLayoutEffect } from '../common/utils';
 import styles from './data_grid.module.scss';
 
-interface RequestedState {
+export interface RequestedState {
   requestedPage: number;
   setRequestedPage: Dispatch<SetStateAction<number>>;
   requestedPageSize: number;

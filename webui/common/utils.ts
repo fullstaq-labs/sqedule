@@ -75,3 +75,8 @@ export const useIsomorphicLayoutEffect =
   (typeof window !== 'undefined')
   ? useLayoutEffect
   : useEffect;
+
+export function paginateArray<T>(ary: Array<T>, page: number, perPage: number): Array<T> {
+  const startIndex = (page - 1) * perPage;
+  return ary.slice(startIndex, startIndex + perPage + 1);
+}
