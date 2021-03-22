@@ -15,16 +15,6 @@ type applicationApprovalRulesetBindingJSON struct {
 func createApplicationApprovalRulesetBindingJSONFromDbModel(binding dbmodels.ApplicationApprovalRulesetBinding, majorVersion dbmodels.ApplicationApprovalRulesetBindingMajorVersion,
 	minorVersion dbmodels.ApplicationApprovalRulesetBindingMinorVersion, includeApplication bool) applicationApprovalRulesetBindingJSON {
 
-	// if binding.LatestMajorVersion == nil {
-	// 	panic("Given binding must have an associated latest major version")
-	// }
-	// if binding.LatestMajorVersion.VersionNumber == nil {
-	// 	panic("Given binding's associated latest major version must be finalized")
-	// }
-	// if binding.LatestMinorVersion == nil {
-	// 	panic("Given binding must have an associated latest minor version")
-	// }
-
 	if binding.ApprovalRuleset.LatestMajorVersion == nil {
 		panic("Given approval ruleset must have an associated latest major version")
 	}

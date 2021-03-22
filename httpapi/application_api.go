@@ -31,7 +31,7 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, dbmodels.MakeApplicationPointerArray(apps))
+	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, dbmodels.MakeApplicationsPointerArray(apps))
 	if err != nil {
 		respondWithDbQueryError("application versions", err, ginctx)
 		return
@@ -75,7 +75,7 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 	}
 
 	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
-		dbmodels.MakeApplicationApprovalRulesetBindingPointerArray(bindings))
+		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(bindings))
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding versions", err, ginctx)
 		return

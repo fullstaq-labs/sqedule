@@ -87,8 +87,8 @@ func CollectApplicationApprovalRulesetBindingRulesets(bindings []ApplicationAppr
 	return result
 }
 
-// MakeApplicationApprovalRulesetBindingPointerArray ...
-func MakeApplicationApprovalRulesetBindingPointerArray(bindings []ApplicationApprovalRulesetBinding) []*ApplicationApprovalRulesetBinding {
+// MakeApplicationApprovalRulesetBindingsPointerArray ...
+func MakeApplicationApprovalRulesetBindingsPointerArray(bindings []ApplicationApprovalRulesetBinding) []*ApplicationApprovalRulesetBinding {
 	result := make([]*ApplicationApprovalRulesetBinding, 0, len(bindings))
 	for i := range bindings {
 		result = append(result, &bindings[i])

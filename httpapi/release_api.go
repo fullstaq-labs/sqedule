@@ -117,7 +117,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 		err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
-			dbmodels.MakeApplicationApprovalRulesetBindingPointerArray(appRuleBindings))
+			dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appRuleBindings))
 		if err != nil {
 			return err
 		}

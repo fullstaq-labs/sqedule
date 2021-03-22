@@ -38,7 +38,7 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 	}
 
 	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
-		dbmodels.MakeApplicationApprovalRulesetBindingPointerArray(bindings))
+		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(bindings))
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding latest versions", err, ginctx)
 		return

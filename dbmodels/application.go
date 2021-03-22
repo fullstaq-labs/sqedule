@@ -65,8 +65,8 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// MakeApplicationPointerArray ...
-func MakeApplicationPointerArray(apps []Application) []*Application {
+// MakeApplicationsPointerArray ...
+func MakeApplicationsPointerArray(apps []Application) []*Application {
 	result := make([]*Application, 0, len(apps))
 	for i := range apps {
 		result = append(result, &apps[i])
