@@ -47,6 +47,27 @@ INSERT INTO application_minor_versions (organization_id, application_major_versi
     'Application 1'
 ) ON CONFLICT DO NOTHING;
 
+INSERT INTO applications (organization_id, id, created_at) VALUES (
+    'org1',
+    'app2',
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO application_major_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
+    'org1',
+    'app2',
+    1,
+    NOW(),
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO application_minor_versions (organization_id, application_major_version_id, version_number, review_state, created_at, display_name) VALUES (
+    'org1',
+    (SELECT id FROM application_major_versions WHERE organization_id = 'org1' AND application_id = 'app2' AND version_number = 1 LIMIT 1),
+    1,
+    'approved',
+    NOW(),
+    'Application 2'
+) ON CONFLICT DO NOTHING;
+
 
 -- Approval rulesets (and bindings) for org1
 INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
@@ -75,6 +96,58 @@ INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_m
     '',
     false
 ) ON CONFLICT DO NOTHING;
+INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+    'org1',
+    (SELECT id FROM approval_ruleset_major_versions
+        WHERE organization_id = 'org1'
+        AND approval_ruleset_id = 'only afternoon'
+        AND version_number = 1
+        LIMIT 1),
+    1,
+    NOW(),
+    '12:00',
+    '14:00'
+) ON CONFLICT DO NOTHING;
+
+INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
+    'org1',
+    'only evening',
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO approval_ruleset_major_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+    'org1',
+    'only evening',
+    1,
+    NOW(),
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_major_version_id, version_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
+    'org1',
+    (SELECT id FROM approval_ruleset_major_versions
+        WHERE organization_id = 'org1'
+        AND approval_ruleset_id = 'only evening'
+        AND version_number = 1
+        LIMIT 1),
+    1,
+    'approved',
+    NOW(),
+    'Only evening',
+    '',
+    false
+) ON CONFLICT DO NOTHING;
+INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+    'org1',
+    (SELECT id FROM approval_ruleset_major_versions
+        WHERE organization_id = 'org1'
+        AND approval_ruleset_id = 'only evening'
+        AND version_number = 1
+        LIMIT 1),
+    1,
+    NOW(),
+    '18:00',
+    '23:59'
+) ON CONFLICT DO NOTHING;
+
 INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
     'org1',
     'app1',
@@ -100,17 +173,57 @@ INSERT INTO application_approval_ruleset_binding_minor_versions (organization_id
     NOW(),
     'enforcing'
 ) ON CONFLICT DO NOTHING;
-INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+
+INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
     'org1',
-    (SELECT id FROM approval_ruleset_major_versions
-        WHERE organization_id = 'org1'
-        AND approval_ruleset_id = 'only afternoon'
-        AND version_number = 1
-        LIMIT 1),
+    'app2',
+    'only afternoon',
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO application_approval_ruleset_binding_major_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+    'org1',
+    'app2',
+    'only afternoon',
     1,
     NOW(),
-    '12:00',
-    '14:00'
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO application_approval_ruleset_binding_minor_versions (organization_id, application_approval_ruleset_binding_major_version_id, version_number, review_state, created_at, mode) VALUES (
+    'org1',
+    (SELECT id FROM application_approval_ruleset_binding_major_versions
+        WHERE organization_id = 'org1' AND application_id = 'app2'
+        AND approval_ruleset_id = 'only afternoon' AND version_number = 1
+        LIMIT 1),
+    1,
+    'approved',
+    NOW(),
+    'enforcing'
+) ON CONFLICT DO NOTHING;
+
+INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
+    'org1',
+    'app2',
+    'only evening',
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO application_approval_ruleset_binding_major_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+    'org1',
+    'app2',
+    'only evening',
+    1,
+    NOW(),
+    NOW()
+) ON CONFLICT DO NOTHING;
+INSERT INTO application_approval_ruleset_binding_minor_versions (organization_id, application_approval_ruleset_binding_major_version_id, version_number, review_state, created_at, mode) VALUES (
+    'org1',
+    (SELECT id FROM application_approval_ruleset_binding_major_versions
+        WHERE organization_id = 'org1' AND application_id = 'app2'
+        AND approval_ruleset_id = 'only evening' AND version_number = 1
+        LIMIT 1),
+    1,
+    'approved',
+    NOW(),
+    'enforcing'
 ) ON CONFLICT DO NOTHING;
 
 

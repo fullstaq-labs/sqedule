@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/dbutils"
 	"gorm.io/gorm"
 )
 
@@ -47,6 +48,66 @@ type ApprovalRulesetMinorVersion struct {
 	GloballyApplicable bool `gorm:"not null; default:false"`
 
 	ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+type ApprovalRulesetWithStats struct {
+	ApprovalRuleset
+	NumBoundApplications uint
+	NumBoundReleases     uint
+}
+
+// FindAllApprovalRulesetsWithStats ...
+func FindAllApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetWithStats, error) {
+	var result []ApprovalRulesetWithStats
+	tx := db.
+		Model(&ApprovalRuleset{}).
+		Select("approval_rulesets.*, "+
+			"bound_apps_stats.num_bound_applications, "+
+			"bound_releases_stats.num_bound_releases").
+		Where("approval_rulesets.organization_id = ?", organizationID).
+		Joins("LEFT JOIN ("+
+			"SELECT approval_rulesets.id, "+
+			"  COUNT(application_approval_ruleset_bindings.application_id) AS num_bound_applications "+
+			"FROM approval_rulesets "+
+			"LEFT JOIN application_approval_ruleset_bindings "+
+			"  ON application_approval_ruleset_bindings.organization_id = approval_rulesets.organization_id "+
+			"  AND application_approval_ruleset_bindings.approval_ruleset_id = approval_rulesets.id "+
+			"WHERE approval_rulesets.organization_id = ? "+
+			"GROUP BY approval_rulesets.organization_id, approval_rulesets.id "+
+			") bound_apps_stats "+
+			"ON bound_apps_stats.id = approval_rulesets.id",
+			organizationID,
+		).
+		Joins("LEFT JOIN ("+
+			"SELECT approval_rulesets.id, "+
+			"  COUNT(CASE WHEN release_approval_ruleset_bindings.application_id IS NULL "+
+			"      AND release_approval_ruleset_bindings.release_id IS NULL "+
+			"    THEN NULL "+
+			"    ELSE (release_approval_ruleset_bindings.application_id, release_approval_ruleset_bindings.release_id) "+
+			"    END) AS num_bound_releases "+
+			"FROM approval_rulesets "+
+			"LEFT JOIN release_approval_ruleset_bindings "+
+			"  ON release_approval_ruleset_bindings.organization_id = approval_rulesets.organization_id "+
+			"  AND release_approval_ruleset_bindings.approval_ruleset_id = approval_rulesets.id "+
+			"WHERE approval_rulesets.organization_id = ? "+
+			"GROUP BY approval_rulesets.organization_id, approval_rulesets.id "+
+			") bound_releases_stats "+
+			"ON bound_releases_stats.id = approval_rulesets.id",
+			organizationID,
+		)
+	tx = dbutils.ApplyDbQueryPaginationOptions(tx, pagination)
+	tx = tx.Find(&result)
+	return result, tx.Error
+}
+
+// CollectApprovalRulesetsWithoutStats ...
+func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {
+	result := make([]*ApprovalRuleset, 0)
+	for i := range rulesets {
+		ruleset := &rulesets[i]
+		result = append(result, &ruleset.ApprovalRuleset)
+	}
+	return result
 }
 
 // LoadApprovalRulesetsLatestVersions ...

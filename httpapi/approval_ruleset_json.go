@@ -7,17 +7,25 @@ import (
 )
 
 type approvalRulesetJSON struct {
-	ID                 string    `json:"id"`
-	MajorVersionNumber *uint32   `json:"major_version_number"`
-	MinorVersionNumber uint32    `json:"minor_version_number"`
-	DisplayName        string    `json:"display_name"`
-	Description        string    `json:"description"`
-	GloballyApplicable bool      `json:"globally_applicable"`
-	ReviewState        string    `json:"review_state"`
-	ReviewComments     *string   `json:"review_comments"`
-	Enabled            bool      `json:"enabled"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	ID                   string    `json:"id"`
+	MajorVersionNumber   *uint32   `json:"major_version_number"`
+	MinorVersionNumber   uint32    `json:"minor_version_number"`
+	DisplayName          string    `json:"display_name"`
+	Description          string    `json:"description"`
+	GloballyApplicable   bool      `json:"globally_applicable"`
+	ReviewState          string    `json:"review_state"`
+	ReviewComments       *string   `json:"review_comments"`
+	Enabled              bool      `json:"enabled"`
+	NumBoundApplications *uint     `json:"num_bound_applications,omitempty"`
+	NumBoundReleases     *uint     `json:"num_bound_releases,omitempty"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+}
+
+type approvalRulesetWithStatsJSON struct {
+	approvalRulesetJSON
+	NumBoundApplications uint `json:"num_bound_applications"`
+	NumBoundReleases     uint `json:"num_bound_releases"`
 }
 
 func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) approvalRulesetJSON {
@@ -38,6 +46,15 @@ func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majo
 		Enabled:            minorVersion.Enabled,
 		CreatedAt:          ruleset.CreatedAt,
 		UpdatedAt:          minorVersion.CreatedAt,
+	}
+	return result
+}
+
+func createApprovalRulesetWithStatsJSONFromDbModel(ruleset dbmodels.ApprovalRulesetWithStats, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) approvalRulesetWithStatsJSON {
+	result := approvalRulesetWithStatsJSON{
+		approvalRulesetJSON:  createApprovalRulesetJSONFromDbModel(ruleset.ApprovalRuleset, majorVersion, minorVersion),
+		NumBoundApplications: ruleset.NumBoundApplications,
+		NumBoundReleases:     ruleset.NumBoundReleases,
 	}
 	return result
 }

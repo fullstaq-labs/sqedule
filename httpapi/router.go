@@ -65,4 +65,5 @@ func (ctx Context) setupAuthenticatedRoutes(rg *gin.RouterGroup) {
 
 	// Approval rulesets
 	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.GetAllApplicationApprovalRulesetBindings)
+	rg.GET("approval-rulesets", ctx.GetAllApprovalRulesets)
 }
