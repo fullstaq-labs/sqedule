@@ -55,8 +55,16 @@ export default function ApplicationPage(props: IProps) {
   const firstError = appError || releasesError;
   const isValidating = appDataIsValidating || releasesDataIsValidating;
 
-  declarePageTitle(appContext, `Application: ${id}`);
+  declarePageTitle(appContext, getPageTitle());
   declareValidatingFetchedData(appContext, isValidating);
+
+  function getPageTitle() {
+    if (appData) {
+      return `${appData.display_name} (${id})`;
+    } else {
+      return '';
+    }
+  }
 
   function handleTabChange(_event: React.ChangeEvent<{}>, newValue: number) {
     setTabIndex(newValue);
