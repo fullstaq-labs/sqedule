@@ -46,7 +46,7 @@ func (engine Engine) processHTTPApiRules(rulesets []ruleset, previousOutcomes ma
 func indexHTTPApiRuleOutcomes(outcomes []dbmodels.HTTPApiApprovalRuleOutcome) map[uint64]bool {
 	result := make(map[uint64]bool)
 	for _, outcome := range outcomes {
-		result[outcome.ApprovalRuleOutcome.ID] = outcome.Success
+		result[outcome.HTTPApiApprovalRuleID] = outcome.Success
 	}
 	return result
 }

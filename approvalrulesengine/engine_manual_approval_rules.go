@@ -46,7 +46,7 @@ func (engine Engine) processManualApprovalRules(rulesets []ruleset, previousOutc
 func indexManualApprovalRuleOutcomes(outcomes []dbmodels.ManualApprovalRuleOutcome) map[uint64]bool {
 	result := make(map[uint64]bool)
 	for _, outcome := range outcomes {
-		result[outcome.ApprovalRuleOutcome.ID] = outcome.Success
+		result[outcome.ManualApprovalRuleID] = outcome.Success
 	}
 	return result
 }

@@ -116,7 +116,7 @@ func (engine Engine) createScheduleRuleOutcome(rule dbmodels.ScheduleApprovalRul
 func indexScheduleRuleOutcomes(outcomes []dbmodels.ScheduleApprovalRuleOutcome) map[uint64]bool {
 	result := make(map[uint64]bool)
 	for _, outcome := range outcomes {
-		result[outcome.ApprovalRuleOutcome.ID] = outcome.Success
+		result[outcome.ScheduleApprovalRuleID] = outcome.Success
 	}
 	return result
 }
