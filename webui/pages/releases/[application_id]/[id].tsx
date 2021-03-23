@@ -56,8 +56,16 @@ export default function ReleasePage(props: IProps) {
   const firstError = appError || releaseError;
   const isValidating = appDataIsValidating || releaseDataIsValidating;
 
-  declarePageTitle(appContext, `Release: ${applicationId}/${id}`);
+  declarePageTitle(appContext, getPageTitle());
   declareValidatingFetchedData(appContext, isValidating);
+
+  function getPageTitle() {
+    if (appData) {
+      return `Release ${id} (for ${appData.display_name})`;
+    } else {
+      return '';
+    }
+  }
 
   function handleTabChange(_event: React.ChangeEvent<{}>, newValue: number) {
     setTabIndex(newValue);
