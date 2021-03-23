@@ -278,6 +278,12 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     valueGetter: ({ row }) => `${row.approval_ruleset.major_version_number}.${row.approval_ruleset.minor_version_number}`,
   },
   {
+    field: 'mode',
+    headerName: 'Mode',
+    width: 120,
+    valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
+  },
+  {
     field: 'enabled',
     headerName: 'Enabled',
     width: 120,
@@ -290,12 +296,6 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 150,
     valueGetter: ({ row }) => row.approval_ruleset.review_state,
     valueFormatter: ({ value }) => formatReviewStateString(value as string),
-  },
-  {
-    field: 'mode',
-    headerName: 'Mode',
-    width: 120,
-    valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
   },
   {
     field: 'updated_at',
