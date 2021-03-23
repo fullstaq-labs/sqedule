@@ -22,6 +22,12 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import Container from '@material-ui/core/Container';
 import { ColDef } from '@material-ui/data-grid';
 import { formatStateString as formatReleaseStateString } from '../releases';
@@ -82,6 +88,7 @@ export default function ApprovalRulesetPage(props: IProps) {
       >
         <Tab label="General" id="tab-general" aria-controls="tab-panel-general" />
         <Tab label="Version history" id="version-history" aria-controls="tab-panel-version-history" />
+        <Tab label="Rules" id="rules" aria-controls="tab-panel-rules" />
         <Tab label="Applications" id="tab-applications" arial-controls="tab-panel-applications" />
         <Tab label="Releases" id="tab-releases" arial-controls="tab-panel-releases" />
       </Tabs>
@@ -103,7 +110,14 @@ export default function ApprovalRulesetPage(props: IProps) {
         </TabPanel>
         <TabPanel value={tabIndex} index={1} id="version-history">
         </TabPanel>
-        <TabPanel value={tabIndex} index={2} id="applications" style={{ flexGrow: 1 }}>
+        <TabPanel value={tabIndex} index={2} id="rules">
+          <RulesTabContents
+            data={data}
+            error={error}
+            mutate={mutate}
+            />
+        </TabPanel>
+        <TabPanel value={tabIndex} index={3} id="applications" style={{ flexGrow: 1 }}>
           <ApplicationsTabContents
             dataGridState={applicationsDataGridState}
             data={data}
@@ -111,7 +125,7 @@ export default function ApprovalRulesetPage(props: IProps) {
             mutate={mutate}
             />
         </TabPanel>
-        <TabPanel value={tabIndex} index={3} id="releases" style={{ flexGrow: 1 }}>
+        <TabPanel value={tabIndex} index={4} id="releases" style={{ flexGrow: 1 }}>
           <ReleasesTabContents
             applicationId={id}
             dataGridState={releasesDataGridState}
@@ -236,6 +250,116 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
       </Box>
     </Paper>
   );
+}
+
+
+interface IRulesTabContentsProps {
+  data: any;
+  error: any;
+  mutate: () => void;
+}
+
+function RulesTabContents(props: IRulesTabContentsProps) {
+  const { data } = props;
+
+  if (data) {
+    const rules = data.approval_rules.map(renderApprovalRule)
+    return <Paper><List>{rules}</List></Paper>;
+  }
+
+  if (props.error) {
+    return <DataLoadErrorScreen error={props.error} onReload={props.mutate} />;
+  }
+
+  return (
+    <Paper>
+      <Box mx={2} my={2}>
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+      </Box>
+    </Paper>
+  );
+}
+
+function renderApprovalRule(rule: any, index: number) {
+  const title = <Typography variant="h6">{humanizeApprovalRuleType(rule.type)}</Typography>;
+  return (
+    <>
+      {index > 0 && <Divider variant="inset" component="li" />}
+      <ListItem alignItems="flex-start">
+        <ListItemAvatar>
+          <AccessTimeIcon style={{ fontSize: '3rem' }} />
+        </ListItemAvatar>
+        <ListItemText
+          primary={title}
+          secondary={renderApprovalRuleDetails(rule)}
+          />
+      </ListItem>
+    </>
+  );
+}
+
+function humanizeApprovalRuleType(type: string): string {
+  switch (type) {
+    case "http_api":
+      return "HTTP API";
+    case "schedule":
+      return "Schedule";
+    case "manual":
+      return "Manual approval";
+    default:
+      return humanizeUnderscoreString(type);
+  }
+}
+
+function renderApprovalRuleDetails(rule: any): JSX.Element {
+  switch (rule.type) {
+    case "http_api":
+      return renderHttpApiApprovalRuleDetails(rule);
+    case "schedule":
+      return renderScheduleApprovalRuleDetails(rule);
+    case "manual":
+      return renderManualApprovalRuleDetails(rule);
+    default:
+      return <></>;
+  }
+}
+
+function renderHttpApiApprovalRuleDetails(_rule: any) {
+  // TODO
+  return <></>;
+}
+
+function renderScheduleApprovalRuleDetails(rule: any) {
+  return (
+    <ul>
+      {rule.begin_time &&
+        <li>Begin time: {rule.begin_time}</li>
+      }
+      {rule.end_time &&
+        <li>End time: {rule.end_time}</li>
+      }
+      {rule.days_of_week &&
+        <li>Days of week: {rule.days_of_week}</li>
+      }
+      {rule.days_of_month &&
+        <li>Days of month: {rule.days_of_month}</li>
+      }
+      {rule.months_of_year &&
+        <li>Months of year: {rule.months_of_year}</li>
+      }
+    </ul>
+  );
+}
+
+function renderManualApprovalRuleDetails(_rule: any) {
+  // TODO
+  return <></>;
 }
 
 
