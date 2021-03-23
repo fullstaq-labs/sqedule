@@ -96,18 +96,28 @@ INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_m
     '',
     false
 ) ON CONFLICT DO NOTHING;
-INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
-    'org1',
-    (SELECT id FROM approval_ruleset_major_versions
+DO $$
+DECLARE
+    major_version_id BIGINT;
+BEGIN
+    SELECT id INTO major_version_id FROM approval_ruleset_major_versions
         WHERE organization_id = 'org1'
         AND approval_ruleset_id = 'only afternoon'
         AND version_number = 1
-        LIMIT 1),
-    1,
-    NOW(),
-    '12:00',
-    '14:00'
-) ON CONFLICT DO NOTHING;
+        LIMIT 1;
+    IF (SELECT COUNT(*) FROM schedule_approval_rules WHERE organization_id = 'org1'
+        AND approval_ruleset_major_version_id = major_version_id AND approval_ruleset_minor_version_number = 1 LIMIT 1) = 0
+    THEN
+        INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+            'org1',
+            major_version_id,
+            1,
+            NOW(),
+            '12:00',
+            '14:00'
+        );
+    END IF;
+END $$;
 
 INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
     'org1',
@@ -135,18 +145,28 @@ INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_m
     '',
     false
 ) ON CONFLICT DO NOTHING;
-INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
-    'org1',
-    (SELECT id FROM approval_ruleset_major_versions
+DO $$
+DECLARE
+    major_version_id BIGINT;
+BEGIN
+    SELECT id INTO major_version_id FROM approval_ruleset_major_versions
         WHERE organization_id = 'org1'
         AND approval_ruleset_id = 'only evening'
         AND version_number = 1
-        LIMIT 1),
-    1,
-    NOW(),
-    '18:00',
-    '23:59'
-) ON CONFLICT DO NOTHING;
+        LIMIT 1;
+    IF (SELECT COUNT(*) FROM schedule_approval_rules WHERE organization_id = 'org1'
+        AND approval_ruleset_major_version_id = major_version_id AND approval_ruleset_minor_version_number = 1 LIMIT 1) = 0
+    THEN
+        INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+            'org1',
+            major_version_id,
+            1,
+            NOW(),
+            '18:00',
+            '23:59'
+        );
+    END IF;
+END $$;
 
 INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
     'org1',
