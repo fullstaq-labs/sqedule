@@ -157,11 +157,11 @@ func (engine Engine) loadRules() ([]ruleset, uint, error) {
 	result := make([]ruleset, len(bindings))
 	// maps an ApprovalRulesetMajorVersion ID to its ruleset struct
 	majorVersionIndex := make(map[uint64]*ruleset, len(bindings))
-	versionKeys := make([]dbmodels.ApprovalRuleVersionKey, 0, len(bindings))
+	versionKeys := make([]dbmodels.ApprovalRulesetVersionKey, 0, len(bindings))
 	for i, binding := range bindings {
 		result[i].mode = binding.Mode
 		majorVersionIndex[binding.ApprovalRulesetMajorVersionID] = &result[i]
-		versionKeys = append(versionKeys, dbmodels.ApprovalRuleVersionKey{
+		versionKeys = append(versionKeys, dbmodels.ApprovalRulesetVersionKey{
 			MajorVersionID:     binding.ApprovalRulesetMajorVersionID,
 			MinorVersionNumber: binding.ApprovalRulesetMinorVersionNumber,
 		})

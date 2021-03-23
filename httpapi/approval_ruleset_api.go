@@ -68,6 +68,15 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
+	rules, err := dbmodels.FindAllApprovalRulesWithRuleset(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionKey{
+		MajorVersionID:     ruleset.LatestMajorVersion.ID,
+		MinorVersionNumber: ruleset.LatestMinorVersion.VersionNumber,
+	})
+	if err != nil {
+		respondWithDbQueryError("approval rules", err, ginctx)
+		return
+	}
+
 	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
 		ctx.Db.Preload("Application"), orgID, id)
 	if err != nil {
@@ -100,7 +109,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	output := createApprovalRulesetWithBindingAssociationsJSONFromDbModel(ruleset, *ruleset.LatestMajorVersion,
-		*ruleset.LatestMinorVersion, appBindings, releaseBindings)
+	output := createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset, *ruleset.LatestMajorVersion,
+		*ruleset.LatestMinorVersion, appBindings, releaseBindings, rules)
 	ginctx.JSON(http.StatusOK, output)
 }

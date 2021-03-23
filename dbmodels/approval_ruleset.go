@@ -50,6 +50,11 @@ type ApprovalRulesetMinorVersion struct {
 	ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
+type ApprovalRulesetVersionKey struct {
+	MajorVersionID     uint64
+	MinorVersionNumber uint32
+}
+
 type ApprovalRulesetWithStats struct {
 	ApprovalRuleset
 	NumBoundApplications uint

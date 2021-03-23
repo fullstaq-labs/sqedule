@@ -119,6 +119,7 @@ func TestGetApprovalRuleset(t *testing.T) {
 	}
 
 	var mockRelease dbmodels.Release
+	var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 	err = ctx.db.Transaction(func(tx *gorm.DB) error {
 		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.db, ctx.org, "ruleset1", nil)
 		if err != nil {
@@ -140,7 +141,14 @@ func TestGetApprovalRuleset(t *testing.T) {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, mockRelease, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, mockRelease, ruleset,
+			*ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		if err != nil {
+			return err
+		}
+
+		mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+			ruleset.LatestMajorVersion.ID, *ruleset.LatestMinorVersion, nil)
 		if err != nil {
 			return err
 		}
@@ -203,4 +211,15 @@ func TestGetApprovalRuleset(t *testing.T) {
 	}
 	app = release["application"].(map[string]interface{})
 	assert.Equal(t, "app1", app["id"])
+
+	if !assert.NotEmpty(t, ruleset["approval_rules"]) {
+		return
+	}
+	rules := ruleset["approval_rules"].([]interface{})
+	if !assert.Equal(t, 1, len(rules)) {
+		return
+	}
+	rule := rules[0].(map[string]interface{})
+	assert.Equal(t, float64(mockScheduleApprovalRule.ID), rule["id"])
+	assert.Equal(t, mockScheduleApprovalRule.BeginTime.String, rule["begin_time"])
 }

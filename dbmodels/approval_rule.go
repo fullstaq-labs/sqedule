@@ -9,11 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// ApprovalRuleVersionKey ...
-type ApprovalRuleVersionKey struct {
-	MajorVersionID     uint64
-	MinorVersionNumber uint32
-}
+const NumApprovalRuleTypes = 3
 
 // ApprovalRule ...
 type ApprovalRule struct {
@@ -54,8 +50,47 @@ type ManualApprovalRule struct {
 	Minimum        sql.NullInt32         `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
 }
 
+type ApprovalRulesetContents struct {
+	HTTPApiApprovalRules  []HTTPApiApprovalRule
+	ScheduleApprovalRules []ScheduleApprovalRule
+	ManualApprovalRules   []ManualApprovalRule
+}
+
+func FindAllApprovalRulesWithRuleset(db *gorm.DB, organizationID string, rulesetVersionKey ApprovalRulesetVersionKey) (ApprovalRulesetContents, error) {
+	var result ApprovalRulesetContents
+	var query, tx *gorm.DB
+	var ruleTypesProcessed uint = 0
+
+	query = db.Where("organization_id = ? AND approval_ruleset_major_version_id = ? AND approval_ruleset_minor_version_number = ?",
+		organizationID, rulesetVersionKey.MajorVersionID, rulesetVersionKey.MinorVersionNumber)
+
+	ruleTypesProcessed++
+	tx = db.Where(query).Find(&result.HTTPApiApprovalRules)
+	if tx.Error != nil {
+		return ApprovalRulesetContents{}, tx.Error
+	}
+
+	ruleTypesProcessed++
+	tx = db.Where(query).Find(&result.ScheduleApprovalRules)
+	if tx.Error != nil {
+		return ApprovalRulesetContents{}, tx.Error
+	}
+
+	ruleTypesProcessed++
+	tx = db.Where(query).Find(&result.ManualApprovalRules)
+	if tx.Error != nil {
+		return ApprovalRulesetContents{}, tx.Error
+	}
+
+	if ruleTypesProcessed != NumApprovalRuleTypes {
+		panic("Bug: code does not cover all approval rule types")
+	}
+
+	return result, nil
+}
+
 // FindAllScheduleApprovalRulesBelongingToVersions ...
-func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, organizationID string, versionKeys []ApprovalRuleVersionKey) ([]ScheduleApprovalRule, error) {
+func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, organizationID string, versionKeys []ApprovalRulesetVersionKey) ([]ScheduleApprovalRule, error) {
 	var result []ScheduleApprovalRule
 	var versionKeyConditions *gorm.DB = db
 
