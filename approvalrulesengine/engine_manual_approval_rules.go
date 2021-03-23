@@ -17,7 +17,7 @@ func (engine Engine) loadManualApprovalRules(db *gorm.DB, majorVersionIndex map[
 
 	for _, rule := range rules {
 		ruleset := majorVersionIndex[rule.ApprovalRulesetMajorVersionID]
-		ruleset.manualApprovalRules = append(ruleset.manualApprovalRules, rule)
+		ruleset.ManualApprovalRules = append(ruleset.ManualApprovalRules, rule)
 	}
 
 	return uint(len(rules)), nil

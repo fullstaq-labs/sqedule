@@ -79,16 +79,20 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 	}
 	ctx.rulesets = []ruleset{
 		{
-			mode:                approvalrulesetbindingmode.Permissive,
-			manualApprovalRules: []dbmodels.ManualApprovalRule{},
-			scheduleRules:       []dbmodels.ScheduleApprovalRule{},
-			httpAPIRules:        []dbmodels.HTTPApiApprovalRule{},
+			ApprovalRulesetContents: dbmodels.ApprovalRulesetContents{
+				ManualApprovalRules:   []dbmodels.ManualApprovalRule{},
+				ScheduleApprovalRules: []dbmodels.ScheduleApprovalRule{},
+				HTTPApiApprovalRules:  []dbmodels.HTTPApiApprovalRule{},
+			},
+			mode: approvalrulesetbindingmode.Permissive,
 		},
 		{
-			mode:                approvalrulesetbindingmode.Enforcing,
-			manualApprovalRules: []dbmodels.ManualApprovalRule{},
-			scheduleRules:       []dbmodels.ScheduleApprovalRule{},
-			httpAPIRules:        []dbmodels.HTTPApiApprovalRule{},
+			ApprovalRulesetContents: dbmodels.ApprovalRulesetContents{
+				ManualApprovalRules:   []dbmodels.ManualApprovalRule{},
+				ScheduleApprovalRules: []dbmodels.ScheduleApprovalRule{},
+				HTTPApiApprovalRules:  []dbmodels.HTTPApiApprovalRule{},
+			},
+			mode: approvalrulesetbindingmode.Enforcing,
 		},
 	}
 	ctx.permissiveRuleset = &ctx.rulesets[0]
@@ -109,7 +113,7 @@ func TestProcessScheduleRulesSuccess(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
+	ctx.enforcingRuleset.ScheduleApprovalRules = append(ctx.enforcingRuleset.ScheduleApprovalRules, rule)
 
 	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -162,7 +166,7 @@ func TestProcessScheduleRulesError(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
+	ctx.enforcingRuleset.ScheduleApprovalRules = append(ctx.enforcingRuleset.ScheduleApprovalRules, rule)
 
 	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -215,7 +219,7 @@ func TestProcessScheduleRulesPermissiveMode(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	ctx.permissiveRuleset.scheduleRules = append(ctx.permissiveRuleset.scheduleRules, rule)
+	ctx.permissiveRuleset.ScheduleApprovalRules = append(ctx.permissiveRuleset.ScheduleApprovalRules, rule)
 
 	resultState, nprocessed, err := ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -280,7 +284,7 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
+	ctx.enforcingRuleset.ScheduleApprovalRules = append(ctx.enforcingRuleset.ScheduleApprovalRules, rule)
 
 	_, _, err = ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {
@@ -345,7 +349,7 @@ func TestProcessScheduleRulesRerunFail(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	ctx.enforcingRuleset.scheduleRules = append(ctx.enforcingRuleset.scheduleRules, rule)
+	ctx.enforcingRuleset.ScheduleApprovalRules = append(ctx.enforcingRuleset.ScheduleApprovalRules, rule)
 
 	_, _, err = ctx.engine.processScheduleRules(ctx.rulesets, map[uint64]bool{}, 0, 1)
 	if !assert.NoError(t, err) {

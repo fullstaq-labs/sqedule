@@ -22,7 +22,7 @@ func (engine Engine) loadScheduleRules(db *gorm.DB, majorVersionIndex map[uint64
 
 	for _, rule := range rules {
 		ruleset := majorVersionIndex[rule.ApprovalRulesetMajorVersionID]
-		ruleset.scheduleRules = append(ruleset.scheduleRules, rule)
+		ruleset.ScheduleApprovalRules = append(ruleset.ScheduleApprovalRules, rule)
 	}
 
 	return uint(len(rules)), nil
@@ -41,7 +41,7 @@ func (engine Engine) processScheduleRules(rulesets []ruleset, previousOutcomes m
 	var nprocessed uint = 0
 
 	for _, ruleset := range rulesets {
-		for _, rule := range ruleset.scheduleRules {
+		for _, rule := range ruleset.ScheduleApprovalRules {
 			success, outcomeAlreadyRecorded, err := engine.processScheduleRule(rule, previousOutcomes)
 			if err != nil {
 				return releasestate.Rejected, nprocessed,

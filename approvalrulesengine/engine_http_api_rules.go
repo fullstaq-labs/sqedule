@@ -17,7 +17,7 @@ func (engine Engine) loadHTTPApiRules(db *gorm.DB, majorVersionIndex map[uint64]
 
 	for _, rule := range rules {
 		ruleset := majorVersionIndex[rule.ApprovalRulesetMajorVersionID]
-		ruleset.httpAPIRules = append(ruleset.httpAPIRules, rule)
+		ruleset.HTTPApiApprovalRules = append(ruleset.HTTPApiApprovalRules, rule)
 	}
 
 	return uint(len(rules)), nil

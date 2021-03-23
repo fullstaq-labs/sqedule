@@ -20,10 +20,8 @@ type Engine struct {
 }
 
 type ruleset struct {
-	mode                approvalrulesetbindingmode.Mode
-	manualApprovalRules []dbmodels.ManualApprovalRule
-	scheduleRules       []dbmodels.ScheduleApprovalRule
-	httpAPIRules        []dbmodels.HTTPApiApprovalRule
+	dbmodels.ApprovalRulesetContents
+	mode approvalrulesetbindingmode.Mode
 }
 
 var errTemporary = errors.New("temporary error, retry later")
