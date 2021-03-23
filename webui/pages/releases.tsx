@@ -22,7 +22,7 @@ const COLUMNS: ColDef[] = [
     field: 'id',
     type: 'number',
     headerName: 'ID',
-    width: 120,
+    width: 100,
     renderCell: ({ row }) => (
       <Box style={{ flexGrow: 1 }}> {/* Make the content properly align right */}
         <Link href={`/releases/${encodeURIComponent(row.application.id)}/${encodeURIComponent(row._orig_id)}`}>
