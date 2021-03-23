@@ -33,7 +33,7 @@ const COLUMNS: ColDef[] = [
     headerName: 'Display name',
     width: 250,
     renderCell: ({ row }) => (
-      <Link href={`/approval_rulesets/${encodeURIComponent(row._orig_id)}`}>
+      <Link href={`/approval-rulesets/${encodeURIComponent(row._orig_id)}`}>
         <a>{row.display_name}</a>
       </Link>
     ),
