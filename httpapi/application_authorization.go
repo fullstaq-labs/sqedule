@@ -26,21 +26,21 @@ const (
 // GetApplicationAuthorizations returns which actions an OrganizationMember is
 // allowed to perform, on a target Application.
 func GetApplicationAuthorizations(orgMember dbmodels.IOrganizationMember,
-	target dbmodels.Application) map[ApplicationAction]bool {
+	target dbmodels.Application) map[ApplicationAction]struct{} {
 
-	result := make(map[ApplicationAction]bool)
+	result := make(map[ApplicationAction]struct{})
 	concreteOrgMember := orgMember.GetOrganizationMember()
 
 	if concreteOrgMember.BaseModel.OrganizationID != target.BaseModel.OrganizationID {
 		return result
 	}
 
-	result[ActionReadAllApplications] = true
-	result[ActionCreateApplication] = true
-	result[ActionReadApplication] = true
-	result[ActionUpdateApplication] = true
-	result[ActionDeleteApplication] = true
-	result[ActionCreateRelease] = true
+	result[ActionReadAllApplications] = struct{}{}
+	result[ActionCreateApplication] = struct{}{}
+	result[ActionReadApplication] = struct{}{}
+	result[ActionUpdateApplication] = struct{}{}
+	result[ActionDeleteApplication] = struct{}{}
+	result[ActionCreateRelease] = struct{}{}
 
 	return result
 }
@@ -52,7 +52,7 @@ func AuthorizeApplicationAction(ginctx *gin.Context, orgMember dbmodels.IOrganiz
 
 	permittedActions := GetApplicationAuthorizations(orgMember, target)
 
-	if !permittedActions[action] {
+	if _, ok := permittedActions[action]; !ok {
 		respondWithUnauthorizedError(ginctx)
 		return false
 	}

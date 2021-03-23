@@ -24,20 +24,20 @@ const (
 // GetApprovalRulesetAuthorizations returns which actions an OrganizationMember is
 // allowed to perform, on a target ApprovalRuleset.
 func GetApprovalRulesetAuthorizations(orgMember dbmodels.IOrganizationMember,
-	target dbmodels.ApprovalRuleset) map[ApprovalRulesetAction]bool {
+	target dbmodels.ApprovalRuleset) map[ApprovalRulesetAction]struct{} {
 
-	result := make(map[ApprovalRulesetAction]bool)
+	result := make(map[ApprovalRulesetAction]struct{})
 	concreteOrgMember := orgMember.GetOrganizationMember()
 
 	if concreteOrgMember.BaseModel.OrganizationID != target.BaseModel.OrganizationID {
 		return result
 	}
 
-	result[ActionReadAllApprovalRulesets] = true
-	result[ActionCreateApprovalRuleset] = true
-	result[ActionReadApprovalRuleset] = true
-	result[ActionUpdateApprovalRuleset] = true
-	result[ActionDeleteApprovalRuleset] = true
+	result[ActionReadAllApprovalRulesets] = struct{}{}
+	result[ActionCreateApprovalRuleset] = struct{}{}
+	result[ActionReadApprovalRuleset] = struct{}{}
+	result[ActionUpdateApprovalRuleset] = struct{}{}
+	result[ActionDeleteApprovalRuleset] = struct{}{}
 
 	return result
 }
@@ -49,7 +49,7 @@ func AuthorizeApprovalRulesetAction(ginctx *gin.Context, orgMember dbmodels.IOrg
 
 	permittedActions := GetApprovalRulesetAuthorizations(orgMember, target)
 
-	if !permittedActions[action] {
+	if _, ok := permittedActions[action]; !ok {
 		respondWithUnauthorizedError(ginctx)
 		return false
 	}

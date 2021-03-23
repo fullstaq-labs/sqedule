@@ -22,15 +22,15 @@ const (
 
 // GetOrganizationAuthorizations returns which actions an OrganizationMember is
 // allowed to perform, on a target Organization.
-func GetOrganizationAuthorizations(orgMember dbmodels.IOrganizationMember, targetOrganizationID string) map[OrganizationAction]bool {
-	result := make(map[OrganizationAction]bool)
+func GetOrganizationAuthorizations(orgMember dbmodels.IOrganizationMember, targetOrganizationID string) map[OrganizationAction]struct{} {
+	result := make(map[OrganizationAction]struct{})
 	concreteOrgMember := orgMember.GetOrganizationMember()
 
 	if concreteOrgMember.Role == organizationmemberrole.OrgAdmin {
-		result[ActionCreateOrganization] = true
-		result[ActionReadOrganization] = true
-		result[ActionUpdateOrganization] = true
-		result[ActionDeleteOrganization] = true
+		result[ActionCreateOrganization] = struct{}{}
+		result[ActionReadOrganization] = struct{}{}
+		result[ActionUpdateOrganization] = struct{}{}
+		result[ActionDeleteOrganization] = struct{}{}
 		return result
 	}
 
@@ -38,9 +38,9 @@ func GetOrganizationAuthorizations(orgMember dbmodels.IOrganizationMember, targe
 		return result
 	}
 
-	result[ActionReadOrganization] = true
+	result[ActionReadOrganization] = struct{}{}
 	if concreteOrgMember.Role == organizationmemberrole.Admin {
-		result[ActionUpdateOrganization] = true
+		result[ActionUpdateOrganization] = struct{}{}
 	}
 	return result
 }
@@ -52,7 +52,7 @@ func AuthorizeOrganizationAction(ginctx *gin.Context, orgMember dbmodels.IOrgani
 
 	permittedActions := GetOrganizationAuthorizations(orgMember, targetOrganizationID)
 
-	if !permittedActions[action] {
+	if _, ok := permittedActions[action]; !ok {
 		respondWithUnauthorizedError(ginctx)
 		return false
 	}

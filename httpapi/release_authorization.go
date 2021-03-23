@@ -22,20 +22,20 @@ const (
 // GetReleaseAuthorizations returns which actions an OrganizationMember is
 // allowed to perform, on a target Release.
 func GetReleaseAuthorizations(orgMember dbmodels.IOrganizationMember,
-	target dbmodels.Release) map[ReleaseAction]bool {
+	target dbmodels.Release) map[ReleaseAction]struct{} {
 
-	result := make(map[ReleaseAction]bool)
+	result := make(map[ReleaseAction]struct{})
 	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	result[ActionReadAllReleases] = true
+	result[ActionReadAllReleases] = struct{}{}
 
 	if concreteOrgMember.BaseModel.OrganizationID != target.BaseModel.OrganizationID {
 		return result
 	}
 
-	result[ActionReadRelease] = true
-	result[ActionUpdateRelease] = true
-	result[ActionDeleteRelease] = true
+	result[ActionReadRelease] = struct{}{}
+	result[ActionUpdateRelease] = struct{}{}
+	result[ActionDeleteRelease] = struct{}{}
 
 	return result
 }
@@ -47,7 +47,7 @@ func AuthorizeReleaseAction(ginctx *gin.Context, orgMember dbmodels.IOrganizatio
 
 	permittedActions := GetReleaseAuthorizations(orgMember, target)
 
-	if !permittedActions[action] {
+	if _, ok := permittedActions[action]; !ok {
 		respondWithUnauthorizedError(ginctx)
 		return false
 	}
