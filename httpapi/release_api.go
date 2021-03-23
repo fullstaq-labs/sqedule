@@ -54,17 +54,17 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 
 	if includeAppJSON {
 		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
-			dbmodels.CollectReleaseApplications(releases))
+			dbmodels.CollectApplicationsWithReleases(dbmodels.MakeReleasesPointerArray(releases)))
 		if err != nil {
 			respondWithDbQueryError("application versions", err, ginctx)
 			return
 		}
 	}
 
-	outputList := make([]releaseJSON, 0, len(releases))
+	outputList := make([]releaseWithAssociationsJSON, 0, len(releases))
 	for _, release := range releases {
 		outputList = append(outputList,
-			createReleaseJSONFromDbModel(release, len(applicationID) == 0, nil))
+			createReleaseWithAssociationsJSONFromDbModel(release, len(applicationID) == 0, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -122,7 +122,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 		err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
-			dbmodels.CollectApplicationApprovalRulesetBindingRulesets(appRuleBindings))
+			dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(appRuleBindings))
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	}
 
 	var bindings []dbmodels.ReleaseApprovalRulesetBinding
-	output := createReleaseJSONFromDbModel(release, includeAppJSON, &bindings)
+	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -213,7 +213,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, includeAppJSON, &bindings)
+	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -271,6 +271,6 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseJSONFromDbModel(release, includeAppJSON, &bindings)
+	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

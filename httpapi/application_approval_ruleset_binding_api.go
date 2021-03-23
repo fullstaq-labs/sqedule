@@ -45,7 +45,7 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 	}
 
 	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
-		dbmodels.CollectApplicationApprovalRulesetBindingRulesets(bindings))
+		dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings))
 	if err != nil {
 		respondWithDbQueryError("approval rulesets", err, ginctx)
 		return
@@ -54,7 +54,7 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 	outputList := make([]applicationApprovalRulesetBindingJSON, 0, len(bindings))
 	for _, binding := range bindings {
 		outputList = append(outputList, createApplicationApprovalRulesetBindingJSONFromDbModel(binding,
-			*binding.LatestMajorVersion, *binding.LatestMinorVersion, false))
+			*binding.LatestMajorVersion, *binding.LatestMinorVersion))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }

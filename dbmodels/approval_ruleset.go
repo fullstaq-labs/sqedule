@@ -100,12 +100,28 @@ func FindAllApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagina
 	return result, tx.Error
 }
 
-// CollectApprovalRulesetsWithoutStats ...
+func FindApprovalRuleset(db *gorm.DB, organizationID string, id string) (ApprovalRuleset, error) {
+	var result ApprovalRuleset
+
+	tx := db.Where("organization_id = ? AND id = ?", organizationID, id)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
+}
+
 func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {
 	result := make([]*ApprovalRuleset, 0)
 	for i := range rulesets {
 		ruleset := &rulesets[i]
 		result = append(result, &ruleset.ApprovalRuleset)
+	}
+	return result
+}
+
+func CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings []ApplicationApprovalRulesetBinding) []*ApprovalRuleset {
+	result := make([]*ApprovalRuleset, 0)
+	for i := range bindings {
+		binding := &bindings[i]
+		result = append(result, &binding.ApprovalRuleset)
 	}
 	return result
 }

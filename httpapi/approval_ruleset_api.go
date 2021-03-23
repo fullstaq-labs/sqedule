@@ -44,3 +44,63 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
+
+// GetApprovalRuleset ...
+func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
+	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	id := ginctx.Param("id")
+
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
+	if !AuthorizeApprovalRulesetAction(ginctx, orgMember, ruleset, ActionReadApprovalRuleset) {
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
+		[]*dbmodels.ApprovalRuleset{&ruleset})
+	if err != nil {
+		respondWithDbQueryError("approval ruleset latest versions", err, ginctx)
+		return
+	}
+
+	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
+		ctx.Db.Preload("Application"), orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
+		return
+	}
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appBindings))
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding latest versions", err, ginctx)
+		return
+	}
+	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+		dbmodels.CollectApplicationsWithApplicationApprovalRulesetBindings(appBindings))
+	if err != nil {
+		respondWithDbQueryError("application latest versions", err, ginctx)
+		return
+	}
+
+	releaseBindings, err := dbmodels.FindAllReleaseApprovalRulesetBindingsWithApprovalRuleset(
+		ctx.Db.Preload("Release.Application"), orgID, ruleset.ID)
+	if err != nil {
+		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)
+		return
+	}
+	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+		dbmodels.CollectApplicationsWithReleases(dbmodels.CollectReleasesWithReleaseApprovalRulesetBindings(releaseBindings)))
+	if err != nil {
+		respondWithDbQueryError("application latest versions", err, ginctx)
+		return
+	}
+
+	output := createApprovalRulesetWithBindingAssociationsJSONFromDbModel(ruleset, *ruleset.LatestMajorVersion,
+		*ruleset.LatestMinorVersion, appBindings, releaseBindings)
+	ginctx.JSON(http.StatusOK, output)
+}

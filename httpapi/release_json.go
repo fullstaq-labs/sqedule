@@ -8,25 +8,70 @@ import (
 )
 
 type releaseJSON struct {
-	Application             *applicationJSON                     `json:"application,omitempty"`
-	ID                      uint64                               `json:"id"`
-	State                   string                               `json:"state"`
-	SourceIdentity          *string                              `json:"source_identity"`
-	Comments                *string                              `json:"comments"`
-	CreatedAt               time.Time                            `json:"created_at"`
-	UpdatedAt               time.Time                            `json:"updated_at"`
-	FinalizedAt             *time.Time                           `json:"finalized_at"`
-	ApprovalRulesetBindings *[]releaseApprovalRulesetBindingJSON `json:"approval_ruleset_bindings,omitempty"`
+	ID             uint64     `json:"id"`
+	State          string     `json:"state"`
+	SourceIdentity *string    `json:"source_identity"`
+	Comments       *string    `json:"comments"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	FinalizedAt    *time.Time `json:"finalized_at"`
 }
 
-func createReleaseJSONFromDbModel(release dbmodels.Release, includeApplication bool,
-	rulesetBindings *[]dbmodels.ReleaseApprovalRulesetBinding) releaseJSON {
+type releaseWithApplicationAssociationJSON struct {
+	releaseJSON
+	Application applicationJSON `json:"application"`
+}
 
+type releaseWithAssociationsJSON struct {
+	releaseJSON
+	Application             *applicationJSON                                           `json:"application,omitempty"`
+	ApprovalRulesetBindings *[]releaseApprovalRulesetBindingWithRulesetAssociationJSON `json:"approval_ruleset_bindings,omitempty"`
+}
+
+func createReleaseJSONFromDbModel(release dbmodels.Release) releaseJSON {
 	result := releaseJSON{
 		ID:        release.ID,
 		State:     string(release.State),
 		CreatedAt: release.CreatedAt,
 		UpdatedAt: release.UpdatedAt,
+	}
+	if release.SourceIdentity.Valid {
+		result.SourceIdentity = &release.SourceIdentity.String
+	}
+	if release.Comments.Valid {
+		result.Comments = &release.Comments.String
+	}
+	if release.FinalizedAt.Valid {
+		result.FinalizedAt = &release.FinalizedAt.Time
+	}
+	return result
+}
+
+func createReleaseWithApplicationAssociationJSONFromDbModel(release dbmodels.Release) releaseWithApplicationAssociationJSON {
+
+	if release.Application.LatestMajorVersion == nil {
+		panic("Associated application must have an associated latest major version")
+	}
+	if release.Application.LatestMajorVersion.VersionNumber == nil {
+		panic("Associated application's associated latest major version must be finalized")
+	}
+	if release.Application.LatestMinorVersion == nil {
+		panic("Associated application must have an associated latest minor version")
+	}
+
+	return releaseWithApplicationAssociationJSON{
+		releaseJSON: createReleaseJSONFromDbModel(release),
+		Application: createApplicationJSONFromDbModel(release.Application,
+			*release.Application.LatestMajorVersion, *release.Application.LatestMinorVersion,
+			nil),
+	}
+}
+
+func createReleaseWithAssociationsJSONFromDbModel(release dbmodels.Release, includeApplication bool,
+	rulesetBindings *[]dbmodels.ReleaseApprovalRulesetBinding) releaseWithAssociationsJSON {
+
+	result := releaseWithAssociationsJSON{
+		releaseJSON: createReleaseJSONFromDbModel(release),
 	}
 	if includeApplication {
 		if release.Application.LatestMajorVersion == nil {
@@ -43,20 +88,11 @@ func createReleaseJSONFromDbModel(release dbmodels.Release, includeApplication b
 			nil)
 		result.Application = &applicationJSON
 	}
-	if release.SourceIdentity.Valid {
-		result.SourceIdentity = &release.SourceIdentity.String
-	}
-	if release.Comments.Valid {
-		result.Comments = &release.Comments.String
-	}
-	if release.FinalizedAt.Valid {
-		result.FinalizedAt = &release.FinalizedAt.Time
-	}
 	if rulesetBindings != nil {
-		rulesetBindingsJSON := make([]releaseApprovalRulesetBindingJSON, 0, len(*rulesetBindings))
+		rulesetBindingsJSON := make([]releaseApprovalRulesetBindingWithRulesetAssociationJSON, 0, len(*rulesetBindings))
 		for _, rulesetBinding := range *rulesetBindings {
 			rulesetBindingsJSON = append(rulesetBindingsJSON,
-				createReleaseApprovalRulesetBindingJSONFromDbModel(rulesetBinding))
+				createReleaseApprovalRulesetBindingWithRulesetAssociationJSONFromDbModel(rulesetBinding))
 		}
 		result.ApprovalRulesetBindings = &rulesetBindingsJSON
 	}

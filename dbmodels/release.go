@@ -44,12 +44,19 @@ func FindRelease(db *gorm.DB, organizationID string, applicationID string, relea
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// CollectReleaseApplications ...
-func CollectReleaseApplications(releases []Release) []*Application {
-	result := make([]*Application, 0)
+func MakeReleasesPointerArray(releases []Release) []*Release {
+	result := make([]*Release, 0, len(releases))
 	for i := range releases {
-		release := &releases[i]
-		result = append(result, &release.Application)
+		result = append(result, &releases[i])
+	}
+	return result
+}
+
+func CollectReleasesWithReleaseApprovalRulesetBindings(bindings []ReleaseApprovalRulesetBinding) []*Release {
+	result := make([]*Release, 0, len(bindings))
+	for i := range bindings {
+		binding := &bindings[i]
+		result = append(result, &binding.Release)
 	}
 	return result
 }

@@ -82,7 +82,7 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 	}
 
 	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
-		dbmodels.CollectApplicationApprovalRulesetBindingRulesets(bindings))
+		dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings))
 	if err != nil {
 		respondWithDbQueryError("approval ruleset versions", err, ginctx)
 		return

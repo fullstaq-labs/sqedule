@@ -5,15 +5,36 @@ import (
 )
 
 type releaseApprovalRulesetBindingJSON struct {
+	Mode string `json:"mode"`
+}
+
+type releaseApprovalRulesetBindingWithRulesetAssociationJSON struct {
+	releaseApprovalRulesetBindingJSON
 	ApprovalRuleset approvalRulesetJSON `json:"approval_ruleset"`
-	Mode            string              `json:"mode"`
+}
+
+type releaseApprovalRulesetBindingWithReleaseAssociationJSON struct {
+	releaseApprovalRulesetBindingJSON
+	Release releaseWithApplicationAssociationJSON `json:"release"`
 }
 
 func createReleaseApprovalRulesetBindingJSONFromDbModel(binding dbmodels.ReleaseApprovalRulesetBinding) releaseApprovalRulesetBindingJSON {
-	result := releaseApprovalRulesetBindingJSON{
-		ApprovalRuleset: createApprovalRulesetJSONFromDbModel(binding.ApprovalRuleset,
-			binding.ApprovalRulesetMajorVersion, binding.ApprovalRulesetMinorVersion),
+	return releaseApprovalRulesetBindingJSON{
 		Mode: string(binding.Mode),
 	}
-	return result
+}
+
+func createReleaseApprovalRulesetBindingWithReleaseAssociationJSONFromDbModel(binding dbmodels.ReleaseApprovalRulesetBinding) releaseApprovalRulesetBindingWithReleaseAssociationJSON {
+	return releaseApprovalRulesetBindingWithReleaseAssociationJSON{
+		releaseApprovalRulesetBindingJSON: createReleaseApprovalRulesetBindingJSONFromDbModel(binding),
+		Release:                           createReleaseWithApplicationAssociationJSONFromDbModel(binding.Release),
+	}
+}
+
+func createReleaseApprovalRulesetBindingWithRulesetAssociationJSONFromDbModel(binding dbmodels.ReleaseApprovalRulesetBinding) releaseApprovalRulesetBindingWithRulesetAssociationJSON {
+	return releaseApprovalRulesetBindingWithRulesetAssociationJSON{
+		releaseApprovalRulesetBindingJSON: createReleaseApprovalRulesetBindingJSONFromDbModel(binding),
+		ApprovalRuleset: createApprovalRulesetJSONFromDbModel(binding.ApprovalRuleset,
+			binding.ApprovalRulesetMajorVersion, binding.ApprovalRulesetMinorVersion),
+	}
 }

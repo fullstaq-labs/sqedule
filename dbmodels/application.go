@@ -55,6 +55,21 @@ func FindAllApplications(db *gorm.DB, organizationID string) ([]Application, err
 	return result, tx.Error
 }
 
+func FindAllApplicationsWithApprovalRuleset(db *gorm.DB, organizationID string, approvalRulesetID string) ([]Application, error) {
+	var result []Application
+	tx := db.
+		Table("application_approval_ruleset_bindings").
+		Select("applications.*").
+		Joins("LEFT JOIN applications "+
+			"ON applications.id = application_approval_ruleset_bindings.application_id "+
+			"AND applications.organization_id = application_approval_ruleset_bindings.organization_id").
+		Where("application_approval_ruleset_bindings.organization_id = ? "+
+			"AND application_approval_ruleset_bindings.approval_ruleset_id = ?",
+			organizationID, approvalRulesetID)
+	tx = tx.Find(&result)
+	return result, tx.Error
+}
+
 // FindApplication looks up an Application by its ID.
 // When not found, returns a `gorm.ErrRecordNotFound` error.
 func FindApplication(db *gorm.DB, organizationID string, id string) (Application, error) {
@@ -70,6 +85,31 @@ func MakeApplicationsPointerArray(apps []Application) []*Application {
 	result := make([]*Application, 0, len(apps))
 	for i := range apps {
 		result = append(result, &apps[i])
+	}
+	return result
+}
+
+func CollectApplicationsWithApplicationApprovalRulesetBindings(bindings []ApplicationApprovalRulesetBinding) []*Application {
+	result := make([]*Application, 0, len(bindings))
+	for i := range bindings {
+		binding := &bindings[i]
+		result = append(result, &binding.Application)
+	}
+	return result
+}
+
+func CollectApplicationsWithReleases(releases []*Release) []*Application {
+	result := make([]*Application, 0, len(releases))
+	for _, release := range releases {
+		result = append(result, &release.Application)
+	}
+	return result
+}
+
+func CollectApplicationIDs(apps []Application) []string {
+	result := make([]string, 0, len(apps))
+	for _, app := range apps {
+		result = append(result, app.ID)
 	}
 	return result
 }

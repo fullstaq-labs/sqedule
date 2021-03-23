@@ -67,24 +67,11 @@ func FindAllApplicationApprovalRulesetBindings(db *gorm.DB, organizationID strin
 	return result, tx.Error
 }
 
-// CollectApplicationApprovalRulesetBindingApplications ...
-func CollectApplicationApprovalRulesetBindingApplications(bindings []ApplicationApprovalRulesetBinding) []*Application {
-	result := make([]*Application, 0)
-	for i := range bindings {
-		binding := &bindings[i]
-		result = append(result, &binding.Application)
-	}
-	return result
-}
-
-// CollectApplicationApprovalRulesetBindingRulesets ...
-func CollectApplicationApprovalRulesetBindingRulesets(bindings []ApplicationApprovalRulesetBinding) []*ApprovalRuleset {
-	result := make([]*ApprovalRuleset, 0)
-	for i := range bindings {
-		binding := &bindings[i]
-		result = append(result, &binding.ApprovalRuleset)
-	}
-	return result
+func FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, organizationID string, rulesetID string) ([]ApplicationApprovalRulesetBinding, error) {
+	var result []ApplicationApprovalRulesetBinding
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID)
+	tx = tx.Find(&result)
+	return result, tx.Error
 }
 
 // MakeApplicationApprovalRulesetBindingsPointerArray ...
