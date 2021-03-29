@@ -23,9 +23,22 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
+import Button from '@material-ui/core/Button';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import Badge from '@material-ui/core/Badge';
+import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
+import CheckIcon from '@material-ui/icons/Check';
+import AccessTimeIcon from '@material-ui/icons/AccessTime';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Container from '@material-ui/core/Container';
 import { ColDef } from '@material-ui/data-grid';
 import styles from '../../../common/tables.module.scss';
+import badgeStyles from '../../../common/badges.module.scss';
+import eventStyles from '../../../components/approval_rule_processing_event.module.scss';
 
 interface IProps {
   appContext: IAppContext;
@@ -378,6 +391,56 @@ function ApprovalRulesetsTabContents(props: IApprovalRulesetsTabContentsProps) {
 
 function EventsTabContents(_props: any) {
   return (
-    <></>
+    <Paper>
+      <List>
+        <ListItem alignItems="flex-start">
+          <ListItemAvatar><AddCircleOutlineIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
+          <ListItemText
+            primary={<Typography variant="h6">Release created</Typography>}
+            secondary="2021-03-29 11:00:01" />
+        </ListItem>
+        <Divider variant="inset" component="li" />
+        <ListItem alignItems="flex-start">
+          <ListItemAvatar><AccessTimeIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
+          <ListItemText
+            primary={<Typography variant="h6"><TextWithBadge text="Schedule approval rule processed" status="success" /></Typography>}
+            secondary={
+              <>
+                <ul className={eventStyles.details_list}>
+                  <li>Processed at: 2021-03-29 11:00:01</li>
+                  <li>Ruleset: <Link href="/approval-rulesets/only%20afternoon">only afternoon</Link></li>
+                </ul>
+                <Button size="small" endIcon={<ExpandMoreIcon />}>View rule details</Button>
+              </>
+            } />
+        </ListItem>
+        <Divider variant="inset" component="li" />
+        <ListItem alignItems="flex-start">
+          <ListItemAvatar><CheckIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
+          <ListItemText
+            primary={<Typography variant="h6"><TextWithBadge text="Release finalized" status="success" /></Typography>}
+            secondary="2021-03-29 11:00:02" />
+        </ListItem>
+      </List>
+    </Paper>
+  );
+}
+
+interface ITextWithBadgeProps {
+  text: string;
+  status: 'success';
+}
+
+function TextWithBadge(props) {
+  const { text, status } = props;
+  return (
+    <>
+      {text}
+      {' '}
+      <Badge
+        badgeContent={status}
+        classes={{ badge: `${badgeStyles.text_only} ${badgeStyles[status]}` }}
+        />
+    </>
   );
 }

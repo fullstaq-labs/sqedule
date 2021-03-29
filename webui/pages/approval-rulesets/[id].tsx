@@ -293,7 +293,7 @@ function renderApprovalRule(rule: any, index: number) {
       {index > 0 && <Divider variant="inset" component="li" />}
       <ListItem alignItems="flex-start">
         <ListItemAvatar>
-          <AccessTimeIcon style={{ fontSize: '3rem' }} />
+          <AccessTimeIcon style={{ fontSize: '2.8rem' }} />
         </ListItemAvatar>
         <ListItemText
           primary={title}
