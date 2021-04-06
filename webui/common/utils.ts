@@ -76,6 +76,15 @@ export const useIsomorphicLayoutEffect =
   ? useLayoutEffect
   : useEffect;
 
+export function getBaseURL(): string {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:3001';
+  } else {
+    var hostWithoutIP = window.location.host.split(':')[0];
+    return `${window.location.protocol}//${hostWithoutIP}:3001`;
+  }
+}
+
 export function paginateArray<T>(ary: Array<T>, page: number, perPage: number): Array<T> {
   const startIndex = (page - 1) * perPage;
   return ary.slice(startIndex, startIndex + perPage + 1);
