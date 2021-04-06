@@ -16,9 +16,10 @@ const (
 )
 
 var serverFlags struct {
-	dbconn databaseConnectionFlags
-	bind   *string
-	port   *int
+	dbconn     databaseConnectionFlags
+	bind       *string
+	port       *int
+	corsOrigin *string
 }
 
 // serverCmd represents the 'server' command
@@ -43,7 +44,8 @@ var serverCmd = &cobra.Command{
 
 		engine := gin.Default()
 		ctx := httpapi.Context{
-			Db: db,
+			Db:         db,
+			CorsOrigin: *serverFlags.corsOrigin,
 		}
 
 		err = ctx.SetupRouter(engine)
@@ -63,4 +65,5 @@ func init() {
 
 	serverFlags.bind = serverCmd.Flags().String("bind", serverDefaultBind, "IP to listen on")
 	serverFlags.port = serverCmd.Flags().Int("port", serverDefaultPort, "port to listen on")
+	serverFlags.corsOrigin = serverCmd.Flags().String("cors-origin", "", "CORS origin to allow")
 }

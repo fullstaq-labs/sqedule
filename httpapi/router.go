@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"fmt"
-	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-contrib/cors"
@@ -16,17 +15,7 @@ func (ctx Context) SetupRouter(engine *gin.Engine) error {
 		return fmt.Errorf("error setting up authentication middleware: %w", err)
 	}
 
-	engine.Use(cors.New(cors.Config{
-		// TODO: change this
-		AllowOrigins:  []string{"https://localhost:3000"},
-		AllowMethods:  []string{"HEAD", "GET", "POST", "PATCH", "DELETE"},
-		AllowHeaders:  []string{"Authorization", "Content-Length", "Content-Type"},
-		ExposeHeaders: []string{"Content-Length"},
-		AllowOriginFunc: func(origin string) bool {
-			return true
-		},
-		MaxAge: 12 * time.Hour,
-	}))
+	engine.Use(cors.New(ctx.createCorsConfig()))
 
 	v1 := engine.Group("/v1")
 	authenticatedGroup := v1.Group("/")
