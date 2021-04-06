@@ -95,6 +95,10 @@ func TestCreateRelease(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+	_, _, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(ctx.db, ctx.org, app)
+	if !assert.NoError(t, err) {
+		return
+	}
 
 	req, err := ctx.NewRequestWithAuth("POST", "/v1/applications/"+app.ID+"/releases", gin.H{})
 	if !assert.NoError(t, err) {
@@ -109,11 +113,13 @@ func TestCreateRelease(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-
+	fmt.Printf("%#v\n", body)
 	assert.Nil(t, body["application"])
 	assert.Equal(t, "in_progress", body["state"])
 	assert.Nil(t, body["finalized_at"])
-	assert.Empty(t, body["approval_ruleset_bindings"])
+
+	bindingsJSON := body["approval_ruleset_bindings"].([]interface{})
+	assert.Equal(t, 2, len(bindingsJSON))
 
 	releases, err := dbmodels.FindAllReleases(ctx.db, ctx.org.ID, app.ID)
 	if !assert.Equal(t, 1, len(releases)) {
@@ -123,7 +129,7 @@ func TestCreateRelease(t *testing.T) {
 
 	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(ctx.db, ctx.org.ID, app.ID, releases[0].ID)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(bindings))
+	assert.Equal(t, 2, len(bindings))
 
 	var creationEvent dbmodels.ReleaseCreatedEvent
 	tx := ctx.db.Take(&creationEvent)

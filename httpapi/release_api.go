@@ -101,6 +101,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	}
 
 	var release dbmodels.Release
+	var releaseRulesetBindings []dbmodels.ReleaseApprovalRulesetBinding
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 		release = dbmodels.Release{
 			BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
@@ -112,22 +113,23 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 
-		appRuleBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(ctx.Db, orgID, applicationID)
+		appRulesetBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(
+			tx.Preload("ApprovalRuleset"), orgID, applicationID)
 		if err != nil {
 			return err
 		}
-		err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
-			dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appRuleBindings))
+		err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(tx, orgID,
+			dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appRulesetBindings))
 		if err != nil {
 			return err
 		}
-		err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
-			dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(appRuleBindings))
+		err = dbmodels.LoadApprovalRulesetsLatestVersions(tx, orgID,
+			dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(appRulesetBindings))
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateReleaseApprovalRulesetBindings(ctx.Db, release.ID, appRuleBindings)
+		releaseRulesetBindings, err = dbmodels.CreateReleaseApprovalRulesetBindings(tx, release.ID, appRulesetBindings)
 		if err != nil {
 			return err
 		}
@@ -163,8 +165,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	var bindings []dbmodels.ReleaseApprovalRulesetBinding
-	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &bindings)
+	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &releaseRulesetBindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
