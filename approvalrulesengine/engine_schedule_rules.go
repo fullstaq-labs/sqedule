@@ -13,9 +13,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func (engine Engine) loadScheduleRules(db *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
+func (engine Engine) loadScheduleRules(conditions *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
 	rules, err := dbmodels.FindAllScheduleApprovalRulesBelongingToVersions(
-		db, engine.Organization.ID, versionKeys)
+		engine.Db, conditions, engine.Organization.ID, versionKeys)
 	if err != nil {
 		return 0, err
 	}

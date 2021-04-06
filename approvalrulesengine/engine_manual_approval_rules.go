@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (engine Engine) loadManualApprovalRules(db *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
+func (engine Engine) loadManualApprovalRules(conditions *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
 	// TODO
 	//rules, err := dbmodels.FindAllManualApprovalRulesBelongingToVersions(
 	//	db, engine.Organization.ID, versionKeys)

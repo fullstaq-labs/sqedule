@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (engine Engine) loadHTTPApiRules(db *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
+func (engine Engine) loadHTTPApiRules(conditions *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
 	// TODO
 	//rules, err := dbmodels.FindAllHTTPApiApprovalRulesBelongingToVersions(
 	//	db, engine.Organization.ID, versionKeys)

@@ -90,7 +90,7 @@ func FindAllApprovalRulesWithRuleset(db *gorm.DB, organizationID string, ruleset
 }
 
 // FindAllScheduleApprovalRulesBelongingToVersions ...
-func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, organizationID string, versionKeys []ApprovalRulesetVersionKey) ([]ScheduleApprovalRule, error) {
+func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, conditions *gorm.DB, organizationID string, versionKeys []ApprovalRulesetVersionKey) ([]ScheduleApprovalRule, error) {
 	var result []ScheduleApprovalRule
 	var versionKeyConditions *gorm.DB = db
 
@@ -102,6 +102,9 @@ func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, organizationID
 	}
 
 	tx := db.Where("organization_id = ?", organizationID).Where(versionKeyConditions)
+	if conditions != nil {
+		tx = tx.Where(conditions)
+	}
 	tx = tx.Find(&result)
 	return result, tx.Error
 }
