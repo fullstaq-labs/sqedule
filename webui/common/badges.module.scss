@@ -1,0 +1,10 @@
+.text_only {
+    position: relative !important;
+    transform: none !important;
+    z-index: inherit !important;
+}
+
+.success {
+    color: white;
+    background: rgb(76, 175, 80);
+}
