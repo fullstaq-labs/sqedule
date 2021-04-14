@@ -1,0 +1,65 @@
+version: '3.5'
+
+services:
+  postgres:
+    networks:
+      - sqedule  
+    container_name: postgres_container
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+  
+  pgadmin:
+    networks:
+      - sqedule  
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+       - pgadmin:/root/.pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    restart: unless-stopped
+
+  sqedule-web:
+    networks:
+      - sqedule  
+    container_name: sqedule-web
+    environment: 
+      - REACT_APP_API_HOST=http://sqedule-server:3001
+    depends_on:
+      - sqedule-server
+    image: webui:latest
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+
+  sqedule-server:
+    networks:
+      - sqedule  
+    depends_on:
+      - postgres
+    container_name: sqedule-server
+    image: sqedule:latest
+    command: server --bind "" --db-type ${DB_TYPE} --db-connection 'dbname=${DB_NAME} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=postgres port=${POSTGRES_PORT}'
+    ports:
+      - 3001:3001
+    restart: unless-stopped
+
+networks:
+  sqedule:
+    driver: bridge
+
+volumes:
+    postgres:
+    pgadmin:
