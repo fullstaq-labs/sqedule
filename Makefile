@@ -16,27 +16,27 @@ define check_npm
 	@if [ ! $(NPM_TEST) ]; then \
 		echo "Cannot find or execute NPM binary $(NPM_EXECUTABLE), you can override it by setting the NPM_EXECUTABLE env variable"; \
 		exit 1; \
-	fi	
+	fi
 endef
 
 define check_docker_compose
 	@if [ ! $(DOCKER_COMPOSE_TEST) ]; then \
 		echo "Cannot find or execute docker-compose binary $(DOCKER_COMPOSE), you can override it by setting the DOCKER_COMPOSE env variable"; \
 		exit 1; \
-	fi	
+	fi
 endef
 
 define make_env
 	echo POSTGRES_USER=$(POSTGRES_USER) >> devtools/.env
 	echo POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) >> devtools/.env
 	echo POSTGRES_HOST=$(POSTGRES_HOST) >> devtools/.env
-	echo POSTGRES_PORT=$(POSTGRES_PORT) >> devtools/.env	
+	echo POSTGRES_PORT=$(POSTGRES_PORT) >> devtools/.env
 	echo DB_TYPE=$(DB_TYPE) >> devtools/.env
 	echo DB_NAME=$(DB_NAME) >> devtools/.env
 endef
 
 help: ## Displays help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-z0-9A-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-z0-9A-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 .PHONY: deps
 deps: ## Ensures fresh go.mod and go.sum.
@@ -61,11 +61,11 @@ web-start: ## Start web UI
 
 .PHONY: local-server-start
 local-server-start: ## Start server
-	@go run main.go server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	
+	@go run main.go server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-process-release
 process-release: ## Start process-release
-	@go run main.go process-release --organization-id $(ORG) --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	
+	@go run main.go process-release --organization-id $(ORG) --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-start-all
 start-all: ## Start the webUI and Server
@@ -82,16 +82,16 @@ local-db-seed: ## Seeds the database
 
 .PHONY: local-db-migrate
 local-db-migrate: ## Migrate database
-	@go run main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	
+	@go run main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-db-reset
 local-db-reset: ## Reset database
-	@go run main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	 --reset	
+	@go run main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	 --reset
 
 .PHONY: local-db-init
 local-db-init: ## Do all DB init steps, requires database
-	$(MAKE) local-db-create	
-	$(MAKE) local-db-migrate	
+	$(MAKE) local-db-create
+	$(MAKE) local-db-migrate
 	$(MAKE) local-db-seed
 
 .PHONY: docker-db-create
@@ -104,7 +104,7 @@ docker-db-seed: ## Seeds the database
 
 .PHONY: docker-db-migrate
 docker-db-migrate: ## Migrate database via docker
-	@docker run --network=devtools_sqedule sqedule:latest db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=postgres port=$(POSTGRES_PORT)'	
+	@docker run --network=devtools_sqedule sqedule:latest db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=postgres port=$(POSTGRES_PORT)'
 
 .PHONY: docker-database
 docker-database: ## Start a postgres & pgadmin docker env
@@ -120,7 +120,7 @@ docker-build-sqedule: ## Build docker image for sqedule
 
 .PHONY: docker-build-webui
 docker-build-webui: ## Build docker image for webUI
-	@docker build -t webui webui	
+	@docker build -t webui webui
 
 .PHONY: docker-full
 docker-full: ## Start a postgres, pgadmin, webUI & sqedule server docker env
@@ -130,12 +130,12 @@ docker-full: ## Start a postgres, pgadmin, webUI & sqedule server docker env
 
 .PHONY: docker-full-down
 docker-full-down: ## Stop the postgres, pgadmin, webUI & sqedule server docker env
-	@docker-compose -f devtools/docker-compose-full.yml down	
+	@docker-compose -f devtools/docker-compose-full.yml down
 
 .PHONY: docker-db-init
 docker-db-init: ## Do all DB init steps, requires either docker-full or docker-database
-	$(MAKE) docker-db-create	
-	$(MAKE) docker-db-migrate	
+	$(MAKE) docker-db-create
+	$(MAKE) docker-db-migrate
 	$(MAKE) docker-db-seed
 
 .PHONY: full-docker-init
