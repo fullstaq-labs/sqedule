@@ -1,0 +1,50 @@
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="191px" height="165px" viewBox="-0.5 -0.5 191 165" content="&lt;mxfile&gt;&lt;diagram id=&quot;8N_DtsPRXCIH5Bv7g5AB&quot; name=&quot;Page-1&quot;&gt;lVVNc5swEP01HNsxYBz7GIiTHpyZTHzoWUYyaCK0VIgY59d3JZYAIZ1xbcbWvn0r7ceTHcRZ1T0ZVpfPwIUKohXvgvghiKJdlOCnA649cLeNe6AwkvdQOAJH+SEIXBHaSi6aGdECKCvrOZiD1iK3M4wZA5c57QxqfmrNCrEAjjlTS/S35LYkNNzsRscvIYuSjt5Gd72jYgOZKmlKxuEygeJ9EGcGwParqsuEcr0b+tLHPf7D+5mYEdreEhD1Ae9MtVRbEG0Uhqa1y85eqeTNn9allCqpxY+SSrtHSrjBA5KRgKuCvv02pwHYd6yqlXgVDbQmF4MfUzstYsxXBFn1iEWz1KLmIivFNFrpGbQ9kmeFdl5KxQ/sCq3rRmNZ/jZYaQlGfiCfKXSFCKDbWBLbejVjHF0k7WlEg5yXocXhF+iZdTPigTV2yAaUYnUjTz4/F1gxU0idgrVQEWmo5lEqlYEC44uMz/7lSpzj+417u2RtNRSyFAHp4l0YK7oJRKJ4ElAJa65IIW+ckEDphoZbsi8Tve8IKydS93rw94zuWPG59yhDXJASv1dlvFDliwHe4k1GOSeprKrWMtfFxEkTuxC6zt1zji1vFvrAkq0fr4E3MbROQy+YSTcJYkoWGk0lzi7M9Uzi1b8n2ELtNqtZLnVx8JyH9Yi8UiscBBh7Vv56l5JzoZ0owLI+937cNUhtfauSFB9sXrb6mfjCMrTD0cbH0Y3NQGMtTPrhCpTXRTT227FHN4+dxry+dcrR/08ZzfF3zfsmfw7x/i8=&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs>
+        <clipPath id="mx-clip-4-46-182-120-0">
+            <rect x="4" y="46" width="182" height="120"/>
+        </clipPath>
+    </defs>
+    <g>
+        <path d="M 0 41 L 0 1 L 190 1 L 190 41" fill="#e6e6e6" stroke="#000000" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 0 41 L 0 161 L 190 161 L 190 41" fill="#ffffff" stroke="#000000" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 0 41 L 190 41" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 21px; margin-left: 95px;">
+                        <div style="box-sizing: border-box; font-size: 0; text-align: center; ">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: all; white-space: nowrap; ">
+                                <p style="line-height: 160%">
+                                    <b>
+                                        ExampleResource
+                                    </b>
+                                    <br/>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="95" y="25" fill="#000000" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    ExampleResource&#xa;
+                </text>
+            </switch>
+        </g>
+        <rect x="0" y="41" width="190" height="120" fill="none" stroke="none" pointer-events="all"/>
+        <g fill="#000000" font-family="Helvetica" clip-path="url(#mx-clip-4-46-182-120-0)" font-size="12px">
+            <text x="5.5" y="58.5">
+                Product [immutable]
+            </text>
+            <text x="5.5" y="72.5">
+                Address
+            </text>
+        </g>
+    </g>
+    <switch>
+        <g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/>
+        <a transform="translate(0,-5)" xlink:href="https://www.diagrams.net/doc/faq/svg-export-text-problems" target="_blank">
+            <text text-anchor="middle" font-size="10px" x="50%" y="100%">
+                Viewer does not support full SVG 1.1
+            </text>
+        </a>
+    </switch>
+</svg>
