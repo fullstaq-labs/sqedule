@@ -15,17 +15,17 @@ import (
 
 // HTTPTestContext ...
 type HTTPTestContext struct {
-	db           *gorm.DB
-	engine       *gin.Engine
-	httpCtx      Context
-	httpRecorder *httptest.ResponseRecorder
+	Db           *gorm.DB
+	Engine       *gin.Engine
+	HttpCtx      Context
+	HttpRecorder *httptest.ResponseRecorder
 
-	org            dbmodels.Organization
-	serviceAccount dbmodels.ServiceAccount
+	Org            dbmodels.Organization
+	ServiceAccount dbmodels.ServiceAccount
 }
 
 func (ctx HTTPTestContext) ServeHTTP(req *http.Request) {
-	ctx.engine.ServeHTTP(ctx.httpRecorder, req)
+	ctx.Engine.ServeHTTP(ctx.HttpRecorder, req)
 }
 
 // NewRequestWithAuth creates a new Request which is already authenticated
@@ -46,7 +46,7 @@ func (ctx HTTPTestContext) NewRequestWithAuth(method string, url string, body in
 
 	req, err := http.NewRequest(method, url, bodyIO)
 	if err == nil {
-		SetupHTTPTestAuthentication(req, ctx.org, ctx.serviceAccount)
+		SetupHTTPTestAuthentication(req, ctx.Org, ctx.ServiceAccount)
 	}
 	return req, err
 }
@@ -54,7 +54,7 @@ func (ctx HTTPTestContext) NewRequestWithAuth(method string, url string, body in
 // BodyJSON returns the response body as a JSON object.
 func (ctx HTTPTestContext) BodyJSON() (gin.H, error) {
 	var body gin.H
-	err := json.Unmarshal([]byte(ctx.httpRecorder.Body.String()), &body)
+	err := json.Unmarshal([]byte(ctx.HttpRecorder.Body.String()), &body)
 	return body, err
 }
 
@@ -63,29 +63,29 @@ func SetupHTTPTestContext() (HTTPTestContext, error) {
 	var ctx HTTPTestContext
 	var err error
 
-	ctx.db, err = dbutils.SetupTestDatabase()
+	ctx.Db, err = dbutils.SetupTestDatabase()
 	if err != nil {
 		return HTTPTestContext{}, err
 	}
 
-	ctx.engine = gin.Default()
+	ctx.Engine = gin.Default()
 	gin.SetMode(gin.DebugMode)
 
-	ctx.httpCtx = Context{Db: ctx.db, UseTestAuthentication: true}
-	err = ctx.httpCtx.SetupRouter(ctx.engine)
+	ctx.HttpCtx = Context{Db: ctx.Db, UseTestAuthentication: true}
+	err = ctx.HttpCtx.SetupRouter(ctx.Engine)
 	if err != nil {
 		return HTTPTestContext{}, err
 	}
 
-	ctx.httpRecorder = httptest.NewRecorder()
+	ctx.HttpRecorder = httptest.NewRecorder()
 
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ctx.org, err = dbmodels.CreateMockOrganization(ctx.db)
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		ctx.Org, err = dbmodels.CreateMockOrganization(ctx.Db)
 		if err != nil {
 			return err
 		}
 
-		ctx.serviceAccount, err = dbmodels.CreateMockServiceAccountWithAdminRole(ctx.db, ctx.org, nil)
+		ctx.ServiceAccount, err = dbmodels.CreateMockServiceAccountWithAdminRole(ctx.Db, ctx.Org, nil)
 		if err != nil {
 			return err
 		}

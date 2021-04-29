@@ -17,8 +17,8 @@ func TestGetAllApplications(t *testing.T) {
 	}
 
 	var app1, app2 dbmodels.Application
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		app1, err = dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org,
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		app1, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
 			func(app *dbmodels.Application) {
 				app.CreatedAt = time.Date(2021, 3, 8, 12, 0, 0, 0, time.Local)
 			},
@@ -27,7 +27,7 @@ func TestGetAllApplications(t *testing.T) {
 			return err
 		}
 
-		app2, err = dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org,
+		app2, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
 			func(app *dbmodels.Application) {
 				app.ID = "app2"
 				app.CreatedAt = time.Date(2021, 3, 8, 11, 0, 0, 0, time.Local)
@@ -39,12 +39,12 @@ func TestGetAllApplications(t *testing.T) {
 			return err
 		}
 
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.db, ctx.org, "ruleset1", nil)
+		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, app1,
+		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1,
 			ruleset, nil)
 		if err != nil {
 			return err
@@ -62,7 +62,7 @@ func TestGetAllApplications(t *testing.T) {
 	}
 	ctx.ServeHTTP(req)
 
-	if !assert.Equal(t, 200, ctx.httpRecorder.Code) {
+	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
 		return
 	}
 	body, err := ctx.BodyJSON()
@@ -106,18 +106,18 @@ func TestGetApplication(t *testing.T) {
 	}
 
 	var app dbmodels.Application
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org, nil, nil)
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
 		if err != nil {
 			return err
 		}
 
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.db, ctx.org, "ruleset1", nil)
+		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, app,
+		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app,
 			ruleset, nil)
 		if err != nil {
 			return err
@@ -135,7 +135,7 @@ func TestGetApplication(t *testing.T) {
 	}
 	ctx.ServeHTTP(req)
 
-	if !assert.Equal(t, 200, ctx.httpRecorder.Code) {
+	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
 		return
 	}
 	body, err := ctx.BodyJSON()

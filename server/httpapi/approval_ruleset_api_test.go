@@ -14,13 +14,13 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 		return
 	}
 
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.db, ctx.org, "ruleset1", nil)
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 		if err != nil {
 			return err
 		}
 
-		app1, err := dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org,
+		app1, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
 			func(app *dbmodels.Application) {
 				app.ID = "app1"
 			},
@@ -30,7 +30,7 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		app2, err := dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org,
+		app2, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
 			func(app *dbmodels.Application) {
 				app.ID = "app2"
 			},
@@ -41,37 +41,37 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, app1, ruleset, nil)
+		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1, ruleset, nil)
 		if err != nil {
 			return err
 		}
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, app2, ruleset, nil)
-		if err != nil {
-			return err
-		}
-
-		release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.db, ctx.org, app1, nil)
-		if err != nil {
-			return err
-		}
-		release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.db, ctx.org, app2, nil)
-		if err != nil {
-			return err
-		}
-		release3, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.db, ctx.org, app2, nil)
+		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app2, ruleset, nil)
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, release1, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app1, nil)
 		if err != nil {
 			return err
 		}
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, release2, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
 		if err != nil {
 			return err
 		}
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, release3, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		release3, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
+		if err != nil {
+			return err
+		}
+
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		if err != nil {
+			return err
+		}
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		if err != nil {
+			return err
+		}
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
 		if err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 	}
 	ctx.ServeHTTP(req)
 
-	if !assert.Equal(t, 200, ctx.httpRecorder.Code) {
+	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
 		return
 	}
 	body, err := ctx.BodyJSON()
@@ -120,34 +120,34 @@ func TestGetApprovalRuleset(t *testing.T) {
 
 	var mockRelease dbmodels.Release
 	var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.db, ctx.org, "ruleset1", nil)
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 		if err != nil {
 			return err
 		}
 
-		app, err := dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org, nil, nil)
+		app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, app, ruleset, nil)
+		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
 		if err != nil {
 			return err
 		}
 
-		mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.db, ctx.org, app, nil)
+		mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, mockRelease, ruleset,
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
 			*ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
 		if err != nil {
 			return err
 		}
 
-		mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
+		mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
 			ruleset.LatestMajorVersion.ID, *ruleset.LatestMinorVersion, nil)
 		if err != nil {
 			return err
@@ -165,7 +165,7 @@ func TestGetApprovalRuleset(t *testing.T) {
 	}
 	ctx.ServeHTTP(req)
 
-	if !assert.Equal(t, 200, ctx.httpRecorder.Code) {
+	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
 		return
 	}
 	ruleset, err := ctx.BodyJSON()

@@ -20,23 +20,23 @@ func TestGetRelease(t *testing.T) {
 
 	var app dbmodels.Application
 	var release dbmodels.Release
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org, nil, nil)
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
 		if err != nil {
 			return err
 		}
 
-		release, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.db, ctx.org, app, nil)
+		release, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
 		if err != nil {
 			return err
 		}
 
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.db, ctx.org, "ruleset1", nil)
+		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 		if err != nil {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.db, ctx.org, release,
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release,
 			ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
 		if err != nil {
 			return err
@@ -54,7 +54,7 @@ func TestGetRelease(t *testing.T) {
 	}
 	ctx.ServeHTTP(req)
 
-	if !assert.Equal(t, 200, ctx.httpRecorder.Code) {
+	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
 		return
 	}
 	body, err := ctx.BodyJSON()
@@ -91,11 +91,11 @@ func TestCreateRelease(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	app, err := dbmodels.CreateMockApplicationWith1Version(ctx.db, ctx.org, nil, nil)
+	app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
 	if !assert.NoError(t, err) {
 		return
 	}
-	_, _, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(ctx.db, ctx.org, app)
+	_, _, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(ctx.Db, ctx.Org, app)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -106,7 +106,7 @@ func TestCreateRelease(t *testing.T) {
 	}
 	ctx.ServeHTTP(req)
 
-	if !assert.Equal(t, 200, ctx.httpRecorder.Code) {
+	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
 		return
 	}
 	body, err := ctx.BodyJSON()
@@ -121,32 +121,32 @@ func TestCreateRelease(t *testing.T) {
 	bindingsJSON := body["approval_ruleset_bindings"].([]interface{})
 	assert.Equal(t, 2, len(bindingsJSON))
 
-	releases, err := dbmodels.FindAllReleases(ctx.db, ctx.org.ID, app.ID)
+	releases, err := dbmodels.FindAllReleases(ctx.Db, ctx.Org.ID, app.ID)
 	if !assert.Equal(t, 1, len(releases)) {
 		return
 	}
 	assert.Equal(t, releasestate.InProgress, releases[0].State)
 
-	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(ctx.db, ctx.org.ID, app.ID, releases[0].ID)
+	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(ctx.Db, ctx.Org.ID, app.ID, releases[0].ID)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(bindings))
 
 	var creationEvent dbmodels.ReleaseCreatedEvent
-	tx := ctx.db.Take(&creationEvent)
+	tx := ctx.Db.Take(&creationEvent)
 	err = dbutils.CreateFindOperationError(tx)
 	assert.NoError(t, err)
 
 	var creationRecord dbmodels.CreationAuditRecord
-	tx = ctx.db.Take(&creationRecord)
+	tx = ctx.Db.Take(&creationRecord)
 	err = dbutils.CreateFindOperationError(tx)
 	if assert.NoError(t, err) {
 		assert.False(t, creationRecord.OrganizationMemberIP.Valid)
-		assert.Equal(t, ctx.serviceAccount.Name, creationRecord.ServiceAccountName.String)
+		assert.Equal(t, ctx.ServiceAccount.Name, creationRecord.ServiceAccountName.String)
 		if assert.NotNil(t, creationRecord.ReleaseCreatedEventID) {
 			assert.Equal(t, creationEvent.ID, *creationRecord.ReleaseCreatedEventID)
 		}
 	}
 
-	_, err = dbmodels.FindReleaseBackgroundJob(ctx.db, ctx.org.ID, app.ID, releases[0].ID)
+	_, err = dbmodels.FindReleaseBackgroundJob(ctx.Db, ctx.Org.ID, app.ID, releases[0].ID)
 	assert.NoError(t, err)
 }
