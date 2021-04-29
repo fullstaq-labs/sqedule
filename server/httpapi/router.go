@@ -5,11 +5,13 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/controllers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func (ctx Context) SetupRouter(engine *gin.Engine) error {
+	controllerCtx := controllers.Context{Db: ctx.Db}
 	jwtAuthMiddleware, orgMemberLookupMiddleware, err := ctx.newAuthMiddlewares()
 	if err != nil {
 		return err
@@ -22,7 +24,7 @@ func (ctx Context) SetupRouter(engine *gin.Engine) error {
 
 	authenticatedGroup := v1.Group("/")
 	ctx.installAuthenticationMiddlewares(authenticatedGroup, jwtAuthMiddleware, orgMemberLookupMiddleware)
-	ctx.installAuthenticatedRoutes(authenticatedGroup)
+	ctx.installAuthenticatedRoutes(authenticatedGroup, controllerCtx)
 	return nil
 }
 
@@ -49,26 +51,6 @@ func (ctx Context) installAuthenticationMiddlewares(rg *gin.RouterGroup, jwtAuth
 	rg.Use(orgMemberLookupMiddleware)
 }
 
-func (ctx Context) installAuthenticatedRoutes(rg *gin.RouterGroup) {
-	// Organizations
-	rg.GET("organization", ctx.GetCurrentOrganization)
-	rg.PATCH("organization", ctx.PatchCurrentOrganization)
-	rg.GET("organizations/:id", ctx.GetOrganization)
-	rg.PATCH("organizations/:id", ctx.PatchOrganization)
-
-	// Applications
-	rg.GET("applications", ctx.GetAllApplications)
-	rg.GET("applications/:application_id", ctx.GetApplication)
-
-	// Releases
-	rg.GET("releases", ctx.GetAllReleases)
-	rg.GET("applications/:application_id/releases", ctx.GetAllReleases)
-	rg.POST("applications/:application_id/releases", ctx.CreateRelease)
-	rg.GET("applications/:application_id/releases/:id", ctx.GetRelease)
-	rg.PATCH("applications/:application_id/releases/:id", ctx.PatchRelease)
-
-	// Approval rulesets
-	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.GetAllApplicationApprovalRulesetBindings)
-	rg.GET("approval-rulesets", ctx.GetAllApprovalRulesets)
-	rg.GET("approval-rulesets/:id", ctx.GetApprovalRuleset)
+func (ctx Context) installAuthenticatedRoutes(rg *gin.RouterGroup, controllerCtx controllers.Context) {
+	controllerCtx.InstallRoutes(rg)
 }

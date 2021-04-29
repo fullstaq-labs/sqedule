@@ -1,4 +1,4 @@
-package httpapi
+package controllers
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -71,11 +72,12 @@ func SetupHTTPTestContext() (HTTPTestContext, error) {
 	ctx.Engine = gin.Default()
 	gin.SetMode(gin.DebugMode)
 
-	ctx.HttpCtx = Context{Db: ctx.Db, UseTestAuthentication: true}
-	err = ctx.HttpCtx.SetupRouter(ctx.Engine)
-	if err != nil {
-		return HTTPTestContext{}, err
-	}
+	orgMemberLookupMiddleware := auth.NewOrgMemberLookupMiddleware(ctx.Db, true)
+	routingGroup := ctx.Engine.Group("/v1")
+	routingGroup.Use(orgMemberLookupMiddleware)
+
+	ctx.HttpCtx = Context{Db: ctx.Db}
+	ctx.HttpCtx.InstallRoutes(routingGroup)
 
 	ctx.HttpRecorder = httptest.NewRecorder()
 

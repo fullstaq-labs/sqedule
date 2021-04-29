@@ -16,6 +16,7 @@ The main server code is located in `server/`. Here are its subdirectories:
  * `dbutils/` — Generic database-related utility code that's not specific to Sqedule's business domain.
  * `httpapi/` — The backend JSON API server (backed by [Gin](https://github.com/gin-gonic/gin)) and everything closely related. Includes routing.
      - `auth/` — JSON API server authentication.
+     - `controllers/` — Main code for handling API endpoints.
      - `json/` — Database-models-to-JSON serialization, and JSON-to-database-models conversion.
 
 ## Web UI
