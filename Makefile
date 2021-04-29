@@ -61,11 +61,11 @@ web-start: ## Start web UI
 
 .PHONY: local-server-start
 local-server-start: ## Start server
-	@go run main.go server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
+	@go run cmd/sqedule-server/main.go server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-process-release
 process-release: ## Start process-release
-	@go run main.go process-release --organization-id $(ORG) --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
+	@go run cmd/sqedule-server/main.go process-release --organization-id $(ORG) --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-start-all
 start-all: ## Start the webUI and Server
@@ -82,11 +82,11 @@ local-db-seed: ## Seeds the database
 
 .PHONY: local-db-migrate
 local-db-migrate: ## Migrate database
-	@go run main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
+	@go run cmd/sqedule-server/main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-db-reset
 local-db-reset: ## Reset database
-	@go run main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	 --reset
+	@go run cmd/sqedule-server/main.go db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	 --reset
 
 .PHONY: local-db-init
 local-db-init: ## Do all DB init steps, requires database
