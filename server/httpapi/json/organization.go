@@ -1,20 +1,20 @@
-package httpapi
+package json
 
 import "github.com/fullstaq-labs/sqedule/server/dbmodels"
 
-type organizationJSON struct {
+type Organization struct {
 	ID          *string `json:"id"`
 	DisplayName *string `json:"display_name"`
 }
 
-func createOrganizationJSONFromDbModel(organization dbmodels.Organization) organizationJSON {
-	return organizationJSON{
+func CreateFromDbOrganization(organization dbmodels.Organization) Organization {
+	return Organization{
 		ID:          &organization.ID,
 		DisplayName: &organization.DisplayName,
 	}
 }
 
-func patchOrganizationDbModelFromJSON(organization *dbmodels.Organization, json organizationJSON) {
+func PatchDbOrganization(organization *dbmodels.Organization, json Organization) {
 	if json.ID != nil {
 		organization.ID = *json.ID
 	}

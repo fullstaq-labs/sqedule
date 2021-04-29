@@ -1,4 +1,4 @@
-package httpapi
+package json
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
-type approvalRulesetJSON struct {
+type ApprovalRuleset struct {
 	ID                 string    `json:"id"`
 	MajorVersionNumber *uint32   `json:"major_version_number"`
 	MinorVersionNumber uint32    `json:"minor_version_number"`
@@ -21,26 +21,26 @@ type approvalRulesetJSON struct {
 	UpdatedAt          time.Time `json:"updated_at"`
 }
 
-type approvalRulesetWithStatsJSON struct {
-	approvalRulesetJSON
+type ApprovalRulesetWithStats struct {
+	ApprovalRuleset
 	NumBoundApplications uint `json:"num_bound_applications"`
 	NumBoundReleases     uint `json:"num_bound_releases"`
 }
 
-type approvalRulesetWithBindingAndRuleAssocationsJSON struct {
-	approvalRulesetJSON
-	ApplicationApprovalRulesetBindings []applicationApprovalRulesetBindingWithApplicationAssociationJSON `json:"application_approval_ruleset_bindings"`
-	ReleaseApprovalRulesetBindings     []releaseApprovalRulesetBindingWithReleaseAssociationJSON         `json:"release_approval_ruleset_bindings"`
-	ApprovalRules                      []map[string]interface{}                                          `json:"approval_rules"`
+type ApprovalRulesetWithBindingAndRuleAssocations struct {
+	ApprovalRuleset
+	ApplicationApprovalRulesetBindings []ApplicationApprovalRulesetBindingWithApplicationAssociation `json:"application_approval_ruleset_bindings"`
+	ReleaseApprovalRulesetBindings     []ReleaseApprovalRulesetBindingWithReleaseAssociation         `json:"release_approval_ruleset_bindings"`
+	ApprovalRules                      []map[string]interface{}                                      `json:"approval_rules"`
 }
 
-func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) approvalRulesetJSON {
+func CreateFromDbApprovalRuleset(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) ApprovalRuleset {
 	var reviewComments *string
 	if minorVersion.ReviewComments.Valid {
 		reviewComments = &minorVersion.ReviewComments.String
 	}
 
-	result := approvalRulesetJSON{
+	result := ApprovalRuleset{
 		ID:                 ruleset.ID,
 		MajorVersionNumber: majorVersion.VersionNumber,
 		MinorVersionNumber: minorVersion.VersionNumber,
@@ -56,24 +56,26 @@ func createApprovalRulesetJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majo
 	return result
 }
 
-func createApprovalRulesetWithStatsJSONFromDbModel(ruleset dbmodels.ApprovalRulesetWithStats, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) approvalRulesetWithStatsJSON {
-	result := approvalRulesetWithStatsJSON{
-		approvalRulesetJSON:  createApprovalRulesetJSONFromDbModel(ruleset.ApprovalRuleset, majorVersion, minorVersion),
+func CreateFromDbApprovalRulesetWithStats(ruleset dbmodels.ApprovalRulesetWithStats, majorVersion dbmodels.ApprovalRulesetMajorVersion,
+	minorVersion dbmodels.ApprovalRulesetMinorVersion) ApprovalRulesetWithStats {
+
+	result := ApprovalRulesetWithStats{
+		ApprovalRuleset:      CreateFromDbApprovalRuleset(ruleset.ApprovalRuleset, majorVersion, minorVersion),
 		NumBoundApplications: ruleset.NumBoundApplications,
 		NumBoundReleases:     ruleset.NumBoundReleases,
 	}
 	return result
 }
 
-func createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion,
-	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) approvalRulesetWithBindingAndRuleAssocationsJSON {
+func CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion,
+	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithBindingAndRuleAssocations {
 
 	var ruleTypesProcessed uint = 0
 
-	result := approvalRulesetWithBindingAndRuleAssocationsJSON{
-		approvalRulesetJSON:                createApprovalRulesetJSONFromDbModel(ruleset, majorVersion, minorVersion),
-		ApplicationApprovalRulesetBindings: make([]applicationApprovalRulesetBindingWithApplicationAssociationJSON, 0, len(appBindings)),
-		ReleaseApprovalRulesetBindings:     make([]releaseApprovalRulesetBindingWithReleaseAssociationJSON, 0, len(releaseBindings)),
+	result := ApprovalRulesetWithBindingAndRuleAssocations{
+		ApprovalRuleset:                    CreateFromDbApprovalRuleset(ruleset, majorVersion, minorVersion),
+		ApplicationApprovalRulesetBindings: make([]ApplicationApprovalRulesetBindingWithApplicationAssociation, 0, len(appBindings)),
+		ReleaseApprovalRulesetBindings:     make([]ReleaseApprovalRulesetBindingWithReleaseAssociation, 0, len(releaseBindings)),
 		ApprovalRules:                      make([]map[string]interface{}, 0),
 	}
 
@@ -89,18 +91,18 @@ func createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset 
 		}
 
 		result.ApplicationApprovalRulesetBindings = append(result.ApplicationApprovalRulesetBindings,
-			createApplicationApprovalRulesetBindingWithApplicationAssociationJSONFromDbModel(binding,
+			CreateFromDbApplicationApprovalRulesetBindingWithApplicationAssociation(binding,
 				*binding.LatestMajorVersion, *binding.LatestMinorVersion))
 	}
 
 	for _, binding := range releaseBindings {
 		result.ReleaseApprovalRulesetBindings = append(result.ReleaseApprovalRulesetBindings,
-			createReleaseApprovalRulesetBindingWithReleaseAssociationJSONFromDbModel(binding))
+			CreateFromDbReleaseApprovalRulesetBindingWithReleaseAssociation(binding))
 	}
 
 	ruleTypesProcessed++
 	for _, rule := range rules.HTTPApiApprovalRules {
-		subJSON := createApprovalRuleJSONFromDbModel(rule.ApprovalRule)
+		subJSON := CreateFromDbApprovalRule(rule.ApprovalRule)
 		subJSON["type"] = "http_api"
 		// TODO
 		result.ApprovalRules = append(result.ApprovalRules, subJSON)
@@ -108,7 +110,7 @@ func createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset 
 
 	ruleTypesProcessed++
 	for _, rule := range rules.ScheduleApprovalRules {
-		subJSON := createApprovalRuleJSONFromDbModel(rule.ApprovalRule)
+		subJSON := CreateFromDbApprovalRule(rule.ApprovalRule)
 		subJSON["type"] = "schedule"
 		subJSON["begin_time"] = getSqlStringContentsOrNil(rule.BeginTime)
 		subJSON["end_time"] = getSqlStringContentsOrNil(rule.EndTime)
@@ -120,7 +122,7 @@ func createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset 
 
 	ruleTypesProcessed++
 	for _, rule := range rules.ManualApprovalRules {
-		subJSON := createApprovalRuleJSONFromDbModel(rule.ApprovalRule)
+		subJSON := CreateFromDbApprovalRule(rule.ApprovalRule)
 		subJSON["type"] = "manual"
 		// TODO
 		result.ApprovalRules = append(result.ApprovalRules, subJSON)
@@ -133,7 +135,7 @@ func createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset 
 	return result
 }
 
-func createApprovalRuleJSONFromDbModel(rule dbmodels.ApprovalRule) map[string]interface{} {
+func CreateFromDbApprovalRule(rule dbmodels.ApprovalRule) map[string]interface{} {
 	return map[string]interface{}{
 		"id":         rule.ID,
 		"enabled":    rule.Enabled,

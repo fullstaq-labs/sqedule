@@ -7,6 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,9 +41,9 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 		return
 	}
 
-	outputList := make([]approvalRulesetWithStatsJSON, 0, len(rulesets))
+	outputList := make([]json.ApprovalRulesetWithStats, 0, len(rulesets))
 	for _, ruleset := range rulesets {
-		outputList = append(outputList, createApprovalRulesetWithStatsJSONFromDbModel(ruleset,
+		outputList = append(outputList, json.CreateFromDbApprovalRulesetWithStats(ruleset,
 			*ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
@@ -114,7 +115,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	output := createApprovalRulesetWithBindingAndRuleAssociationsJSONFromDbModel(ruleset, *ruleset.LatestMajorVersion,
+	output := json.CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset, *ruleset.LatestMajorVersion,
 		*ruleset.LatestMinorVersion, appBindings, releaseBindings, rules)
 	ginctx.JSON(http.StatusOK, output)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,9 +41,9 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 		return
 	}
 
-	outputList := make([]applicationJSON, 0, len(apps))
+	outputList := make([]json.Application, 0, len(apps))
 	for _, app := range apps {
-		outputList = append(outputList, createApplicationJSONFromDbModel(app, *app.LatestMajorVersion, *app.LatestMinorVersion, nil))
+		outputList = append(outputList, json.CreateFromDbApplication(app, *app.LatestMajorVersion, *app.LatestMinorVersion, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -93,6 +94,6 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 		return
 	}
 
-	output := createApplicationJSONFromDbModel(app, *app.LatestMajorVersion, *app.LatestMinorVersion, &bindings)
+	output := json.CreateFromDbApplication(app, *app.LatestMajorVersion, *app.LatestMinorVersion, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

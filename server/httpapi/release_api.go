@@ -10,6 +10,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -64,10 +65,10 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 		}
 	}
 
-	outputList := make([]releaseWithAssociationsJSON, 0, len(releases))
+	outputList := make([]json.ReleaseWithAssociations, 0, len(releases))
 	for _, release := range releases {
 		outputList = append(outputList,
-			createReleaseWithAssociationsJSONFromDbModel(release, len(applicationID) == 0, nil))
+			json.CreateFromDbReleaseWithAssociations(release, len(applicationID) == 0, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -91,7 +92,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	var input releaseJSON
+	var input json.Release
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
@@ -113,7 +114,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			ApplicationID: applicationID,
 			State:         releasestate.InProgress,
 		}
-		patchReleaseDbModelFromJSON(&release, input)
+		json.PatchDbRelease(&release, input)
 		if err := tx.Create(&release).Error; err != nil {
 			return err
 		}
@@ -170,7 +171,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &releaseRulesetBindings)
+	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &releaseRulesetBindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -221,7 +222,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		return
 	}
 
-	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &bindings)
+	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -251,7 +252,7 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
-	var input releaseJSON
+	var input json.Release
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
@@ -275,12 +276,12 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
-	patchReleaseDbModelFromJSON(&release, input)
+	json.PatchDbRelease(&release, input)
 	if err = ctx.Db.Save(&release).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	output := createReleaseWithAssociationsJSONFromDbModel(release, includeAppJSON, &bindings)
+	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

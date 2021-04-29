@@ -7,6 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/gin-gonic/gin"
 )
 
@@ -55,9 +56,9 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 		return
 	}
 
-	outputList := make([]applicationApprovalRulesetBindingJSON, 0, len(bindings))
+	outputList := make([]json.ApplicationApprovalRulesetBinding, 0, len(bindings))
 	for _, binding := range bindings {
-		outputList = append(outputList, createApplicationApprovalRulesetBindingJSONFromDbModel(binding,
+		outputList = append(outputList, json.CreateFromDbApplicationApprovalRulesetBinding(binding,
 			*binding.LatestMajorVersion, *binding.LatestMinorVersion))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})

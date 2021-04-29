@@ -1,4 +1,4 @@
-package httpapi
+package json
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
-type releaseJSON struct {
+type Release struct {
 	ID             uint64     `json:"id"`
 	State          string     `json:"state"`
 	SourceIdentity *string    `json:"source_identity"`
@@ -17,19 +17,19 @@ type releaseJSON struct {
 	FinalizedAt    *time.Time `json:"finalized_at"`
 }
 
-type releaseWithApplicationAssociationJSON struct {
-	releaseJSON
-	Application applicationJSON `json:"application"`
+type ReleaseWithApplicationAssociation struct {
+	Release
+	Application Application `json:"application"`
 }
 
-type releaseWithAssociationsJSON struct {
-	releaseJSON
-	Application             *applicationJSON                                           `json:"application,omitempty"`
-	ApprovalRulesetBindings *[]releaseApprovalRulesetBindingWithRulesetAssociationJSON `json:"approval_ruleset_bindings,omitempty"`
+type ReleaseWithAssociations struct {
+	Release
+	Application             *Application                                           `json:"application,omitempty"`
+	ApprovalRulesetBindings *[]ReleaseApprovalRulesetBindingWithRulesetAssociation `json:"approval_ruleset_bindings,omitempty"`
 }
 
-func createReleaseJSONFromDbModel(release dbmodels.Release) releaseJSON {
-	result := releaseJSON{
+func CreateFromDbRelease(release dbmodels.Release) Release {
+	result := Release{
 		ID:        release.ID,
 		State:     string(release.State),
 		CreatedAt: release.CreatedAt,
@@ -47,8 +47,7 @@ func createReleaseJSONFromDbModel(release dbmodels.Release) releaseJSON {
 	return result
 }
 
-func createReleaseWithApplicationAssociationJSONFromDbModel(release dbmodels.Release) releaseWithApplicationAssociationJSON {
-
+func CreateFromDbReleaseWithApplicationAssociation(release dbmodels.Release) ReleaseWithApplicationAssociation {
 	if release.Application.LatestMajorVersion == nil {
 		panic("Associated application must have an associated latest major version")
 	}
@@ -59,19 +58,19 @@ func createReleaseWithApplicationAssociationJSONFromDbModel(release dbmodels.Rel
 		panic("Associated application must have an associated latest minor version")
 	}
 
-	return releaseWithApplicationAssociationJSON{
-		releaseJSON: createReleaseJSONFromDbModel(release),
-		Application: createApplicationJSONFromDbModel(release.Application,
+	return ReleaseWithApplicationAssociation{
+		Release: CreateFromDbRelease(release),
+		Application: CreateFromDbApplication(release.Application,
 			*release.Application.LatestMajorVersion, *release.Application.LatestMinorVersion,
 			nil),
 	}
 }
 
-func createReleaseWithAssociationsJSONFromDbModel(release dbmodels.Release, includeApplication bool,
-	rulesetBindings *[]dbmodels.ReleaseApprovalRulesetBinding) releaseWithAssociationsJSON {
+func CreateFromDbReleaseWithAssociations(release dbmodels.Release, includeApplication bool,
+	rulesetBindings *[]dbmodels.ReleaseApprovalRulesetBinding) ReleaseWithAssociations {
 
-	result := releaseWithAssociationsJSON{
-		releaseJSON: createReleaseJSONFromDbModel(release),
+	result := ReleaseWithAssociations{
+		Release: CreateFromDbRelease(release),
 	}
 	if includeApplication {
 		if release.Application.LatestMajorVersion == nil {
@@ -83,23 +82,23 @@ func createReleaseWithAssociationsJSONFromDbModel(release dbmodels.Release, incl
 		if release.Application.LatestMinorVersion == nil {
 			panic("Associated application must have an associated latest minor version")
 		}
-		applicationJSON := createApplicationJSONFromDbModel(release.Application,
+		applicationJSON := CreateFromDbApplication(release.Application,
 			*release.Application.LatestMajorVersion, *release.Application.LatestMinorVersion,
 			nil)
 		result.Application = &applicationJSON
 	}
 	if rulesetBindings != nil {
-		rulesetBindingsJSON := make([]releaseApprovalRulesetBindingWithRulesetAssociationJSON, 0, len(*rulesetBindings))
+		rulesetBindingsJSON := make([]ReleaseApprovalRulesetBindingWithRulesetAssociation, 0, len(*rulesetBindings))
 		for _, rulesetBinding := range *rulesetBindings {
 			rulesetBindingsJSON = append(rulesetBindingsJSON,
-				createReleaseApprovalRulesetBindingWithRulesetAssociationJSONFromDbModel(rulesetBinding))
+				CreateFromDbReleaseApprovalRulesetBindingWithRulesetAssociation(rulesetBinding))
 		}
 		result.ApprovalRulesetBindings = &rulesetBindingsJSON
 	}
 	return result
 }
 
-func patchReleaseDbModelFromJSON(release *dbmodels.Release, json releaseJSON) {
+func PatchDbRelease(release *dbmodels.Release, json Release) {
 	if json.SourceIdentity != nil {
 		release.SourceIdentity = sql.NullString{String: *json.SourceIdentity, Valid: true}
 	}
