@@ -5,12 +5,13 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
 )
 
 // GetCurrentOrganization ...
 func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
 	authorizer := authz.OrganizationAuthorizer{}
@@ -31,7 +32,7 @@ func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 
 // PatchCurrentOrganization ...
 func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
 	authorizer := authz.OrganizationAuthorizer{}
@@ -64,7 +65,7 @@ func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 
 // GetOrganization ...
 func (ctx Context) GetOrganization(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
 
 	authorizer := authz.OrganizationAuthorizer{}
@@ -85,7 +86,7 @@ func (ctx Context) GetOrganization(ginctx *gin.Context) {
 
 // PatchOrganization ...
 func (ctx Context) PatchOrganization(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
 
 	authorizer := authz.OrganizationAuthorizer{}

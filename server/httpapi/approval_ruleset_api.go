@@ -6,12 +6,13 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
 )
 
 // GetAllApprovalRulesets ...
 func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
 	authorizer := authz.ApprovalRulesetAuthorizer{}
@@ -49,7 +50,7 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 
 // GetApprovalRuleset ...
 func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	id := ginctx.Param("id")
 

@@ -1,4 +1,4 @@
-package httpapi
+package auth
 
 import (
 	"errors"
@@ -12,12 +12,13 @@ import (
 )
 
 const (
-	orgIDClaim         = "orgid"
-	orgMemberTypeClaim = "omt"
-	orgMemberIDClaim   = "omid"
+	jwtOrgIDClaim         = "orgid"
+	jwtOrgMemberTypeClaim = "omt"
+	jwtOrgMemberIDClaim   = "omid"
 )
 
-func (ctx Context) createJwtAuthMiddleware() (*jwt.GinJWTMiddleware, error) {
+func NewJwtMiddleware(db *gorm.DB) (*jwt.GinJWTMiddleware, error) {
+	m := jwtMiddleware{Db: db}
 	return jwt.New(&jwt.GinJWTMiddleware{
 		Realm:         "Sqedule",
 		Key:           []byte("secret key"),
@@ -26,31 +27,35 @@ func (ctx Context) createJwtAuthMiddleware() (*jwt.GinJWTMiddleware, error) {
 		TokenLookup:   "header:Authorization",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
-		Authenticator: ctx.jwtLoginOrganizationMember,
-		PayloadFunc:   jwtConvertOrgMemberToClaims,
+		Authenticator: m.run,
+		PayloadFunc:   m.convertOrgMemberToClaims,
 	})
 }
 
-type loginVals struct {
+type jwtMiddleware struct {
+	Db *gorm.DB
+}
+
+type jwtLoginVals struct {
 	OrganizationID     string `json:"organization_id"`
 	Email              string `json:"email"`
 	ServiceAccountName string `json:"service_account_name"`
 	AccessToken        string `json:"access_token"`
 }
 
-func (ctx Context) jwtLoginOrganizationMember(ginctx *gin.Context) (interface{}, error) {
-	var loginVals loginVals
+func (m jwtMiddleware) run(ginctx *gin.Context) (interface{}, error) {
+	var loginVals jwtLoginVals
 	var orgMember dbmodels.IOrganizationMember
 	var err error
 
 	if err = ginctx.ShouldBind(&loginVals); err != nil {
 		return nil, jwt.ErrMissingLoginValues
 	}
-	if err = jwtValidateLoginVals(loginVals); err != nil {
+	if err = m.validateLoginVals(loginVals); err != nil {
 		return nil, err
 	}
 
-	if orgMember, err = ctx.jwtLookupOrganizationMemberWithLoginVals(loginVals); err != nil {
+	if orgMember, err = m.lookupOrgMemberWithLoginVals(loginVals); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("incorrect organization ID or %s", orgMember.IDTypeDisplayName())
 		}
@@ -68,19 +73,19 @@ func (ctx Context) jwtLoginOrganizationMember(ginctx *gin.Context) (interface{},
 	return orgMember, nil
 }
 
-func (ctx Context) jwtLookupOrganizationMemberWithLoginVals(loginVals loginVals) (dbmodels.IOrganizationMember, error) {
+func (m jwtMiddleware) lookupOrgMemberWithLoginVals(loginVals jwtLoginVals) (dbmodels.IOrganizationMember, error) {
 	if len(loginVals.Email) > 0 {
-		return dbmodels.FindUserByEmail(ctx.Db, loginVals.OrganizationID,
+		return dbmodels.FindUserByEmail(m.Db, loginVals.OrganizationID,
 			loginVals.Email)
 	} else if len(loginVals.ServiceAccountName) > 0 {
-		return dbmodels.FindServiceAccountByName(ctx.Db, loginVals.OrganizationID,
+		return dbmodels.FindServiceAccountByName(m.Db, loginVals.OrganizationID,
 			loginVals.ServiceAccountName)
 	} else {
 		panic("Bug")
 	}
 }
 
-func jwtValidateLoginVals(loginVals loginVals) error {
+func (m jwtMiddleware) validateLoginVals(loginVals jwtLoginVals) error {
 	if len(loginVals.OrganizationID) == 0 {
 		return errors.New("missing organization ID")
 	}
@@ -96,11 +101,11 @@ func jwtValidateLoginVals(loginVals loginVals) error {
 	return nil
 }
 
-func jwtConvertOrgMemberToClaims(data interface{}) jwt.MapClaims {
+func (m jwtMiddleware) convertOrgMemberToClaims(data interface{}) jwt.MapClaims {
 	orgMember := data.(dbmodels.IOrganizationMember)
 	return jwt.MapClaims{
-		orgIDClaim:         orgMember.GetOrganizationMember().BaseModel.OrganizationID,
-		orgMemberTypeClaim: orgMember.Type(),
-		orgMemberIDClaim:   orgMember.ID(),
+		jwtOrgIDClaim:         orgMember.GetOrganizationMember().BaseModel.OrganizationID,
+		jwtOrgMemberTypeClaim: orgMember.Type(),
+		jwtOrgMemberIDClaim:   orgMember.ID(),
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -16,7 +17,7 @@ import (
 
 // GetAllReleases ...
 func (ctx Context) GetAllReleases(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
@@ -73,7 +74,7 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 
 // CreateRelease ...
 func (ctx Context) CreateRelease(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
@@ -175,7 +176,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 
 // GetRelease ...
 func (ctx Context) GetRelease(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
@@ -226,7 +227,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 
 // PatchRelease ...
 func (ctx Context) PatchRelease(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0

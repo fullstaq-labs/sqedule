@@ -6,12 +6,13 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
 )
 
 // GetAllApplications ...
 func (ctx Context) GetAllApplications(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
 	authorizer := authz.ApplicationAuthorizer{}
@@ -48,7 +49,7 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 
 // GetApplication ...
 func (ctx Context) GetApplication(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	id := ginctx.Param("application_id")
 

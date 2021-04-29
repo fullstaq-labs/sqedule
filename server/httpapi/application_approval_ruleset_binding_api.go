@@ -6,12 +6,13 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
 )
 
 // GetAllApplicationApprovalRulesetBindings ...
 func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context) {
-	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 	applicationID := ginctx.Param("application_id")
 
