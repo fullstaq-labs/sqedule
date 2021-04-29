@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 
+	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
@@ -13,8 +14,9 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
-	authTarget := dbmodels.Application{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
-	if !AuthorizeApplicationAction(ginctx, orgMember, authTarget, ActionReadAllApplications) {
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApplications) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -62,7 +64,9 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 		return
 	}
 
-	if !AuthorizeApplicationAction(ginctx, orgMember, app, ActionReadApplication) {
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, app) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 

@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 
+	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
@@ -13,8 +14,9 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
-	authTarget := dbmodels.ApprovalRuleset{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
-	if !AuthorizeApprovalRulesetAction(ginctx, orgMember, authTarget, ActionReadAllApprovalRulesets) {
+	authorizer := authz.ApprovalRulesetAuthorizer{}
+	if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApprovalRulesets) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -57,7 +59,9 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	if !AuthorizeApprovalRulesetAction(ginctx, orgMember, ruleset, ActionReadApprovalRuleset) {
+	authorizer := authz.ApprovalRulesetAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 

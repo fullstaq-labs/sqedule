@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 
+	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,9 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 		return
 	}
 
-	if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionReadApplication) {
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 

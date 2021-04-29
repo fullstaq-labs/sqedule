@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 
+	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +13,9 @@ func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
-	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionReadOrganization) {
+	authorizer := authz.OrganizationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadOrganization, orgID) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -31,7 +34,9 @@ func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
 
-	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionUpdateOrganization) {
+	authorizer := authz.OrganizationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -62,7 +67,9 @@ func (ctx Context) GetOrganization(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
 
-	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionReadOrganization) {
+	authorizer := authz.OrganizationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadOrganization, orgID) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -81,7 +88,9 @@ func (ctx Context) PatchOrganization(ginctx *gin.Context) {
 	orgMember := GetAuthenticatedOrganizationMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
 
-	if !AuthorizeOrganizationAction(ginctx, orgMember, orgID, ActionUpdateOrganization) {
+	authorizer := authz.OrganizationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 

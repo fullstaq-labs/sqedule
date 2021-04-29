@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
@@ -27,12 +28,13 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 			return
 		}
 
-		if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionReadApplication) {
+		authorizer := authz.ApplicationAuthorizer{}
+		if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+			respondWithUnauthorizedError(ginctx)
 			return
 		}
-	} else if !AuthorizeReleaseAction(ginctx, orgMember, dbmodels.Release{},
-		ActionReadAllReleases) {
-
+	} else if !authz.AuthorizeCollectionAction(authz.ReleaseAuthorizer{}, orgMember, authz.ActionListReleases) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -82,7 +84,9 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	if !AuthorizeApplicationAction(ginctx, orgMember, application, ActionCreateRelease) {
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionCreateRelease, application) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -200,7 +204,9 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		}
 	}
 
-	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionReadRelease) {
+	authorizer := authz.ReleaseAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadRelease, release) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
@@ -238,7 +244,9 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
-	if !AuthorizeReleaseAction(ginctx, orgMember, release, ActionUpdateRelease) {
+	authorizer := authz.ReleaseAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateRelease, release) {
+		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
