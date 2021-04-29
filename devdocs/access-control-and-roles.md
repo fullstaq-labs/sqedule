@@ -13,8 +13,8 @@ We control access through the use of predefined roles. Each [organization member
 | Delete organization member            |             | ✔︎     |                |            |           |
 | Propose application & ruleset changes |             | ✔︎     | ✔︎              | ✔︎          |           |
 | Approve application & ruleset changes |             | ✔︎     | ✔︎              |            |           |
-| Create deployment request             |             | ✔︎     | ✔︎              | ✔︎          |           |
-| Cancel deployment request             |             | ✔︎     | ✔︎              | ✔︎          |           |
+| Create release                        |             | ✔︎     | ✔︎              | ✔︎          |           |
+| Cancel release                        |             | ✔︎     | ✔︎              | ✔︎          |           |
 | Approving "manual approval" rule      |             | ✔︎     | ✔︎              |            |           |
 
  * (1) = Only if organization has no admins
