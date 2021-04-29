@@ -10,10 +10,13 @@ Server entrypoint sources:
 The main server code is located in `server/`. Here are its subdirectories:
 
  * `approvalrulesengine/` — The engine for applying Approval Rules on Releases.
+ * `authz` — Authorization. Determining which users are allowed to perform what actions on which domain resources.
  * `dbmigrations/` — Database migrations, backed by [Gormigrate](https://github.com/go-gormigrate/gormigrate).
  * `dbmodels/` — Database models, backed by [GORM](https://gorm.io/).
  * `dbutils/` — Generic database-related utility code that's not specific to Sqedule's business domain.
- * `httpapi/` — The backend JSON API server (backed by [Gin](https://github.com/gin-gonic/gin)) and everything closely related. Routing, authentication, authorization, database-to-JSON serialization, and JSON-to-database conversion.
+ * `httpapi/` — The backend JSON API server (backed by [Gin](https://github.com/gin-gonic/gin)) and everything closely related. Includes routing.
+     - `auth/` — JSON API server authentication.
+     - `json/` — Database-models-to-JSON serialization, and JSON-to-database-models conversion.
 
 ## Web UI
 
