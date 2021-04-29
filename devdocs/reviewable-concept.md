@@ -20,13 +20,20 @@ Reviewable resources are _versioned_. Every change results in a new version. Old
 
 Creating a resource for the first time, or modifying an existing resource, doesn't happen in one step. It happens in multiple steps, accompanied by a review process. This is called the _change process_. Every step inside the change process is called a _subchange_.
 
-When a change process begins, the system creates a new _major version_ of the resource. This major version starts in the "draft" review state, and has no version number (yet).
-
-As part of the process, reviewers may approve or reject, or the author of the change may revise the contents or abandon the entire change process altogether. Each of these events is called a _subchange_. When a subchange happens, the system does not modify the existing version object. Instead, it creates a new _minor version_ of the resource, representing the most up-to-date contents and review state.
-
-The change process ends upon approval. When this happens, a version number is assigned to the major version object. This version number is _mutable_: it's assigned to the existing major version in-place: no new major version object is created.
-
 ![](reviewable-change-process.drawio.svg)
+
+ * When a change process begins, the system creates a new _major version_ of the resource. This major version is no yet approved, and thus has no version number yet.
+ * The contents may start in the draft state, which means that it isn't ready for review. This draft can be revised multiple times, each time perhaps by a different author. Once someone decides it's ready, s/he finalizes the draft. The review process then begins.
+ * The system first automatically determines whether the submitted contents may result in a change in overall system behavior. If not (for example, when creating a new Ruleset which isn't bound to any Applications), then the system automatically approves the major version.
+ * If the system determines that a manual review is necessary, the system changes the major version to the "reviewing" state and awaits a review.
+ * Multiple non-approved major versions (multiple parallel proposals) may exist simultaneously. If during the reviewing state, some *other* major version for the same resource is approved, then system automatically changes our major version back to the "draft" state, in order to prevent a reviewer from approving contents that's out-of-date with the latest reality.
+ * If a reviewer rejects the contents, then the major version transitions to the "rejected" state. Someone can then decide to revise the contents, either as draft, or as final (which immediately pushes the contents into the review process again).
+ * At any time (except when the major version is approved) someone may abandon this major version. In the abandoned state, someone may reopen (revise) the major version, either as draft or as final.
+ * The change process ends upon approval. When this happens, a version number is assigned to the major version object.
+
+Any of the above events are subchanges. When a subchange happens, creates a new _minor version_ of the resource, representing the most up-to-date contents and review state. The system does not modify previous minor versions. The system also does not modify the major version, except on approval (in order to set the version number).
+
+The major version number is _mutable_: it's assigned to the existing major version in-place: no new major version object is created.
 
 You can compare this change process with software development pull requests:
 
@@ -37,19 +44,14 @@ You can compare this change process with software development pull requests:
 
 ## Major and minor versions
 
-A major version represents a change process. A minor version represents a change inside the change process.
+A major version represents a change process. A minor version represents a subchange inside the change process. The minor versions together form a timeline, an editing history of the major version.
 
-A change begins as a draft. It may be revised, abandoned and/or reviewed multiple times, until it's finally approved. Each such individual subchange may be done by a different person. In order to keep track of all this history, we split versions in two levels: major and minor.
+A major version object contains very little information. It mainly exists to group minor versions together. Instead, the minor version object stores most information:
 
- * A major version represents the change process itself.
- * Minor versions describe the editing history of a major version. They represent each subchange.
-
-A major version object contains very little information. It mainly exists to group minor versions together. The minor version object stores most information:
-
- * The full resource contents.
+ * The versioned resource fields.
  * The review state and potential comments.
  * If the resource is [disableable](disableable-resources.md): the enable state and potential comments.
- * The author who made this change.
+ * The author who made this change (via CreationAuditRecord).
 
 ### Version object immutability
 
