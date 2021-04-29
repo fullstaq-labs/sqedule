@@ -16,20 +16,16 @@ We implement polymorphic associations through the use of multiple foreign keys, 
 For example, let's take a look at CreationAuditRecord, which has a 0..1 reference to OrganizationMember (which can be either User or ServiceAccount):
 
 ~~~sql
-CREATE TABLE service_account (
+CREATE TABLE creation_audit_records (
   ...
 
   -- Foreign key for User association
   user_email TEXT
-    REFERENCES users (email)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
+    REFERENCES users (email),
 
   -- Foreign key for ServiceAccount association
   service_account_name TEXT
-    REFERENCES service_accounts (name)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
+    REFERENCES service_accounts (name),
 
   -- Check constraint: there's either a User association, or ServiceAccount association, or either
   CHECK (
