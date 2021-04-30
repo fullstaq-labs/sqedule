@@ -11,7 +11,6 @@ import (
 
 const NumApprovalRuleTypes = 3
 
-// ApprovalRule ...
 type ApprovalRule struct {
 	BaseModel
 	ID                                uint64                      `gorm:"primaryKey; autoIncrement; not null"`
@@ -22,7 +21,6 @@ type ApprovalRule struct {
 	CreatedAt                         time.Time                   `gorm:"not null"`
 }
 
-// HTTPApiApprovalRule ...
 type HTTPApiApprovalRule struct {
 	ApprovalRule
 	URL              string `gorm:"not null"`
@@ -33,7 +31,6 @@ type HTTPApiApprovalRule struct {
 	RetryLimit       int                `gorm:"not null; default:1; check:((retry_policy = 'retry_on_fail') = (retry_limit IS NOT NULL))"`
 }
 
-// ScheduleApprovalRule ...
 type ScheduleApprovalRule struct {
 	ApprovalRule
 	BeginTime    sql.NullString `gorm:"check:((begin_time IS NULL) = (end_time IS NULL))"`
@@ -43,20 +40,27 @@ type ScheduleApprovalRule struct {
 	MonthsOfYear sql.NullString
 }
 
-// ManualApprovalRule ...
 type ManualApprovalRule struct {
 	ApprovalRule
 	ApprovalPolicy approvalpolicy.Policy `gorm:"type:approval_policy; not null"`
 	Minimum        sql.NullInt32         `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
 }
 
+// ApprovalRulesetContents represents a collection of ApprovalRules.
+// It's capable of containing all supported ApprovalRule types in a way that doesn't
+// use pointers, and that doesn't require typecasting.
+//
+// ApprovalRulesetContents is a more efficient alternative to `[]*ApprovalRule`. This
+// latter requires pointers and is thus not as memory-efficient. Furthermore,
+// this latter requires the use of casting to find out which specific subtype an
+// element is.
 type ApprovalRulesetContents struct {
 	HTTPApiApprovalRules  []HTTPApiApprovalRule
 	ScheduleApprovalRules []ScheduleApprovalRule
 	ManualApprovalRules   []ManualApprovalRule
 }
 
-func FindAllApprovalRulesWithRuleset(db *gorm.DB, organizationID string, rulesetVersionKey ApprovalRulesetVersionKey) (ApprovalRulesetContents, error) {
+func FindAllApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, rulesetVersionKey ApprovalRulesetVersionKey) (ApprovalRulesetContents, error) {
 	var result ApprovalRulesetContents
 	var query, tx *gorm.DB
 	var ruleTypesProcessed uint = 0
@@ -89,7 +93,6 @@ func FindAllApprovalRulesWithRuleset(db *gorm.DB, organizationID string, ruleset
 	return result, nil
 }
 
-// FindAllScheduleApprovalRulesBelongingToVersions ...
 func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, conditions *gorm.DB, organizationID string, versionKeys []ApprovalRulesetVersionKey) ([]ScheduleApprovalRule, error) {
 	var result []ScheduleApprovalRule
 	var versionKeyConditions *gorm.DB
