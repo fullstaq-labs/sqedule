@@ -335,7 +335,7 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 			Organization:   organization,
 		},
 		ApplicationID: app.ID,
-		LockID:        1,
+		LockSubID:     1,
 		ReleaseID:     release.ID,
 		Release:       release,
 	}

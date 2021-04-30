@@ -17,7 +17,7 @@ import (
 const ReleaseBackgroundJobPostgresLockNamespace uint64 = 1 * 0xffffffff
 
 // ReleaseBackgroundJobMaxLockID is the maximum value that `ReleaseBackgroundJob.LockID` may have.
-var ReleaseBackgroundJobMaxLockID uint32 = uint32(math.Pow(2, 31)) - 1
+var ReleaseBackgroundJobMaxLockSubID uint32 = uint32(math.Pow(2, 31)) - 1
 
 // ReleaseBackgroundJob ...
 type ReleaseBackgroundJob struct {
@@ -25,7 +25,7 @@ type ReleaseBackgroundJob struct {
 	ApplicationID string    `gorm:"type:citext; primaryKey; not null"`
 	ReleaseID     uint64    `gorm:"primaryKey; not null"`
 	Release       Release   `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	LockID        uint32    `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
+	LockSubID     uint32    `gorm:"type:int; autoIncrement; unique; not null; check:(lock_sub_id > 0)"`
 	CreatedAt     time.Time `gorm:"not null"`
 }
 
@@ -57,9 +57,9 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organizationID string, app
 				Release:       release,
 			}
 			if numTry > 0 {
-				// We were unable to obtain a free lock ID through auto-incrementation.
+				// We were unable to obtain a free lock sub-ID through auto-incrementation.
 				// So pick a random one instead.
-				job.LockID = uint32(uint64(rand.Uint32()) % (uint64(ReleaseBackgroundJobMaxLockID) + 1))
+				job.LockSubID = uint32(uint64(rand.Uint32()) % (uint64(ReleaseBackgroundJobMaxLockSubID) + 1))
 			}
 			savetx := tx.Omit(clause.Associations).Create(&job)
 			if savetx.Error != nil {
@@ -70,7 +70,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organizationID string, app
 		})
 
 		if err != nil {
-			if dbutils.IsUniqueConstraintError(err, "release_background_jobs_lock_id_key") {
+			if dbutils.IsUniqueConstraintError(err, "release_background_jobs_lock_sub_id_key") {
 				// Try again
 				err = nil
 			}
@@ -85,7 +85,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organizationID string, app
 	if err != nil {
 		return ReleaseBackgroundJob{}, numTry, err
 	}
-	return ReleaseBackgroundJob{}, numTry, fmt.Errorf("Unable to find a free lock ID after %d tries", maxTries)
+	return ReleaseBackgroundJob{}, numTry, fmt.Errorf("Unable to find a free lock sub-ID after %d tries", maxTries)
 }
 
 // FindReleaseBackgroundJob looks up a ReleaseBackgroundJob by its application ID and release ID.

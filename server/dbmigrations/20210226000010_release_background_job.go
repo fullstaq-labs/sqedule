@@ -51,7 +51,7 @@ var migration20210226000010 = gormigrate.Migration{
 			ApplicationID string    `gorm:"type:citext; primaryKey; not null"`
 			ReleaseID     uint64    `gorm:"primaryKey; not null"`
 			Release       Release   `gorm:"foreignKey:OrganizationID,ApplicationID,ReleaseID; references:OrganizationID,ApplicationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-			LockID        uint32    `gorm:"type:int; autoIncrement; unique; not null; check:(lock_id > 0)"`
+			LockSubID     uint32    `gorm:"type:int; autoIncrement; unique; not null; check:(lock_sub_id > 0)"`
 			CreatedAt     time.Time `gorm:"not null"`
 		}
 

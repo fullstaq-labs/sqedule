@@ -77,7 +77,7 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 		if !assert.NoError(t, err) {
 			return nil
 		}
-		nextLockID := (job.LockID + 1) % ReleaseBackgroundJobMaxLockID
+		nextLockSubID := (job.LockSubID + 1) % ReleaseBackgroundJobMaxLockSubID
 		err = tx.Delete(&job).Error
 		if !assert.NoError(t, err) {
 			return nil
@@ -90,7 +90,7 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 			},
 			ApplicationID: ctx.app.ID,
 			ReleaseID:     release2.ID,
-			LockID:        nextLockID,
+			LockSubID:     nextLockSubID,
 		}
 		err = tx.Create(&job).Error
 		if !assert.NoError(t, err) {
@@ -103,8 +103,8 @@ func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
 			return nil
 		}
 		assert.Equal(t, uint(2), numTries)
-		assert.NotEqual(t, (nextLockID+1)%ReleaseBackgroundJobMaxLockID, job.LockID,
-			"Expect lock ID to be random, not auto-incremented")
+		assert.NotEqual(t, (nextLockSubID+1)%ReleaseBackgroundJobMaxLockSubID, job.LockSubID,
+			"Expect lock sub-ID to be random, not auto-incremented")
 
 		return nil
 	})
@@ -127,7 +127,7 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 		if !assert.NoError(t, err) {
 			return nil
 		}
-		nextLockID := (job.LockID + 1) % ReleaseBackgroundJobMaxLockID
+		nextLockSubID := (job.LockSubID + 1) % ReleaseBackgroundJobMaxLockSubID
 		err = tx.Delete(&job).Error
 		if !assert.NoError(t, err) {
 			return nil
@@ -140,7 +140,7 @@ func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) 
 			},
 			ApplicationID: ctx.app.ID,
 			ReleaseID:     release2.ID,
-			LockID:        nextLockID,
+			LockSubID:     nextLockSubID,
 		}
 		err = tx.Create(&job).Error
 		if !assert.NoError(t, err) {

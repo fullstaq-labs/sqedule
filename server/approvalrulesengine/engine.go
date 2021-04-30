@@ -143,7 +143,7 @@ func (engine Engine) unlock() {
 }
 
 func (engine Engine) getPostgresAdvisoryLockID() uint64 {
-	return dbmodels.ReleaseBackgroundJobPostgresLockNamespace + uint64(engine.ReleaseBackgroundJob.LockID)
+	return dbmodels.ReleaseBackgroundJobPostgresLockNamespace + uint64(engine.ReleaseBackgroundJob.LockSubID)
 }
 
 func (engine Engine) loadRules() ([]ruleset, uint, error) {
