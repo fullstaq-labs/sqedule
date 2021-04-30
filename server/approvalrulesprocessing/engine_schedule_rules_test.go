@@ -1,4 +1,4 @@
-package approvalrulesengine
+package approvalrulesprocessing
 
 import (
 	"database/sql"

@@ -1,4 +1,4 @@
-package approvalrulesengine
+package approvalrulesprocessing
 
 import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"

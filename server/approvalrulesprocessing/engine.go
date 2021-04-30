@@ -1,4 +1,4 @@
-package approvalrulesengine
+package approvalrulesprocessing
 
 import (
 	"database/sql"
@@ -12,7 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// Engine ...
+// Engine processes a Release based on its bound ApprovalRules.
+// It accepts a Release which hasn't been fully processed yet. This is
+// done by passing the corresponding ReleaseBackgroundJob.
 type Engine struct {
 	Db                   *gorm.DB
 	Organization         dbmodels.Organization

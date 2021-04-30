@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/fullstaq-labs/sqedule/server/approvalrulesengine"
+	"github.com/fullstaq-labs/sqedule/server/approvalrulesprocessing"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/spf13/cobra"
@@ -62,7 +62,7 @@ var processReleaseCmd = &cobra.Command{
 			}
 		}
 
-		engine := approvalrulesengine.Engine{
+		engine := approvalrulesprocessing.Engine{
 			Db:                   db,
 			Organization:         organization,
 			ReleaseBackgroundJob: job,
