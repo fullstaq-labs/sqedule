@@ -92,16 +92,22 @@ func FindAllApprovalRulesWithRuleset(db *gorm.DB, organizationID string, ruleset
 // FindAllScheduleApprovalRulesBelongingToVersions ...
 func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, conditions *gorm.DB, organizationID string, versionKeys []ApprovalRulesetVersionKey) ([]ScheduleApprovalRule, error) {
 	var result []ScheduleApprovalRule
-	var versionKeyConditions *gorm.DB = db
+	var versionKeyConditions *gorm.DB
 
 	for _, versionKey := range versionKeys {
-		versionKeyConditions = versionKeyConditions.Or(
-			db.Where("approval_ruleset_major_version_id = ? AND approval_ruleset_minor_version_number = ?",
-				versionKey.MajorVersionID, versionKey.MinorVersionNumber),
-		)
+		versionKeyCondition := db.Where("approval_ruleset_major_version_id = ? AND approval_ruleset_minor_version_number = ?",
+			versionKey.MajorVersionID, versionKey.MinorVersionNumber)
+		if versionKeyConditions == nil {
+			versionKeyConditions = versionKeyCondition
+		} else {
+			versionKeyConditions = versionKeyConditions.Or(versionKeyCondition)
+		}
 	}
 
-	tx := db.Where("organization_id = ?", organizationID).Where(versionKeyConditions)
+	tx := db.Where("organization_id = ?", organizationID)
+	if versionKeyConditions != nil {
+		tx = tx.Where(versionKeyConditions)
+	}
 	if conditions != nil {
 		tx = tx.Where(conditions)
 	}
