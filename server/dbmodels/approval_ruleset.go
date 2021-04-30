@@ -83,23 +83,9 @@ type ApprovalRulesetContents struct {
 
 // NumRules returns the total number of rules in this ApprovalRulesetContents.
 func (c ApprovalRulesetContents) NumRules() uint {
-	var ruleTypesProcessed uint = 0
-	var result uint = 0
-
-	ruleTypesProcessed++
-	result += uint(len(c.HTTPApiApprovalRules))
-
-	ruleTypesProcessed++
-	result += uint(len(c.ScheduleApprovalRules))
-
-	ruleTypesProcessed++
-	result += uint(len(c.ManualApprovalRules))
-
-	if ruleTypesProcessed != NumApprovalRuleTypes {
-		panic("Bug: code does not cover all approval rule types")
-	}
-
-	return result
+	return uint(len(c.HTTPApiApprovalRules)) +
+		uint(len(c.ScheduleApprovalRules)) +
+		uint(len(c.ManualApprovalRules))
 }
 
 // FindAllApprovalRulesetsWithStats ...
