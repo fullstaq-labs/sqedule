@@ -19,9 +19,8 @@ type OrganizationAuthorizer struct{}
 // allowed to perform.
 func (OrganizationAuthorizer) CollectionAuthorizations(orgMember dbmodels.IOrganizationMember) map[CollectionAction]struct{} {
 	result := make(map[CollectionAction]struct{})
-	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	if concreteOrgMember.Role == organizationmemberrole.OrgAdmin {
+	if orgMember.GetRole() == organizationmemberrole.OrgAdmin {
 		result[ActionCreateOrganization] = struct{}{}
 	}
 
@@ -32,21 +31,20 @@ func (OrganizationAuthorizer) CollectionAuthorizations(orgMember dbmodels.IOrgan
 // allowed to perform, on a target Organization ID.
 func (OrganizationAuthorizer) SingularAuthorizations(orgMember dbmodels.IOrganizationMember, targetOrganizationID interface{}) map[SingularAction]struct{} {
 	result := make(map[SingularAction]struct{})
-	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	if concreteOrgMember.Role == organizationmemberrole.OrgAdmin {
+	if orgMember.GetRole() == organizationmemberrole.OrgAdmin {
 		result[ActionReadOrganization] = struct{}{}
 		result[ActionUpdateOrganization] = struct{}{}
 		result[ActionDeleteOrganization] = struct{}{}
 		return result
 	}
 
-	if concreteOrgMember.BaseModel.OrganizationID != targetOrganizationID.(string) {
+	if orgMember.GetOrganizationID() != targetOrganizationID.(string) {
 		return result
 	}
 
 	result[ActionReadOrganization] = struct{}{}
-	if concreteOrgMember.Role == organizationmemberrole.Admin {
+	if orgMember.GetRole() == organizationmemberrole.Admin {
 		result[ActionUpdateOrganization] = struct{}{}
 	}
 

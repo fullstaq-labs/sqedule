@@ -34,9 +34,8 @@ func (ApplicationAuthorizer) SingularAuthorizations(orgMember dbmodels.IOrganiza
 	target interface{}) map[SingularAction]struct{} {
 
 	result := make(map[SingularAction]struct{})
-	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	if concreteOrgMember.BaseModel.OrganizationID != target.(dbmodels.Application).BaseModel.OrganizationID {
+	if orgMember.GetOrganizationID() != target.(dbmodels.Application).OrganizationID {
 		return result
 	}
 

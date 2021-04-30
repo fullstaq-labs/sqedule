@@ -30,9 +30,8 @@ func (ReleaseAuthorizer) SingularAuthorizations(orgMember dbmodels.IOrganization
 	target interface{}) map[SingularAction]struct{} {
 
 	result := make(map[SingularAction]struct{})
-	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	if concreteOrgMember.BaseModel.OrganizationID != target.(dbmodels.Release).BaseModel.OrganizationID {
+	if orgMember.GetOrganizationID() != target.(dbmodels.Release).OrganizationID {
 		return result
 	}
 

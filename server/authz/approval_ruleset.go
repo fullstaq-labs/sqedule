@@ -32,9 +32,8 @@ func (ApprovalRulesetAuthorizer) SingularAuthorizations(orgMember dbmodels.IOrga
 	target interface{}) map[SingularAction]struct{} {
 
 	result := make(map[SingularAction]struct{})
-	concreteOrgMember := orgMember.GetOrganizationMember()
 
-	if concreteOrgMember.BaseModel.OrganizationID != target.(dbmodels.ApprovalRuleset).BaseModel.OrganizationID {
+	if orgMember.GetOrganizationID() != target.(dbmodels.ApprovalRuleset).OrganizationID {
 		return result
 	}
 

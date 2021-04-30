@@ -14,7 +14,7 @@ import (
 // GetAllApplications ...
 func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 
 	authorizer := authz.ApplicationAuthorizer{}
 	if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApplications) {
@@ -51,7 +51,7 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 // GetApplication ...
 func (ctx Context) GetApplication(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	id := ginctx.Param("application_id")
 
 	app, err := dbmodels.FindApplication(ctx.Db, orgID, id)

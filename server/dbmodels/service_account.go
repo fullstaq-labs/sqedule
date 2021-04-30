@@ -41,11 +41,6 @@ func (sa ServiceAccount) IDTypeDisplayName() string {
 	return "service account name"
 }
 
-// GetOrganizationMember returns the OrganizationMember embedded in this ServiceAccount.
-func (sa ServiceAccount) GetOrganizationMember() *OrganizationMember {
-	return &sa.OrganizationMember
-}
-
 // Authenticate checks whether the given access token successfully authenticates this ServiceAccount.
 func (sa ServiceAccount) Authenticate(accessToken string) (bool, error) {
 	return argon2.VerifyEncoded([]byte(accessToken), []byte(sa.SecretHash))

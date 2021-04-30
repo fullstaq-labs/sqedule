@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// OrganizationMemberType ...
 type OrganizationMemberType string
 
 // These values must be short and must not change, because they're used
@@ -20,7 +19,6 @@ const (
 	ServiceAccountType OrganizationMemberType = "sa"
 )
 
-// OrganizationMember ...
 type OrganizationMember struct {
 	BaseModel
 	Role      organizationmemberrole.Role `gorm:"type:organization_member_role; not null"`
@@ -28,8 +26,9 @@ type OrganizationMember struct {
 	UpdatedAt time.Time                   `gorm:"not null"`
 }
 
-// IOrganizationMember ...
 type IOrganizationMember interface {
+	IBaseModel
+
 	// Type returns a name of the concrete type. This name is short,
 	// suitable for machine use, not user display purposes.
 	Type() OrganizationMemberType
@@ -42,15 +41,14 @@ type IOrganizationMember interface {
 	// for user display, i.e. "email" (for User) and "service account name" (for ServiceAccount).
 	IDTypeDisplayName() string
 
-	// OrganizationMember returns the OrganizationMember embedded in this object.
-	GetOrganizationMember() *OrganizationMember
+	// GetRole returns this organization member's role.
+	GetRole() organizationmemberrole.Role
 
 	// Authenticate checks whether the given access token successfully authenticates
 	// this organization member.
 	Authenticate(accessToken string) (bool, error)
 }
 
-// FindOrganizationMember ...
 func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType OrganizationMemberType, orgMemberID string) (IOrganizationMember, error) {
 	switch orgMemberType {
 	case UserType:
@@ -60,4 +58,8 @@ func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType Or
 	default:
 		panic(fmt.Errorf("Bug: unsupported organization member type %s", orgMemberType))
 	}
+}
+
+func (orgMember OrganizationMember) GetRole() organizationmemberrole.Role {
+	return orgMember.Role
 }

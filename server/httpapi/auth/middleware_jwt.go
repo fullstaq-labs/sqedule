@@ -104,7 +104,7 @@ func (m jwtMiddleware) validateLoginVals(loginVals jwtLoginVals) error {
 func (m jwtMiddleware) convertOrgMemberToClaims(data interface{}) jwt.MapClaims {
 	orgMember := data.(dbmodels.IOrganizationMember)
 	return jwt.MapClaims{
-		jwtOrgIDClaim:         orgMember.GetOrganizationMember().BaseModel.OrganizationID,
+		jwtOrgIDClaim:         orgMember.GetOrganizationID(),
 		jwtOrgMemberTypeClaim: orgMember.Type(),
 		jwtOrgMemberIDClaim:   orgMember.ID(),
 	}

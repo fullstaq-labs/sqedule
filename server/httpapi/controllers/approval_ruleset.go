@@ -14,7 +14,7 @@ import (
 // GetAllApprovalRulesets ...
 func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 
 	authorizer := authz.ApprovalRulesetAuthorizer{}
 	if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApprovalRulesets) {
@@ -52,7 +52,7 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 // GetApprovalRuleset ...
 func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	id := ginctx.Param("id")
 
 	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, id)

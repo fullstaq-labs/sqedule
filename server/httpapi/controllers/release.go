@@ -19,7 +19,7 @@ import (
 // GetAllReleases ...
 func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
 
@@ -76,7 +76,7 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 // CreateRelease ...
 func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
 
@@ -178,7 +178,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 // GetRelease ...
 func (ctx Context) GetRelease(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
 
@@ -229,7 +229,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 // PatchRelease ...
 func (ctx Context) PatchRelease(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
 

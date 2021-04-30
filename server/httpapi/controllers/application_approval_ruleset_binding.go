@@ -14,7 +14,7 @@ import (
 // GetAllApplicationApprovalRulesetBindings ...
 func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 
 	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)

@@ -13,7 +13,7 @@ import (
 // GetCurrentOrganization ...
 func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 
 	authorizer := authz.OrganizationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadOrganization, orgID) {
@@ -34,7 +34,7 @@ func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 // PatchCurrentOrganization ...
 func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationMember().BaseModel.OrganizationID
+	orgID := orgMember.GetOrganizationID()
 
 	authorizer := authz.OrganizationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
