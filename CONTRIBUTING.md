@@ -4,7 +4,7 @@
 
 For developing the API backend, you need:
 
- * Go 1.15
+ * Go 1.16
  * PostgreSQL >= 13
 
 For developing the web UI, you need:

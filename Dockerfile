@@ -1,5 +1,5 @@
 # Start from the latest golang base image
-FROM golang:1.15 as builder
+FROM golang:1.16.3 as builder
 
 # Add Maintainer Info
 LABEL maintainer="Fullstaq"
