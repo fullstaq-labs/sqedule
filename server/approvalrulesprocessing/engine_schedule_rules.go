@@ -168,10 +168,7 @@ func timeIsWithinSchedule(releaseTime time.Time, rule dbmodels.ScheduleApprovalR
 //
 // Example:
 //
-// ~~~go
-// parseScheduleTime(time.Date(2021, 2, 19, 0, 0, 0), "12:32")
-// // => 2021-02-19 12:32
-// ~~~
+//     parseScheduleTime(time.Date(2021, 2, 19, 0, 0, 0), "12:32") // => 2021-02-19 12:32
 func parseScheduleTime(date time.Time, str string) (time.Time, error) {
 	components := strings.SplitN(str, ":", 3)
 	if len(components) < 2 {
