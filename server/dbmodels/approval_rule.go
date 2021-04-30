@@ -2,9 +2,11 @@ package dbmodels
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalpolicy"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/retrypolicy"
 	"gorm.io/gorm"
 )
@@ -19,6 +21,11 @@ type ApprovalRule struct {
 	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	Enabled                           bool                        `gorm:"not null; default:true"`
 	CreatedAt                         time.Time                   `gorm:"not null"`
+
+	// BindingMode is the mode with which the containing Ruleset is bound to some entity.
+	// This is only set by `FindApprovalRulesBoundToRelease()`. It's not a real table
+	// column, so don't add to database migrations.
+	BindingMode approvalrulesetbindingmode.Mode `gorm:"<-:false"`
 }
 
 type HTTPApiApprovalRule struct {
@@ -46,21 +53,58 @@ type ManualApprovalRule struct {
 	Minimum        sql.NullInt32         `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
 }
 
-// ApprovalRulesetContents represents a collection of ApprovalRules.
-// It's capable of containing all supported ApprovalRule types in a way that doesn't
-// use pointers, and that doesn't require typecasting.
-//
-// ApprovalRulesetContents is a more efficient alternative to `[]*ApprovalRule`. This
-// latter requires pointers and is thus not as memory-efficient. Furthermore,
-// this latter requires the use of casting to find out which specific subtype an
-// element is.
-type ApprovalRulesetContents struct {
-	HTTPApiApprovalRules  []HTTPApiApprovalRule
-	ScheduleApprovalRules []ScheduleApprovalRule
-	ManualApprovalRules   []ManualApprovalRule
+// FindApprovalRulesBoundToRelease finds all ApprovalRules that are bound to a specific Release.
+// It populates the `BindingMode` field so that you know which ApprovalRules are bound
+// to the Release through which mode.
+func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applicationID string, releaseID uint64) (ApprovalRulesetContents, error) {
+	var result ApprovalRulesetContents
+	var tx *gorm.DB
+	var ruleTypesProcessed uint = 0
+
+	bindingsCondition := db.Where("organization_id = ? AND application_id = ? AND release_id = ?",
+		organizationID, applicationID, releaseID)
+
+	const joinConditionString = "LEFT JOIN %s approval_rules " +
+		"ON approval_rules.organization_id = release_approval_ruleset_bindings.organization_id " +
+		"AND approval_rules.approval_ruleset_major_version_id = release_approval_ruleset_bindings.approval_ruleset_major_version_id " +
+		"AND approval_rules.approval_ruleset_minor_version_number = release_approval_ruleset_bindings.approval_ruleset_minor_version_number"
+	const selector = "approval_rules.*, release_approval_ruleset_bindings.mode AS binding_mode"
+
+	ruleTypesProcessed++
+	tx = db.Where(bindingsCondition).
+		Joins(fmt.Sprintf(joinConditionString, "http_api_approval_rules")).
+		Select(selector).
+		Find(&result.HTTPApiApprovalRules)
+	if tx.Error != nil {
+		return ApprovalRulesetContents{}, tx.Error
+	}
+
+	ruleTypesProcessed++
+	tx = db.Where(bindingsCondition).
+		Joins(fmt.Sprintf(joinConditionString, "schedule_approval_rules")).
+		Select(selector).
+		Find(&result.ScheduleApprovalRules)
+	if tx.Error != nil {
+		return ApprovalRulesetContents{}, tx.Error
+	}
+
+	ruleTypesProcessed++
+	tx = db.Where(bindingsCondition).
+		Joins(fmt.Sprintf(joinConditionString, "manual_approval_rules")).
+		Select(selector).
+		Find(&result.ManualApprovalRules)
+	if tx.Error != nil {
+		return ApprovalRulesetContents{}, tx.Error
+	}
+
+	if ruleTypesProcessed != NumApprovalRuleTypes {
+		panic("Bug: code does not cover all approval rule types")
+	}
+
+	return result, nil
 }
 
-func FindAllApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, rulesetVersionKey ApprovalRulesetVersionKey) (ApprovalRulesetContents, error) {
+func FindApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, rulesetVersionKey ApprovalRulesetVersionKey) (ApprovalRulesetContents, error) {
 	var result ApprovalRulesetContents
 	var query, tx *gorm.DB
 	var ruleTypesProcessed uint = 0
@@ -91,29 +135,4 @@ func FindAllApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, ru
 	}
 
 	return result, nil
-}
-
-func FindAllScheduleApprovalRulesBelongingToVersions(db *gorm.DB, conditions *gorm.DB, organizationID string, versionKeys []ApprovalRulesetVersionKey) ([]ScheduleApprovalRule, error) {
-	var result []ScheduleApprovalRule
-	var versionKeyConditions *gorm.DB
-
-	for _, versionKey := range versionKeys {
-		versionKeyCondition := db.Where("approval_ruleset_major_version_id = ? AND approval_ruleset_minor_version_number = ?",
-			versionKey.MajorVersionID, versionKey.MinorVersionNumber)
-		if versionKeyConditions == nil {
-			versionKeyConditions = versionKeyCondition
-		} else {
-			versionKeyConditions = versionKeyConditions.Or(versionKeyCondition)
-		}
-	}
-
-	tx := db.Where("organization_id = ?", organizationID)
-	if versionKeyConditions != nil {
-		tx = tx.Where(versionKeyConditions)
-	}
-	if conditions != nil {
-		tx = tx.Where(conditions)
-	}
-	tx = tx.Find(&result)
-	return result, tx.Error
 }

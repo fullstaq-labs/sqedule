@@ -10,23 +10,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
-	"gorm.io/gorm"
 )
-
-func (engine Engine) loadScheduleRules(conditions *gorm.DB, majorVersionIndex map[uint64]*ruleset, versionKeys []dbmodels.ApprovalRulesetVersionKey) (uint, error) {
-	rules, err := dbmodels.FindAllScheduleApprovalRulesBelongingToVersions(
-		engine.Db, conditions, engine.Organization.ID, versionKeys)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, rule := range rules {
-		ruleset := majorVersionIndex[rule.ApprovalRulesetMajorVersionID]
-		ruleset.ScheduleApprovalRules = append(ruleset.ScheduleApprovalRules, rule)
-	}
-
-	return uint(len(rules)), nil
-}
 
 func (engine Engine) fetchScheduleRulePreviousOutcomes() (map[uint64]bool, error) {
 	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(engine.Db, engine.Organization.ID, engine.ReleaseBackgroundJob.ReleaseID)
@@ -37,38 +21,37 @@ func (engine Engine) fetchScheduleRulePreviousOutcomes() (map[uint64]bool, error
 	return indexScheduleRuleOutcomes(outcomes), nil
 }
 
-func (engine Engine) processScheduleRules(rulesets []ruleset, previousOutcomes map[uint64]bool, nAlreadyProcessed uint, totalRules uint) (releasestate.State, uint, error) {
+func (engine Engine) processScheduleRules(rulesetContents dbmodels.ApprovalRulesetContents, previousOutcomes map[uint64]bool, nAlreadyProcessed uint) (releasestate.State, uint, error) {
 	var nprocessed uint = 0
+	var totalRules uint = rulesetContents.NumRules()
 
-	for _, ruleset := range rulesets {
-		for _, rule := range ruleset.ScheduleApprovalRules {
-			success, outcomeAlreadyRecorded, err := engine.processScheduleRule(rule, previousOutcomes)
+	for _, rule := range rulesetContents.ScheduleApprovalRules {
+		success, outcomeAlreadyRecorded, err := engine.processScheduleRule(rule, previousOutcomes)
+		if err != nil {
+			return releasestate.Rejected, nprocessed,
+				maybeFormatRuleProcessingError(err, "Error processing schedule rule org=%s, ID=%d: %w",
+					engine.Organization.ID, rule.ID, err)
+		}
+
+		nprocessed++
+		resultState, ignoredError := determineReleaseStateFromOutcome(success, rule.BindingMode, isLastRule(nAlreadyProcessed, nprocessed, totalRules))
+		engine.Db.Logger.Info(context.Background(),
+			"Processed schedule rule: org=%s, ID=%d, success=%t, ignoredError=%t, resultState=%s",
+			engine.Organization.ID, rule.ID, success, ignoredError, resultState)
+		if !outcomeAlreadyRecorded {
+			event, err := engine.createRuleProcessedEvent(resultState, ignoredError)
 			if err != nil {
 				return releasestate.Rejected, nprocessed,
-					maybeFormatRuleProcessingError(err, "Error processing schedule rule org=%s, ID=%d: %w",
-						engine.Organization.ID, rule.ID, err)
+					fmt.Errorf("Error recording release event: %w", err)
 			}
-
-			nprocessed++
-			resultState, ignoredError := determineReleaseStateFromOutcome(success, ruleset.mode, isLastRule(nAlreadyProcessed, nprocessed, totalRules))
-			engine.Db.Logger.Info(context.Background(),
-				"Processed schedule rule: org=%s, ID=%d, success=%t, ignoredError=%t, resultState=%s",
-				engine.Organization.ID, rule.ID, success, ignoredError, resultState)
-			if !outcomeAlreadyRecorded {
-				event, err := engine.createRuleProcessedEvent(resultState, ignoredError)
-				if err != nil {
-					return releasestate.Rejected, nprocessed,
-						fmt.Errorf("Error recording release event: %w", err)
-				}
-				err = engine.createScheduleRuleOutcome(rule, event, success)
-				if err != nil {
-					return releasestate.Rejected, nprocessed,
-						fmt.Errorf("Error recording schedule approval rule outcome: %w", err)
-				}
+			err = engine.createScheduleRuleOutcome(rule, event, success)
+			if err != nil {
+				return releasestate.Rejected, nprocessed,
+					fmt.Errorf("Error recording schedule approval rule outcome: %w", err)
 			}
-			if resultState.IsFinal() {
-				return resultState, nprocessed, nil
-			}
+		}
+		if resultState.IsFinal() {
+			return resultState, nprocessed, nil
 		}
 	}
 

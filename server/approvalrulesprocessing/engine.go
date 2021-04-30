@@ -21,11 +21,6 @@ type Engine struct {
 	ReleaseBackgroundJob dbmodels.ReleaseBackgroundJob
 }
 
-type ruleset struct {
-	dbmodels.ApprovalRulesetContents
-	mode approvalrulesetbindingmode.Mode
-}
-
 var errTemporary = errors.New("temporary error, retry later")
 
 // Run ...
@@ -36,12 +31,12 @@ func (engine *Engine) Run() error {
 	}
 	defer engine.unlock()
 
-	rulesets, totalRules, err := engine.loadRules()
+	rulesetContents, err := engine.loadRules()
 	if err != nil {
 		return fmt.Errorf("Error loading rules: %w", err)
 	}
 
-	resultState, err := engine.processRules(rulesets, totalRules)
+	resultState, err := engine.processRules(rulesetContents)
 	if err != nil {
 		// Error message already mentions the fact that it's about processing rules.
 		return err
@@ -55,7 +50,7 @@ func (engine *Engine) Run() error {
 	return nil
 }
 
-func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (releasestate.State, error) {
+func (engine *Engine) processRules(rulesetContents dbmodels.ApprovalRulesetContents) (releasestate.State, error) {
 	var finalResultState releasestate.State = releasestate.InProgress
 	var finalError error
 	var resultState releasestate.State
@@ -78,7 +73,7 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (release
 	err = engine.Db.Transaction(func(tx *gorm.DB) error {
 		if !finalResultState.IsFinal() {
 			// Process manual approval rules
-			resultState, n, err = engine.processManualApprovalRules(rulesets, manualApprovalRulePreviousOutcomes, nprocessed, totalRules)
+			resultState, n, err = engine.processManualApprovalRules(rulesetContents, manualApprovalRulePreviousOutcomes, nprocessed)
 			if err != nil {
 				finalResultState = releasestate.Rejected
 				// Error message already mentions the fact that it's about processing rules.
@@ -93,7 +88,7 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (release
 
 		if !finalResultState.IsFinal() {
 			// Process schedule rules
-			resultState, n, err = engine.processScheduleRules(rulesets, scheduleRulePreviousOutcomes, nprocessed, totalRules)
+			resultState, n, err = engine.processScheduleRules(rulesetContents, scheduleRulePreviousOutcomes, nprocessed)
 			if err != nil {
 				finalResultState = releasestate.Rejected
 				// Error message already mentions the fact that it's about processing rules.
@@ -117,7 +112,7 @@ func (engine *Engine) processRules(rulesets []ruleset, totalRules uint) (release
 
 	if !finalResultState.IsFinal() {
 		// Process HTTP API rules
-		resultState, n, err = engine.processHTTPApiRules(rulesets, httpAPIRulePreviousOutcomes, nprocessed, totalRules)
+		resultState, n, err = engine.processHTTPApiRules(rulesetContents, httpAPIRulePreviousOutcomes, nprocessed)
 		if err != nil {
 			// Error message already mentions the fact that it's about processing rules.
 			return releasestate.Rejected, err
@@ -148,56 +143,9 @@ func (engine Engine) getPostgresAdvisoryLockID() uint64 {
 	return dbmodels.ReleaseBackgroundJobPostgresLockNamespace + uint64(engine.ReleaseBackgroundJob.LockSubID)
 }
 
-func (engine Engine) loadRules() ([]ruleset, uint, error) {
-	bindings, err := engine.loadRuleBindingsAndTheirRulesets()
-	if err != nil {
-		return []ruleset{}, 0, err
-	}
-
-	result := make([]ruleset, len(bindings))
-	// maps an ApprovalRulesetMajorVersion ID to its ruleset struct
-	majorVersionIndex := make(map[uint64]*ruleset, len(bindings))
-	versionKeys := make([]dbmodels.ApprovalRulesetVersionKey, 0, len(bindings))
-	for i, binding := range bindings {
-		result[i].mode = binding.Mode
-		majorVersionIndex[binding.ApprovalRulesetMajorVersionID] = &result[i]
-		versionKeys = append(versionKeys, dbmodels.ApprovalRulesetVersionKey{
-			MajorVersionID:     binding.ApprovalRulesetMajorVersionID,
-			MinorVersionNumber: binding.ApprovalRulesetMinorVersionNumber,
-		})
-	}
-
-	var totalRules uint = 0
-	var n uint
-	var enabledTx *gorm.DB = engine.Db.Where("enabled")
-
-	n, err = engine.loadManualApprovalRules(enabledTx, majorVersionIndex, versionKeys)
-	if err != nil {
-		return []ruleset{}, 0, err
-	}
-	totalRules += n
-
-	n, err = engine.loadScheduleRules(enabledTx, majorVersionIndex, versionKeys)
-	if err != nil {
-		return []ruleset{}, 0, err
-	}
-	totalRules += n
-
-	n, err = engine.loadHTTPApiRules(enabledTx, majorVersionIndex, versionKeys)
-	if err != nil {
-		return []ruleset{}, 0, err
-	}
-	totalRules += n
-
-	return result, totalRules, nil
-}
-
-func (engine Engine) loadRuleBindingsAndTheirRulesets() ([]dbmodels.ReleaseApprovalRulesetBinding, error) {
-	return dbmodels.FindAllReleaseApprovalRulesetBindings(
-		engine.Db.Preload("ApprovalRulesetMinorVersion"),
-		engine.Organization.ID,
-		engine.ReleaseBackgroundJob.ApplicationID,
-		engine.ReleaseBackgroundJob.ReleaseID)
+func (engine Engine) loadRules() (dbmodels.ApprovalRulesetContents, error) {
+	return dbmodels.FindApprovalRulesBoundToRelease(engine.Db, engine.Organization.ID,
+		engine.ReleaseBackgroundJob.ApplicationID, engine.ReleaseBackgroundJob.ReleaseID)
 }
 
 func (engine *Engine) finalizeJob(resultState releasestate.State) error {

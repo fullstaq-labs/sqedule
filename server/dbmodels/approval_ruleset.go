@@ -63,6 +63,45 @@ type ApprovalRulesetWithStats struct {
 	NumBoundReleases     uint
 }
 
+// ApprovalRulesetContents is a collection of ApprovalRules.
+//
+// This is unlike ApprovalRuleset, which is a database model representing the `approval_rulesets`
+// database table. ApprovalRuleset is not capable of actually physically containing all the
+// associated ApprovalRules. In contrast, ApprovalRulesetContents *is* a container which
+// physically contains ApprovalRules.
+//
+// ApprovalRulesetContents can contain all supported ApprovalRule types in a way that doesn't
+// use pointers, and that doesn't require typecasting. It's a more efficient alternative to
+// `[]*ApprovalRule`. This latter requires pointers and is thus not as memory-efficient.
+// Furthermore, this latter requires the use of casting to find out which specific subtype an
+// element is.
+type ApprovalRulesetContents struct {
+	HTTPApiApprovalRules  []HTTPApiApprovalRule
+	ScheduleApprovalRules []ScheduleApprovalRule
+	ManualApprovalRules   []ManualApprovalRule
+}
+
+// NumRules returns the total number of rules in this ApprovalRulesetContents.
+func (c ApprovalRulesetContents) NumRules() uint {
+	var ruleTypesProcessed uint = 0
+	var result uint = 0
+
+	ruleTypesProcessed++
+	result += uint(len(c.HTTPApiApprovalRules))
+
+	ruleTypesProcessed++
+	result += uint(len(c.ScheduleApprovalRules))
+
+	ruleTypesProcessed++
+	result += uint(len(c.ManualApprovalRules))
+
+	if ruleTypesProcessed != NumApprovalRuleTypes {
+		panic("Bug: code does not cover all approval rule types")
+	}
+
+	return result
+}
+
 // FindAllApprovalRulesetsWithStats ...
 func FindAllApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetWithStats, error) {
 	var result []ApprovalRulesetWithStats

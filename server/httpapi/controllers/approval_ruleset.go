@@ -74,7 +74,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	rules, err := dbmodels.FindAllApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionKey{
+	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionKey{
 		MajorVersionID:     ruleset.LatestMajorVersion.ID,
 		MinorVersionNumber: ruleset.LatestMinorVersion.VersionNumber,
 	})
