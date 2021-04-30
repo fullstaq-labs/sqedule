@@ -10,6 +10,7 @@ For developing the API backend, you need:
 For developing the web UI, you need:
 
  * Node.js >= 12 LTS
+ * NPM >= 7
 
 ## Web UI one-time setup
 
