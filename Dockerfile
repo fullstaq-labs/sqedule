@@ -14,7 +14,7 @@ COPY . ./
 RUN go mod download
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo .
+RUN CGO_ENABLED=0 GOOS=linux go build -o sqedule -ldflags '-w -s' -a -installsuffix cgo ./cmd/sqedule-server
 
 ######## Start a new stage from scratch #######
 FROM alpine:latest
