@@ -9,7 +9,7 @@ POSTGRES_PASSWORD 	?=changeme
 POSTGRES_HOST 		?=localhost
 POSTGRES_PORT 		?=5432
 DB_TYPE				?=postgresql
-DB_NAME				?=sqedule_dev2
+DB_NAME				?=sqedule_dev
 ORG					?=1
 
 define check_npm
@@ -125,7 +125,7 @@ docker-build-webui: ## Build docker image for webUI
 .PHONY: docker-full
 docker-full: ## Start a postgres, pgadmin, webUI & sqedule server docker env
 	$(call make_env,'make env var file')
-	@docker-compose --project-directory devtools -f devtools/docker-compose-full.yml --env-file .env up -d
+	@docker-compose --project-directory devtools -f devtools/docker-compose-full.yml --env-file devtools/.env up -d
 	@rm devtools/.env
 
 .PHONY: docker-full-down
@@ -138,8 +138,8 @@ docker-db-init: ## Do all DB init steps, requires either docker-full or docker-d
 	$(MAKE) docker-db-migrate
 	$(MAKE) docker-db-seed
 
-.PHONY: full-docker-init
-full-docker-init: ## Build docker containers, start all applications and prepare database
+.PHONY: docker-full-init
+docker-full-init: ## Build docker containers, start all applications and prepare database
 	$(MAKE) docker-build-webui
 	$(MAKE) docker-build-sqedule
 	$(MAKE) docker-full

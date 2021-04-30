@@ -51,7 +51,7 @@ services:
       - postgres
     container_name: sqedule-server
     image: sqedule:latest
-    command: server --bind "" --db-type ${DB_TYPE} --db-connection 'dbname=${DB_NAME} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=postgres port=${POSTGRES_PORT}'
+    command: run --bind "" --db-type ${DB_TYPE} --db-connection 'dbname=${DB_NAME} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=postgres port=${POSTGRES_PORT}'
     ports:
       - 3001:3001
     restart: unless-stopped
