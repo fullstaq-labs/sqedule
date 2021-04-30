@@ -104,23 +104,23 @@ func indexScheduleRuleOutcomes(outcomes []dbmodels.ScheduleApprovalRuleOutcome) 
 	return result
 }
 
-func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprovalRule) (bool, error) {
+func timeIsWithinSchedule(releaseTime time.Time, rule dbmodels.ScheduleApprovalRule) (bool, error) {
 	if rule.BeginTime.Valid {
 		if !rule.EndTime.Valid {
 			panic(fmt.Sprintf("ScheduleApprovalRule %d: BeginTime non-null, but EndTime null", rule.ApprovalRule.ID))
 		}
 
-		parsedBeginTime, err := parseScheduleTime(deploymentTime, rule.BeginTime.String)
+		parsedBeginTime, err := parseScheduleTime(releaseTime, rule.BeginTime.String)
 		if err != nil {
 			return false, fmt.Errorf("Error parsing begin time '%s': %w", rule.BeginTime.String, err)
 		}
 
-		parsedEndTime, err := parseScheduleTime(deploymentTime, rule.EndTime.String)
+		parsedEndTime, err := parseScheduleTime(releaseTime, rule.EndTime.String)
 		if err != nil {
 			return false, fmt.Errorf("Error parsing end time '%s': %w", rule.EndTime.String, err)
 		}
 
-		if deploymentTime.Before(parsedBeginTime) || deploymentTime.After(parsedEndTime) {
+		if releaseTime.Before(parsedBeginTime) || releaseTime.After(parsedEndTime) {
 			return false, nil
 		}
 	}
@@ -131,7 +131,7 @@ func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprov
 			return false, fmt.Errorf("Error parsing days of week '%s': %w", rule.DaysOfWeek.String, err)
 		}
 
-		if !parsedWeekDays[deploymentTime.Weekday()] {
+		if !parsedWeekDays[releaseTime.Weekday()] {
 			return false, nil
 		}
 	}
@@ -142,7 +142,7 @@ func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprov
 			return false, fmt.Errorf("Error parsing days of month '%s': %w", rule.DaysOfMonth.String, err)
 		}
 
-		if !parsedMonthDays[deploymentTime.Day()] {
+		if !parsedMonthDays[releaseTime.Day()] {
 			return false, nil
 		}
 	}
@@ -153,7 +153,7 @@ func timeIsWithinSchedule(deploymentTime time.Time, rule dbmodels.ScheduleApprov
 			return false, fmt.Errorf("Error parsing months '%s': %w", rule.MonthsOfYear.String, err)
 		}
 
-		if !parsedMonths[deploymentTime.Month()] {
+		if !parsedMonths[releaseTime.Month()] {
 			return false, nil
 		}
 	}
