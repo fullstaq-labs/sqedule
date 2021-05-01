@@ -107,11 +107,10 @@ Here's what it means for the underlying infrastructure:
 
 Here are the changes compared to the common case:
 
- 1. The Resource itself is always undeletable, even if the simple notation says its disableable.
- 2. The major version resource is always undeletable (instead of eventually undeletable).
- 3. If the Resource is disableable in its simple notation, then the minor version resource is disableable. Otherwise, the minor version resource is undeletable, with the same undeleteable scope that Resource has.
+ 1. The Resource itself is always Undeletable, even if the simple notation says its Disableable. The scope is the same as it says in the simple notation.
+ 2. The minor version resource is also Disableable or Undeletable, just like the simple notation says. The scope however is ResourceMajorVersion, not X.
 
-Note that if the Resource is disableable, then _enabling/disabling the resource results in a new minor version_. This is because the immutability property also extends to the disableable concept's implicit `Enabled` flag.
+Note that if the Resource is Disableable, then _enabling/disabling the resource results in a new minor version_. This is because the immutability property also extends to the Disableable concept's implicit `Enabled` flag.
 
 ## Assocations
 
