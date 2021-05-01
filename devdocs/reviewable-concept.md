@@ -76,7 +76,7 @@ Minor version numbers are always non-null.
 
 A major version's number may be null. Being null indicates that the corresponding change process is not finalized. Being non-null indicates that the change process *is* finalized.
 
-## Versioning infrastructure & database implementation
+## Versioning infrastructure & implementation
 
 ### Common case
 
@@ -95,9 +95,9 @@ Highlights:
  * (3) and (4): The Resource's primary key, as well as its non-versioned fields, are located in the Resource itself. However, its versioned fields live in the minor version object instead.
  * (5) Each minor version has exactly one CreationAuditRecord. This keeps track of who made this subchange.
 
-### Interaction with the Undeletable or Disableable concepts
+### When combined with Undeletable or Disableable
 
-Suppose that a Reviewable resource is Undeletable or Disableable, like this:
+Suppose that a Reviewable resource is [Undeletable](undeletable-concept.md) or [Disableable](disableable-concept.md), like this:
 
 ![](reviewable-simple-notation-undeletable-or-disableable.drawio.svg)
 

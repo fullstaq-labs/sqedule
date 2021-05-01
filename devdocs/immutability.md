@@ -100,7 +100,7 @@ Normally, immutability means that something is always immutable. But sometimes, 
 
    In case of immutibility on resources (instead of relationships), temporary immutibility implies that the fields on which the condition is based are mutable.
 
-   [Disableable resources](disableable-resources.md) are good examples of temporary immutable resources. Whether a resource is enabled is indicated by an `Enabled` boolean field.
+   [Disableable resources](disableable-concept.md) are good examples of temporarily immutable resources. Whether a resource is enabled is indicated by an `Enabled` boolean field.
 
     - When enabled, the resource is either partially immutable, or not immutable. It's never fully immutable because the `Enabled` value may change. And that's because disableable resources are merely temporarily immutable, not eventually immutable.
     - When disabled, the resource is also either partially immutable, or not immutable.
@@ -109,4 +109,4 @@ Normally, immutability means that something is always immutable. But sometimes, 
 
 ## Deletability
 
-Immutability has got nothing to do with whether an object may be deleted. Immutable resources are normally deletable, except when it's declared [Undeletable](undeletable-resources.md).
+Immutability has got nothing to do with whether an object may be deleted. Immutable resources are normally deletable, except when it's declared [Undeletable](undeletable-concept.md).

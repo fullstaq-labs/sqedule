@@ -34,8 +34,8 @@ Data model core concepts:
  * [Multitenancy strategy](multitenancy-strategy.md)
  * [Multitenancy & security: foreign key constraints](multitenancy-security-foreign-key-constraints.md)
  * [Inheritance & polymorphism](inheritance-and-polymorphism.md)
- * [Undeletable resources] TODO
- * [Disableable resources] TODO
+ * [Undeletable resources](undeletable-concept.md)
+ * [Disableable resources](disableable-concept.md)
  * [The Immutability concept](immutability.md)
  * [The Reviewable concept: versioning, auditing & reviewing changes](reviewable-concept.md)
 
