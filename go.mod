@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/appleboy/gin-jwt/v2 v2.6.4
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.1
 	github.com/go-resty/resty/v2 v2.4.0
 	github.com/gookit/color v1.3.1
 	github.com/jarcoal/httpmock v1.0.8
