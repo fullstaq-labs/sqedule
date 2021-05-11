@@ -40,7 +40,7 @@ type jwtLoginVals struct {
 	OrganizationID     string `json:"organization_id"`
 	Email              string `json:"email"`
 	ServiceAccountName string `json:"service_account_name"`
-	AccessToken        string `json:"access_token"`
+	Password           string `json:"password"`
 }
 
 func (m jwtMiddleware) run(ginctx *gin.Context) (interface{}, error) {
@@ -62,12 +62,12 @@ func (m jwtMiddleware) run(ginctx *gin.Context) (interface{}, error) {
 		return nil, errors.New("internal database error")
 	}
 
-	ok, err := orgMember.Authenticate(loginVals.AccessToken)
+	ok, err := orgMember.Authenticate(loginVals.Password)
 	if err != nil {
-		return nil, fmt.Errorf("error authenticating user: %w", err)
+		return nil, fmt.Errorf("error authenticating organization member: %w", err)
 	}
 	if !ok {
-		return nil, fmt.Errorf("incorrect access token")
+		return nil, fmt.Errorf("incorrect password")
 	}
 
 	return orgMember, nil
@@ -95,8 +95,8 @@ func (m jwtMiddleware) validateLoginVals(loginVals jwtLoginVals) error {
 	if len(loginVals.Email) > 0 && len(loginVals.ServiceAccountName) > 0 {
 		return errors.New("only email or service_account_name may be specified, not both")
 	}
-	if len(loginVals.AccessToken) == 0 {
-		return errors.New("missing access token")
+	if len(loginVals.Password) == 0 {
+		return errors.New("missing password")
 	}
 	return nil
 }

@@ -80,7 +80,7 @@ This example shows how you can request a list of releases from the API server. W
 First, authenticate as the `admin_sa` user account (who's part of the `org1` organization) and obtain an authentication token:
 
 ~~~bash
-http POST localhost:3001/v1/auth/login service_account_name=admin_sa access_token=123456 organization_id=org1
+http POST localhost:3001/v1/auth/login service_account_name=admin_sa password=123456 organization_id=org1
 ~~~
 
 This prints something like:

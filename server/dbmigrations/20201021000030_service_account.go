@@ -25,15 +25,15 @@ var migration20201021000030 = gormigrate.Migration{
 
 		type OrganizationMember struct {
 			BaseModel
-			Role      string    `gorm:"type:organization_member_role; not null"`
-			CreatedAt time.Time `gorm:"not null"`
-			UpdatedAt time.Time `gorm:"not null"`
+			Role         string    `gorm:"type:organization_member_role; not null"`
+			PasswordHash string    `gorm:"not null"`
+			CreatedAt    time.Time `gorm:"not null"`
+			UpdatedAt    time.Time `gorm:"not null"`
 		}
 
 		type ServiceAccount struct {
 			OrganizationMember
-			Name       string `gorm:"type:citext; primaryKey; not null"`
-			SecretHash string `gorm:"not null"`
+			Name string `gorm:"type:citext; primaryKey; not null"`
 		}
 
 		return tx.AutoMigrate(&ServiceAccount{})

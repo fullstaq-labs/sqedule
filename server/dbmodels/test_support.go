@@ -32,10 +32,10 @@ func CreateMockServiceAccountWithAdminRole(db *gorm.DB, organization Organizatio
 				OrganizationID: organization.ID,
 				Organization:   organization,
 			},
-			Role: organizationmemberrole.Admin,
+			Role:         organizationmemberrole.Admin,
+			PasswordHash: "unauthenticatable",
 		},
-		Name:       "sa1",
-		SecretHash: "unauthenticatable",
+		Name: "sa1",
 	}
 	if customizeFunc != nil {
 		customizeFunc(&result)

@@ -2,17 +2,15 @@ package dbmodels
 
 import (
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
-	"github.com/matthewhartstonge/argon2"
 	"gorm.io/gorm"
 )
 
 // User ...
 type User struct {
 	OrganizationMember
-	Email        string `gorm:"type:citext; primaryKey; not null"`
-	PasswordHash string `gorm:"not null"`
-	FirstName    string `gorm:"not null"`
-	LastName     string `gorm:"not null"`
+	Email     string `gorm:"type:citext; primaryKey; not null"`
+	FirstName string `gorm:"not null"`
+	LastName  string `gorm:"not null"`
 }
 
 // FindUserByEmail looks up a User by its email address.
@@ -41,9 +39,4 @@ func (user User) ID() string {
 // for user display, i.e. "email" (for User) and "service account name" (for ServiceAccount).
 func (user User) IDTypeDisplayName() string {
 	return "email"
-}
-
-// Authenticate checks whether the given access token successfully authenticates this ServiceAccount.
-func (user User) Authenticate(accessToken string) (bool, error) {
-	return argon2.VerifyEncoded([]byte(accessToken), []byte(user.PasswordHash))
 }

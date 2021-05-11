@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/organizationmemberrole"
+	"github.com/matthewhartstonge/argon2"
 	"gorm.io/gorm"
 )
 
@@ -21,9 +22,10 @@ const (
 
 type OrganizationMember struct {
 	BaseModel
-	Role      organizationmemberrole.Role `gorm:"type:organization_member_role; not null"`
-	CreatedAt time.Time                   `gorm:"not null"`
-	UpdatedAt time.Time                   `gorm:"not null"`
+	Role         organizationmemberrole.Role `gorm:"type:organization_member_role; not null"`
+	PasswordHash string                      `gorm:"not null"`
+	CreatedAt    time.Time                   `gorm:"not null"`
+	UpdatedAt    time.Time                   `gorm:"not null"`
 }
 
 type IOrganizationMember interface {
@@ -44,9 +46,9 @@ type IOrganizationMember interface {
 	// GetRole returns this organization member's role.
 	GetRole() organizationmemberrole.Role
 
-	// Authenticate checks whether the given access token successfully authenticates
+	// Authenticate checks whether the given password successfully authenticates
 	// this organization member.
-	Authenticate(accessToken string) (bool, error)
+	Authenticate(password string) (bool, error)
 }
 
 func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType OrganizationMemberType, orgMemberID string) (IOrganizationMember, error) {
@@ -62,4 +64,8 @@ func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType Or
 
 func (orgMember OrganizationMember) GetRole() organizationmemberrole.Role {
 	return orgMember.Role
+}
+
+func (orgMember OrganizationMember) Authenticate(password string) (bool, error) {
+	return argon2.VerifyEncoded([]byte(password), []byte(orgMember.PasswordHash))
 }
