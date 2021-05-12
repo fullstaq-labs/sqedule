@@ -8,11 +8,13 @@ import (
 
 type Config struct {
 	ServerBaseURL string //`mapstructure:"server-base-url"`
+	Debug         bool
 }
 
 func LoadConfigFromViper(viper *viper.Viper) Config {
 	return Config{
 		ServerBaseURL: viper.GetString("server-base-url"),
+		Debug:         viper.GetBool("debug"),
 	}
 }
 

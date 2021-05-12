@@ -42,6 +42,9 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "config file (default ~/.config/sqedule-cli/config.yml)")
+
+	rootCmd.PersistentFlags().Bool("debug", false, "Show API requests/responses")
+	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 }
 
 // initConfig reads in config file and ENV variables if set.

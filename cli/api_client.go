@@ -17,6 +17,7 @@ func NewApiClient(config Config) (*resty.Client, error) {
 
 	client := resty.New()
 	client.SetHostURL(config.ServerBaseURL + "/v1")
+	client.SetDebug(config.Debug)
 	if MockHttpClientFunc != nil {
 		MockHttpClientFunc(client.GetClient())
 	}
