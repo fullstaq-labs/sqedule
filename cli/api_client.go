@@ -25,6 +25,21 @@ func NewApiClient(config Config) (*resty.Client, error) {
 }
 
 func NewApiRequest(config Config, state State) (*resty.Request, error) {
+	err := state.RequireAuthToken()
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := NewApiRequestWithoutAuth(config)
+	if err != nil {
+		return nil, err
+	}
+
+	r.SetAuthToken(state.AuthToken)
+	return r, nil
+}
+
+func NewApiRequestWithoutAuth(config Config) (*resty.Request, error) {
 	client, err := NewApiClient(config)
 	if err != nil {
 		return nil, err
@@ -32,7 +47,6 @@ func NewApiRequest(config Config, state State) (*resty.Request, error) {
 
 	r := client.R()
 	r.SetError(&map[string]interface{}{})
-	r.SetAuthToken(state.AuthToken)
 	r.SetHeader("User-Agent", "sqedule-cli")
 	r.SetHeader("Accept", "application/json")
 	return r, nil

@@ -31,7 +31,7 @@ func loginCmd_run(viper *viper.Viper) error {
 		return err
 	}
 
-	req, err := cli.NewApiRequest(config, state)
+	req, err := cli.NewApiRequestWithoutAuth(config)
 	if err != nil {
 		return err
 	}

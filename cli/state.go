@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -66,6 +67,16 @@ func StateFilePath() (string, error) {
 	}
 
 	return path.Join(dir, "sqedule-cli", "state.json"), nil
+}
+
+func (state State) RequireAuthToken() error {
+	if len(state.AuthToken) == 0 {
+		return errors.New("Login required. Please run 'sqedule-cli login'")
+	} else if time.Now().After(state.AuthTokenExpirationTime) {
+		return errors.New("Authentication token expired. Please re-run 'sqedule-cli login'")
+	} else {
+		return nil
+	}
 }
 
 func (state State) SaveToFilesystem() error {
