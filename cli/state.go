@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"time"
+
+	"github.com/fullstaq-labs/sqedule/lib"
 )
 
 type State struct {
@@ -58,7 +60,7 @@ func LoadStateFromFilesystem() (State, error) {
 }
 
 func StateFilePath() (string, error) {
-	dir, err := UserConfigDir()
+	dir, err := lib.UserConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("Error determining user config directory: %w", err)
 	}

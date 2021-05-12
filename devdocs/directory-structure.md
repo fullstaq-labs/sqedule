@@ -28,3 +28,4 @@ The main server code is located in `server/`. Here are its subdirectories:
  * `devdocs/` — Development documentation.
  * `devtools/` — Tools and scripts used during development.
  * `bin/` - Place to build binaries to in automation
+ * `lib/` — Generic library code that's not specific to Sqedule.
