@@ -62,12 +62,14 @@ var dbMigrateCmd = &cobra.Command{
 }
 
 func init() {
-	dbCmd.AddCommand(dbMigrateCmd)
+	cmd := dbMigrateCmd
+	flags := cmd.Flags()
+	dbCmd.AddCommand(cmd)
 
-	dbMigrateFlags.dbconn = defineDatabaseConnectionFlags(dbMigrateCmd)
+	dbMigrateFlags.dbconn = defineDatabaseConnectionFlags(cmd)
 
-	dbMigrateFlags.reset = dbMigrateCmd.Flags().Bool("reset", false, "wipe the database and recreate schema from scratch (DANGER)")
-	dbMigrateFlags.upTo = dbMigrateCmd.Flags().String("up-to", "", "run migrations up to the given migration ID")
+	dbMigrateFlags.reset = flags.Bool("reset", false, "wipe the database and recreate schema from scratch (DANGER)")
+	dbMigrateFlags.upTo = flags.String("up-to", "", "run migrations up to the given migration ID")
 }
 
 func createGormigrateOptions(logger gormlogger.Interface) gormigrate.Options {

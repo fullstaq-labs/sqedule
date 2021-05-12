@@ -59,11 +59,13 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	cmd := runCmd
+	flags := cmd.Flags()
+	rootCmd.AddCommand(cmd)
 
-	runFlags.dbconn = defineDatabaseConnectionFlags(runCmd)
+	runFlags.dbconn = defineDatabaseConnectionFlags(cmd)
 
-	runFlags.bind = runCmd.Flags().String("bind", runDefaultBind, "IP to listen on")
-	runFlags.port = runCmd.Flags().Int("port", runDefaultPort, "port to listen on")
-	runFlags.corsOrigin = runCmd.Flags().String("cors-origin", "", "CORS origin to allow")
+	runFlags.bind = flags.String("bind", runDefaultBind, "IP to listen on")
+	runFlags.port = flags.Int("port", runDefaultPort, "port to listen on")
+	runFlags.corsOrigin = flags.String("cors-origin", "", "CORS origin to allow")
 }

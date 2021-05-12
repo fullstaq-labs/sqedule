@@ -72,11 +72,13 @@ var processReleaseCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(processReleaseCmd)
+	cmd := processReleaseCmd
+	flags := cmd.Flags()
+	rootCmd.AddCommand(cmd)
 
-	processReleaseFlags.dbconn = defineDatabaseConnectionFlags(processReleaseCmd)
+	processReleaseFlags.dbconn = defineDatabaseConnectionFlags(cmd)
 
-	processReleaseFlags.organizationID = processReleaseCmd.Flags().String("organization-id", "", "")
-	processReleaseFlags.applicationID = processReleaseCmd.Flags().String("application-id", "", "")
-	processReleaseFlags.releaseID = processReleaseCmd.Flags().Uint64("release-id", 0, "")
+	processReleaseFlags.organizationID = flags.String("organization-id", "", "")
+	processReleaseFlags.applicationID = flags.String("application-id", "", "")
+	processReleaseFlags.releaseID = flags.Uint64("release-id", 0, "")
 }

@@ -63,5 +63,6 @@ Note that Sqedule only supports these environment variables:
 }
 
 func init() {
-	dbCmd.AddCommand(dbHelpCmd)
+	cmd := dbHelpCmd
+	dbCmd.AddCommand(cmd)
 }

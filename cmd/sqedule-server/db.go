@@ -25,5 +25,6 @@ func defineDatabaseConnectionFlags(cmd *cobra.Command) (result databaseConnectio
 }
 
 func init() {
-	rootCmd.AddCommand(dbCmd)
+	cmd := dbCmd
+	rootCmd.AddCommand(cmd)
 }

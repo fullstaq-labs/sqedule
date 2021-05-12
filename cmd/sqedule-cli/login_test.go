@@ -27,8 +27,6 @@ var _ = Describe("Login", func() {
 	})
 
 	It("works on user accounts", func() {
-		viper.Set("email", "a@a.com")
-
 		httpmock.RegisterResponder("POST", serverBaseURL+"/v1/auth/login", func(req *http.Request) (*http.Response, error) {
 			input := make(map[string]interface{})
 			err := json.NewDecoder(req.Body).Decode(&input)
@@ -47,13 +45,12 @@ var _ = Describe("Login", func() {
 			return resp, nil
 		})
 
+		viper.Set("email", "a@a.com")
 		err := loginCmd_run(viper)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("works on service accounts", func() {
-		viper.Set("service-account-name", "sa")
-
 		httpmock.RegisterResponder("POST", serverBaseURL+"/v1/auth/login", func(req *http.Request) (*http.Response, error) {
 			input := make(map[string]interface{})
 			err := json.NewDecoder(req.Body).Decode(&input)
@@ -72,6 +69,7 @@ var _ = Describe("Login", func() {
 			return resp, nil
 		})
 
+		viper.Set("service-account-name", "sa")
 		err := loginCmd_run(viper)
 		Expect(err).ToNot(HaveOccurred())
 	})

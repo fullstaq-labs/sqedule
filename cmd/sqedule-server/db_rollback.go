@@ -48,10 +48,12 @@ var dbRollbackCmd = &cobra.Command{
 }
 
 func init() {
-	dbCmd.AddCommand(dbRollbackCmd)
+	cmd := dbRollbackCmd
+	flags := cmd.Flags()
+	dbCmd.AddCommand(cmd)
 
-	dbRollbackFlags.dbconn = defineDatabaseConnectionFlags(dbRollbackCmd)
+	dbRollbackFlags.dbconn = defineDatabaseConnectionFlags(cmd)
 
-	dbRollbackFlags.target = dbRollbackCmd.Flags().String("target", "", "migration ID to rollback to (required)")
-	dbRollbackCmd.MarkFlagRequired("target")
+	dbRollbackFlags.target = flags.String("target", "", "migration ID to rollback to (required)")
+	cmd.MarkFlagRequired("target")
 }
