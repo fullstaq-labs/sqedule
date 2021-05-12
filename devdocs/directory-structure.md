@@ -1,5 +1,11 @@
 # Directory structure
 
+## CLI
+
+ * `cmd/sqedule-cli/main.go` — Sqedule CLI's main function. It's deliberately minimal because it just kicks off subcommands with [Cobra](https://github.com/spf13/cobra) (similar to how the `git` command does nothing but kicking off subcommands).
+ * `cmd/sqedule-cli/*.go` — All CLI subcommands, backed by [Cobra](https://github.com/spf13/cobra).
+ * `cli/` — additional CLI code that are not specific to a particular subcommand.
+
 ## Server
 
 Server entrypoint sources:
@@ -27,5 +33,5 @@ The main server code is located in `server/`. Here are its subdirectories:
 
  * `devdocs/` — Development documentation.
  * `devtools/` — Tools and scripts used during development.
- * `bin/` - Place to build binaries to in automation
+ * `bin/` - Place to build binaries to in automation.
  * `lib/` — Generic library code that's not specific to Sqedule.
