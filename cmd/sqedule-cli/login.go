@@ -20,15 +20,15 @@ var loginCmd = &cobra.Command{
 }
 
 func loginCmd_run(viper *viper.Viper) error {
+	err := loginCmd_checkConfig(viper)
+	if err != nil {
+		return err
+	}
+
 	config := cli.LoadConfigFromViper(viper)
 	state, err := cli.LoadStateFromFilesystem()
 	if err != nil {
 		return fmt.Errorf("Error loading state: %w", err)
-	}
-
-	err = loginCmd_checkConfig(viper)
-	if err != nil {
-		return err
 	}
 
 	req, err := cli.NewApiRequestWithoutAuth(config)
