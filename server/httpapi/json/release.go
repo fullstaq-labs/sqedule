@@ -5,16 +5,21 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 )
 
 type Release struct {
-	ID             uint64     `json:"id"`
-	State          string     `json:"state"`
-	SourceIdentity *string    `json:"source_identity"`
-	Comments       *string    `json:"comments"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-	FinalizedAt    *time.Time `json:"finalized_at"`
+	ID    uint64 `json:"id"`
+	State string `json:"state"`
+	ReleasePatchablePart
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	FinalizedAt *time.Time `json:"finalized_at"`
+}
+
+type ReleasePatchablePart struct {
+	SourceIdentity *string `json:"source_identity"`
+	Comments       *string `json:"comments"`
 }
 
 type ReleaseWithApplicationAssociation struct {
@@ -98,11 +103,15 @@ func CreateFromDbReleaseWithAssociations(release dbmodels.Release, includeApplic
 	return result
 }
 
-func PatchDbRelease(release *dbmodels.Release, json Release) {
+func PatchDbRelease(release *dbmodels.Release, json ReleasePatchablePart) {
 	if json.SourceIdentity != nil {
 		release.SourceIdentity = sql.NullString{String: *json.SourceIdentity, Valid: true}
 	}
 	if json.Comments != nil {
 		release.Comments = sql.NullString{String: *json.Comments, Valid: true}
 	}
+}
+
+func (release Release) ApprovalStatusIsFinal() bool {
+	return releasestate.State(release.State).IsFinal()
 }

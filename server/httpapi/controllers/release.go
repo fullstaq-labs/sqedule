@@ -92,7 +92,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	var input json.Release
+	var input json.ReleasePatchablePart
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
@@ -252,7 +252,7 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
-	var input json.Release
+	var input json.ReleasePatchablePart
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return

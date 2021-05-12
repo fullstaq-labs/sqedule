@@ -15,12 +15,18 @@ type ConfigRequirementSpec struct {
 	// StringNonEmpty contains a list of Viper config names, whose
 	// String value must be non-empty.
 	StringNonEmpty []string
+	// UintNonZero contains a list of Viper config names, whose
+	// Uint value must be non-zero.
+	UintNonZero []string
 }
 
 // Names returns all configuration option names that appear in this spec.
 func (spec ConfigRequirementSpec) Names() []string {
 	result := make([]string, 0)
 	for _, name := range spec.StringNonEmpty {
+		result = append(result, name)
+	}
+	for _, name := range spec.UintNonZero {
 		result = append(result, name)
 	}
 	return result
@@ -58,6 +64,14 @@ func checkConfigRequirements(viper *viper.Viper, spec ConfigRequirementSpec) (mi
 
 	for _, name := range spec.StringNonEmpty {
 		if len(viper.GetString(name)) == 0 {
+			missing = append(missing, name)
+		} else {
+			numSet++
+		}
+	}
+
+	for _, name := range spec.UintNonZero {
+		if viper.GetUint64(name) == 0 {
 			missing = append(missing, name)
 		} else {
 			numSet++

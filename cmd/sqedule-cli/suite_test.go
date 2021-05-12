@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/jarcoal/httpmock"
@@ -28,3 +29,8 @@ var _ = AfterSuite(func() {
 var _ = BeforeEach(func() {
 	cli.MockState = &cli.State{}
 })
+
+func mockAuthToken() {
+	cli.MockState.AuthToken = "test"
+	cli.MockState.AuthTokenExpirationTime = time.Now().Add(1 * time.Hour)
+}
