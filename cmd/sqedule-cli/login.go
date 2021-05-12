@@ -14,18 +14,19 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Logs into a Sqedule server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return loginCmd_run(cmd, args, viper.GetViper())
+		viper.BindPFlags(cmd.Flags())
+		return loginCmd_run(viper.GetViper())
 	},
 }
 
-func loginCmd_run(cmd *cobra.Command, args []string, viper *viper.Viper) error {
+func loginCmd_run(viper *viper.Viper) error {
 	config := cli.LoadConfigFromViper(viper)
 	state, err := cli.LoadStateFromFilesystem()
 	if err != nil {
 		return fmt.Errorf("Error loading state: %w", err)
 	}
 
-	err = loginCmd_checkConfig(viper, config)
+	err = loginCmd_checkConfig(viper)
 	if err != nil {
 		return err
 	}
@@ -65,7 +66,7 @@ func loginCmd_run(cmd *cobra.Command, args []string, viper *viper.Viper) error {
 	return nil
 }
 
-func loginCmd_checkConfig(viper *viper.Viper, config cli.Config) error {
+func loginCmd_checkConfig(viper *viper.Viper) error {
 	err := cli.RequireConfigOptions(viper, cli.ConfigRequirementSpec{
 		StringNonEmpty: []string{"organization-id", "password"},
 	})
@@ -104,12 +105,10 @@ func init() {
 	flags := cmd.Flags()
 	rootCmd.AddCommand(cmd)
 
-	cli.DefineServerFlags(cmd)
+	cli.DefineServerFlags(flags)
 
 	flags.String("organization-id", "", "organization ID (required)")
 	flags.StringP("email", "e", "", "user account email")
 	flags.StringP("service-account-name", "n", "", "service account name")
 	flags.StringP("password", "p", "", "user or service account password (required)")
-
-	viper.BindPFlags(flags)
 }

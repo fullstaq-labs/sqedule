@@ -1,7 +1,7 @@
 package cli
 
-import "github.com/spf13/cobra"
+import "github.com/spf13/pflag"
 
-func DefineServerFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("server-base-url", "S", "", "server base URL (required). Example: https://sqedule.mydomain.net")
+func DefineServerFlags(flags *pflag.FlagSet) {
+	flags.StringP("server-base-url", "S", "", "server base URL (required). Example: https://sqedule.mydomain.net")
 }

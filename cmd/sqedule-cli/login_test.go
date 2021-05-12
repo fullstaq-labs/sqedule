@@ -47,7 +47,7 @@ var _ = Describe("Login", func() {
 			return resp, nil
 		})
 
-		err := loginCmd_run(nil, nil, viper)
+		err := loginCmd_run(viper)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -72,7 +72,7 @@ var _ = Describe("Login", func() {
 			return resp, nil
 		})
 
-		err := loginCmd_run(nil, nil, viper)
+		err := loginCmd_run(viper)
 		Expect(err).ToNot(HaveOccurred())
 	})
 })
