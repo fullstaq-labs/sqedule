@@ -14,11 +14,11 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Logs into a Sqedule server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return LoginCmd_Run(cmd, args, viper.GetViper())
+		return loginCmd_run(cmd, args, viper.GetViper())
 	},
 }
 
-func LoginCmd_Run(cmd *cobra.Command, args []string, viper *viper.Viper) error {
+func loginCmd_run(cmd *cobra.Command, args []string, viper *viper.Viper) error {
 	config := cli.LoadConfigFromViper(viper)
 	state, err := cli.LoadStateFromFilesystem()
 	if err != nil {

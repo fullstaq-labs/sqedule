@@ -1,4 +1,4 @@
-package main_test
+package main
 
 import (
 	"time"
@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/fullstaq-labs/sqedule/cli"
-	. "github.com/fullstaq-labs/sqedule/cmd/sqedule-cli"
 )
 
 var _ = Describe("Logout", func() {

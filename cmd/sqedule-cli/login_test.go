@@ -1,4 +1,4 @@
-package main_test
+package main
 
 import (
 	"encoding/json"
@@ -8,8 +8,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	viperPkg "github.com/spf13/viper"
-
-	. "github.com/fullstaq-labs/sqedule/cmd/sqedule-cli"
 )
 
 var _ = Describe("Login", func() {
@@ -49,7 +47,7 @@ var _ = Describe("Login", func() {
 			return resp, nil
 		})
 
-		err := LoginCmd_Run(nil, nil, viper)
+		err := loginCmd_run(nil, nil, viper)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -74,7 +72,7 @@ var _ = Describe("Login", func() {
 			return resp, nil
 		})
 
-		err := LoginCmd_Run(nil, nil, viper)
+		err := loginCmd_run(nil, nil, viper)
 		Expect(err).ToNot(HaveOccurred())
 	})
 })
