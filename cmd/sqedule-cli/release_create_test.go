@@ -61,7 +61,8 @@ var _ = Describe("release create", func() {
 		})
 
 		viper.Set("wait", true)
-		viper.Set("wait-interval", "1m")
+		viper.Set("wait-min-duration", "1s")
+		viper.Set("wait-max-duration", "1s")
 		viper.Set("wait-timeout", "0")
 
 		err := releaseCreateCmd_run(viper, &printer, true)

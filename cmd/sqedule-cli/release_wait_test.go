@@ -34,7 +34,8 @@ var _ = Describe("release wait", func() {
 		viper.Set("server-base-url", serverBaseURL)
 		viper.Set("application-id", appID)
 		viper.Set("release-id", releaseID)
-		viper.Set("wait-interval", "1m")
+		viper.Set("wait-min-duration", "1s")
+		viper.Set("wait-max-duration", "1s")
 		viper.Set("wait-timeout", "0")
 	})
 

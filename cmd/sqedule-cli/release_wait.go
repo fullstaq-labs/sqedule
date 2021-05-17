@@ -55,8 +55,9 @@ func releaseWaitCmd_run(viper *viper.Viper, printer mocking.IPrinter, clock mock
 		return releasestate.InProgress, err
 	}
 
+	var lastSleepDuration time.Duration
 	if invokedByCreate {
-		releaseWaitCmd_sleep(viper, clock)
+		lastSleepDuration = releaseWaitCmd_sleep(viper, clock, time.Duration(0))
 	}
 
 	deadline, err := releaseWaitCmd_getDeadline(viper, clock)
@@ -84,7 +85,7 @@ func releaseWaitCmd_run(viper *viper.Viper, printer mocking.IPrinter, clock mock
 		} else if (deadline != time.Time{}) && time.Now().After(deadline) {
 			return releasestate.InProgress, errors.New("Timeout")
 		} else {
-			releaseWaitCmd_sleep(viper, clock)
+			lastSleepDuration = releaseWaitCmd_sleep(viper, clock, lastSleepDuration)
 		}
 	}
 }
@@ -107,7 +108,12 @@ func releaseWaitCmd_checkConfig(viper *viper.Viper, fromCreateCmd bool) error {
 		return err
 	}
 
-	_, err = releaseWaitCmd_getInterval(viper)
+	_, err = releaseWaitCmd_getMinDuration(viper)
+	if err != nil {
+		return err
+	}
+
+	_, err = releaseWaitCmd_getMaxDuration(viper)
 	if err != nil {
 		return err
 	}
@@ -124,14 +130,26 @@ func releaseWaitCmd_getTimeout(viper *viper.Viper) (time.Duration, error) {
 	return result, nil
 }
 
-func releaseWaitCmd_getInterval(viper *viper.Viper) (time.Duration, error) {
-	interval := viper.GetString("wait-interval")
+func releaseWaitCmd_getMinDuration(viper *viper.Viper) (time.Duration, error) {
+	interval := viper.GetString("wait-min-duration")
 	result, err := time.ParseDuration(interval)
 	if err != nil {
-		return time.Duration(0), fmt.Errorf("Error parsing configuration wait-interval: %w", err)
+		return time.Duration(0), fmt.Errorf("Error parsing configuration wait-min-duration: %w", err)
 	}
 	if result == time.Duration(0) {
-		return time.Duration(0), errors.New("Configuration wait-interval must be larger than 0")
+		return time.Duration(0), errors.New("Configuration wait-min-duration must be larger than 0")
+	}
+	return result, nil
+}
+
+func releaseWaitCmd_getMaxDuration(viper *viper.Viper) (time.Duration, error) {
+	interval := viper.GetString("wait-max-duration")
+	result, err := time.ParseDuration(interval)
+	if err != nil {
+		return time.Duration(0), fmt.Errorf("Error parsing configuration wait-max-duration: %w", err)
+	}
+	if result == time.Duration(0) {
+		return time.Duration(0), errors.New("Configuration wait-max-duration must be larger than 0")
 	}
 	return result, nil
 }
@@ -149,17 +167,33 @@ func releaseWaitCmd_getDeadline(viper *viper.Viper, clock mocking.IClock) (time.
 	}
 }
 
-func releaseWaitCmd_sleep(viper *viper.Viper, clock mocking.IClock) {
-	interval, err := releaseWaitCmd_getInterval(viper)
-	if err != nil {
-		panic("Bug: cannot parse wait-interval")
+func releaseWaitCmd_sleep(viper *viper.Viper, clock mocking.IClock, prevDuration time.Duration) time.Duration {
+	var duration time.Duration
+	var err error
+
+	if prevDuration == time.Duration(0) {
+		duration, err = releaseWaitCmd_getMinDuration(viper)
+		if err != nil {
+			panic("Bug: cannot parse wait-min-duration")
+		}
+	} else {
+		duration = prevDuration * 2
+		maxDuration, err := releaseWaitCmd_getMaxDuration(viper)
+		if err != nil {
+			panic("Bug: cannot parse wait-max-duration")
+		}
+		if duration > maxDuration {
+			duration = maxDuration
+		}
 	}
-	clock.Sleep(interval)
+	clock.Sleep(duration)
+	return duration
 }
 
 func releaseWaitCmd_defineFlagsSharedWithCreateCmd(flags *pflag.FlagSet) {
 	flags.String("wait-timeout", "0", "Max time to wait until timeout, 0 means forever. Non-zero values must contain a time unit (e.g. 1s, 2m, 3h)")
-	flags.String("wait-interval", "1m", "Time between state checks. Must contain a time unit (e.g. 1s, 2m, 3h)")
+	flags.String("wait-min-duration", "1s", "Minimum duration between state checks. Must contain a time unit (e.g. 1s, 2m, 3h)")
+	flags.String("wait-max-duration", "1m", "Maximum duration between state checks. Must contain a time unit (e.g. 1s, 2m, 3h)")
 }
 
 func init() {
