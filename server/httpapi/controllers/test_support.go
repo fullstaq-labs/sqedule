@@ -82,7 +82,7 @@ func SetupHTTPTestContext() (HTTPTestContext, error) {
 	ctx.HttpRecorder = httptest.NewRecorder()
 
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		ctx.Org, err = dbmodels.CreateMockOrganization(ctx.Db)
+		ctx.Org, err = dbmodels.CreateMockOrganization(ctx.Db, nil)
 		if err != nil {
 			return err
 		}

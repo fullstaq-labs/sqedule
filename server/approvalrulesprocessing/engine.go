@@ -17,13 +17,12 @@ import (
 // done by passing the corresponding ReleaseBackgroundJob.
 type Engine struct {
 	Db                   *gorm.DB
-	Organization         dbmodels.Organization
+	OrganizationID       string
 	ReleaseBackgroundJob dbmodels.ReleaseBackgroundJob
 }
 
 var errTemporary = errors.New("temporary error, retry later")
 
-// Run ...
 func (engine *Engine) Run() error {
 	err := engine.lock()
 	if err != nil {
@@ -144,7 +143,7 @@ func (engine Engine) getPostgresAdvisoryLockID() uint64 {
 }
 
 func (engine Engine) loadRules() (dbmodels.ApprovalRulesetContents, error) {
-	return dbmodels.FindApprovalRulesBoundToRelease(engine.Db, engine.Organization.ID,
+	return dbmodels.FindApprovalRulesBoundToRelease(engine.Db, engine.OrganizationID,
 		engine.ReleaseBackgroundJob.ApplicationID, engine.ReleaseBackgroundJob.ReleaseID)
 }
 
@@ -170,7 +169,7 @@ func (engine Engine) createRuleProcessedEvent(resultState releasestate.State, ig
 	event := dbmodels.ReleaseRuleProcessedEvent{
 		ReleaseEvent: dbmodels.ReleaseEvent{
 			BaseModel: dbmodels.BaseModel{
-				OrganizationID: engine.Organization.ID,
+				OrganizationID: engine.OrganizationID,
 			},
 			ReleaseID:     engine.ReleaseBackgroundJob.Release.ID,
 			ApplicationID: engine.ReleaseBackgroundJob.ApplicationID,

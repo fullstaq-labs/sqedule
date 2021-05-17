@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/fullstaq-labs/sqedule/server/approvalrulesprocessing"
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
@@ -108,6 +109,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 
 	var release dbmodels.Release
 	var releaseRulesetBindings []dbmodels.ReleaseApprovalRulesetBinding
+	var job dbmodels.ReleaseBackgroundJob
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 		release = dbmodels.Release{
 			BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
@@ -159,7 +161,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 
-		_, err = dbmodels.CreateReleaseBackgroundJob(tx, orgID, applicationID, release)
+		job, err = dbmodels.CreateReleaseBackgroundJob(tx, orgID, applicationID, release)
 		if err != nil {
 			return fmt.Errorf("Error creating background job for processing this Release: %w", err)
 		}
@@ -169,6 +171,11 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	err = approvalrulesprocessing.ProcessInBackground(ctx.Db, orgID, job)
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
 	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &releaseRulesetBindings)

@@ -13,10 +13,13 @@ import (
 )
 
 // CreateMockOrganization ...
-func CreateMockOrganization(db *gorm.DB) (Organization, error) {
+func CreateMockOrganization(db *gorm.DB, customizeFunc func(org *Organization)) (Organization, error) {
 	result := Organization{
 		ID:          "org1",
 		DisplayName: "Org 1",
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
 	}
 	tx := db.Create(&result)
 	return result, tx.Error
@@ -328,7 +331,7 @@ func CreateMockReleaseRulesetBindingWithEnforcingMode1Version(db *gorm.DB, organ
 }
 
 // CreateMockReleaseBackgroundJob ...
-func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app Application, release Release) (ReleaseBackgroundJob, error) {
+func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app Application, release Release, customizeFunc func(job *ReleaseBackgroundJob)) (ReleaseBackgroundJob, error) {
 	result := ReleaseBackgroundJob{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
@@ -338,6 +341,9 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 		LockSubID:     1,
 		ReleaseID:     release.ID,
 		Release:       release,
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
 	}
 	tx := db.Omit(clause.Associations).Create(&result)
 	if tx.Error != nil {

@@ -2,6 +2,7 @@ package dbmodels
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
@@ -59,4 +60,8 @@ func CollectReleasesWithReleaseApprovalRulesetBindings(bindings []ReleaseApprova
 		result = append(result, &binding.Release)
 	}
 	return result
+}
+
+func (r Release) Description() string {
+	return fmt.Sprintf("(org=%s, app=%s, releaseID=%d)", r.OrganizationID, r.ApplicationID, r.ID)
 }

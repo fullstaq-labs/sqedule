@@ -13,7 +13,7 @@ import (
 )
 
 func (engine Engine) fetchScheduleRulePreviousOutcomes() (map[uint64]bool, error) {
-	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(engine.Db, engine.Organization.ID, engine.ReleaseBackgroundJob.ReleaseID)
+	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(engine.Db, engine.OrganizationID, engine.ReleaseBackgroundJob.ReleaseID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,14 +30,14 @@ func (engine Engine) processScheduleRules(rulesetContents dbmodels.ApprovalRules
 		if err != nil {
 			return releasestate.Rejected, nprocessed,
 				maybeFormatRuleProcessingError(err, "Error processing schedule rule org=%s, ID=%d: %w",
-					engine.Organization.ID, rule.ID, err)
+					engine.OrganizationID, rule.ID, err)
 		}
 
 		nprocessed++
 		resultState, ignoredError := determineReleaseStateFromOutcome(success, rule.BindingMode, isLastRule(nAlreadyProcessed, nprocessed, totalRules))
 		engine.Db.Logger.Info(context.Background(),
 			"Processed schedule rule: org=%s, ID=%d, success=%t, ignoredError=%t, resultState=%s",
-			engine.Organization.ID, rule.ID, success, ignoredError, resultState)
+			engine.OrganizationID, rule.ID, success, ignoredError, resultState)
 		if !outcomeAlreadyRecorded {
 			event, err := engine.createRuleProcessedEvent(resultState, ignoredError)
 			if err != nil {
@@ -81,7 +81,7 @@ func (engine Engine) createScheduleRuleOutcome(rule dbmodels.ScheduleApprovalRul
 	outcome := dbmodels.ScheduleApprovalRuleOutcome{
 		ApprovalRuleOutcome: dbmodels.ApprovalRuleOutcome{
 			BaseModel: dbmodels.BaseModel{
-				OrganizationID: engine.Organization.ID,
+				OrganizationID: engine.OrganizationID,
 			},
 			ReleaseRuleProcessedEventID: event.ReleaseEvent.ID,
 			Success:                     success,

@@ -64,7 +64,7 @@ var processReleaseCmd = &cobra.Command{
 
 		engine := approvalrulesprocessing.Engine{
 			Db:                   db,
-			Organization:         organization,
+			OrganizationID:       organization.ID,
 			ReleaseBackgroundJob: job,
 		}
 		return engine.Run()

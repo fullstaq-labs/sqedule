@@ -25,7 +25,7 @@ func setupCreateReleaseBackgroundJobTest() (CreateReleaseBackgroundJobTestContex
 	}
 
 	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ctx.org, err = CreateMockOrganization(tx)
+		ctx.org, err = CreateMockOrganization(tx, nil)
 		if err != nil {
 			return err
 		}

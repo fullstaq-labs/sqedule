@@ -97,3 +97,11 @@ func FindReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID 
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
 }
+
+// FindUnlockedReleaseBackgroundJobs returns all ReleaseBackgroundJobs, in the entire database
+// (across organizations), that aren't currently being processed by approvalrulesprocessing.Engine.
+func FindUnlockedReleaseBackgroundJobs(db *gorm.DB) ([]ReleaseBackgroundJob, error) {
+	var result []ReleaseBackgroundJob
+	tx := db.Clauses(clause.Locking{Strength: "UPDATE SKIP LOCKED"}).Preload("Release").Find(&result)
+	return result, tx.Error
+}

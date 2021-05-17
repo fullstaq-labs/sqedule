@@ -38,7 +38,7 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 	}
 
 	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ctx.org, err = dbmodels.CreateMockOrganization(tx)
+		ctx.org, err = dbmodels.CreateMockOrganization(tx, nil)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 			return err
 		}
 
-		ctx.job, err = dbmodels.CreateMockReleaseBackgroundJob(tx, ctx.org, ctx.app, ctx.release)
+		ctx.job, err = dbmodels.CreateMockReleaseBackgroundJob(tx, ctx.org, ctx.app, ctx.release, nil)
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func setupProcessScheduleRulesTest() (ProcessScheduleRulesTestContext, error) {
 
 	ctx.engine = Engine{
 		Db:                   ctx.db,
-		Organization:         ctx.org,
+		OrganizationID:       ctx.org.ID,
 		ReleaseBackgroundJob: ctx.job,
 	}
 	return ctx, nil

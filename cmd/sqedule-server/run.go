@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/fullstaq-labs/sqedule/server/approvalrulesprocessing"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi"
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,11 @@ var runCmd = &cobra.Command{
 		err = ctx.SetupRouter(engine)
 		if err != nil {
 			return fmt.Errorf("Error setting up router: %w", err)
+		}
+
+		err = approvalrulesprocessing.ProcessAllPendingReleasesInBackground(ctx.Db)
+		if err != nil {
+			return fmt.Errorf("Error processing pending releases in the background: %w", err)
 		}
 
 		engine.Run(fmt.Sprintf("%s:%d", *runFlags.bind, *runFlags.port))
