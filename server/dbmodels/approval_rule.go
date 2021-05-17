@@ -2,7 +2,6 @@ package dbmodels
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalpolicy"
@@ -61,10 +60,12 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 	var tx *gorm.DB
 	var ruleTypesProcessed uint = 0
 
-	bindingsCondition := db.Where("organization_id = ? AND application_id = ? AND release_id = ?",
+	bindingsCondition := db.Where("approval_rules.organization_id = ? "+
+		"AND release_approval_ruleset_bindings.application_id = ? "+
+		"AND release_approval_ruleset_bindings.release_id = ?",
 		organizationID, applicationID, releaseID)
 
-	const joinConditionString = "LEFT JOIN %s approval_rules " +
+	const joinConditionString = "LEFT JOIN release_approval_ruleset_bindings " +
 		"ON approval_rules.organization_id = release_approval_ruleset_bindings.organization_id " +
 		"AND approval_rules.approval_ruleset_major_version_id = release_approval_ruleset_bindings.approval_ruleset_major_version_id " +
 		"AND approval_rules.approval_ruleset_minor_version_number = release_approval_ruleset_bindings.approval_ruleset_minor_version_number"
@@ -72,7 +73,8 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 
 	ruleTypesProcessed++
 	tx = db.Where(bindingsCondition).
-		Joins(fmt.Sprintf(joinConditionString, "http_api_approval_rules")).
+		Joins(joinConditionString).
+		Table("http_api_approval_rules approval_rules").
 		Select(selector).
 		Find(&result.HTTPApiApprovalRules)
 	if tx.Error != nil {
@@ -81,7 +83,8 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 
 	ruleTypesProcessed++
 	tx = db.Where(bindingsCondition).
-		Joins(fmt.Sprintf(joinConditionString, "schedule_approval_rules")).
+		Joins(joinConditionString).
+		Table("schedule_approval_rules approval_rules").
 		Select(selector).
 		Find(&result.ScheduleApprovalRules)
 	if tx.Error != nil {
@@ -90,7 +93,8 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 
 	ruleTypesProcessed++
 	tx = db.Where(bindingsCondition).
-		Joins(fmt.Sprintf(joinConditionString, "manual_approval_rules")).
+		Joins(joinConditionString).
+		Table("manual_approval_rules approval_rules").
 		Select(selector).
 		Find(&result.ManualApprovalRules)
 	if tx.Error != nil {
