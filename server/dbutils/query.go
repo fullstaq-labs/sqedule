@@ -34,6 +34,12 @@ func QueryStringList(db *gorm.DB, sql string, values ...interface{}) ([]string, 
 // CreateFindOperationError is to be used by `dbmodel.FindXxxByYyyy()`
 // functions to ensure that, when a record is not found, a
 // `gorm.ErrRecordNotFound` error is returned.
+//
+// Implementors are supposed to use this in combination with GORM's `tx.Take()`, like so:
+//
+//  var result MyModel
+//  tx := db.Where(...).Take(&result)
+//  return result, dbutils.CreateFindOperationError(tx)
 func CreateFindOperationError(tx *gorm.DB) error {
 	if tx.Error != nil {
 		return tx.Error

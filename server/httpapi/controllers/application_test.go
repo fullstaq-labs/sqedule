@@ -2,173 +2,158 @@ package controllers
 
 import (
 	"fmt"
-	"testing"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/stretchr/testify/assert"
+	"github.com/gin-gonic/gin"
+	. "github.com/onsi/gomega"
 	"gorm.io/gorm"
 )
 
-func TestGetAllApplications(t *testing.T) {
-	ctx, err := SetupHTTPTestContext()
-	if !assert.NoError(t, err) {
-		return
-	}
+var _ = Describe("approval-ruleset API", func() {
+	var ctx HTTPTestContext
+	var err error
 
-	var app1, app2 dbmodels.Application
-	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		app1, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
-			func(app *dbmodels.Application) {
-				app.CreatedAt = time.Date(2021, 3, 8, 12, 0, 0, 0, time.Local)
-			},
-			nil)
-		if err != nil {
-			return err
-		}
+	BeforeEach(func() {
+		ctx, err = SetupHTTPTestContext()
+		Expect(err).ToNot(HaveOccurred())
+	})
 
-		app2, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
-			func(app *dbmodels.Application) {
-				app.ID = "app2"
-				app.CreatedAt = time.Date(2021, 3, 8, 11, 0, 0, 0, time.Local)
-			},
-			func(adjustment *dbmodels.ApplicationAdjustment) {
-				adjustment.DisplayName = "App 2"
+	Describe("GET /applications", func() {
+		var app1, app2 dbmodels.Application
+		var body gin.H
+
+		BeforeEach(func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				app1, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+					func(app *dbmodels.Application) {
+						app.CreatedAt = time.Date(2021, 3, 8, 12, 0, 0, 0, time.Local)
+					},
+					nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				app2, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+					func(app *dbmodels.Application) {
+						app.ID = "app2"
+						app.CreatedAt = time.Date(2021, 3, 8, 11, 0, 0, 0, time.Local)
+					},
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.DisplayName = "App 2"
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1,
+					ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
 			})
-		if err != nil {
-			return err
-		}
+			Expect(err).ToNot(HaveOccurred())
 
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
-		if err != nil {
-			return err
-		}
+			req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications"), nil)
+			Expect(err).ToNot(HaveOccurred())
+			ctx.ServeHTTP(req)
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1,
-			ruleset, nil)
-		if err != nil {
-			return err
-		}
+			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			body, err = ctx.BodyJSON()
+			Expect(err).ToNot(HaveOccurred())
+		})
 
-		return nil
+		It("outputs all applications", func() {
+			Expect(body["items"]).NotTo(BeNil())
+			items := body["items"].([]interface{})
+			Expect(items).To(HaveLen(2))
+
+			item1 := items[0].(map[string]interface{})
+			Expect(item1["id"]).To(Equal(app1.ID))
+			Expect(item1["version_number"]).To(Equal(float64(1)))
+			Expect(item1["adjustment_number"]).To(Equal(float64(1)))
+			Expect(item1["display_name"]).To(Equal(app1.LatestAdjustment.DisplayName))
+			Expect(item1["enabled"]).To(Equal(app1.LatestAdjustment.Enabled))
+			Expect(item1["created_at"]).ToNot(BeNil())
+			Expect(item1["updated_at"]).ToNot(BeNil())
+
+			item2 := items[1].(map[string]interface{})
+			Expect(item2["id"]).To(Equal(app2.ID))
+			Expect(item2["version_number"]).To(Equal(float64(1)))
+			Expect(item2["adjustment_number"]).To(Equal(float64(1)))
+			Expect(item2["display_name"]).To(Equal(app2.LatestAdjustment.DisplayName))
+			Expect(item2["enabled"]).To(Equal(app2.LatestAdjustment.Enabled))
+			Expect(item2["created_at"]).ToNot(BeNil())
+			Expect(item2["updated_at"]).ToNot(BeNil())
+		})
+
+		It("outputs no approval ruleset bindings", func() {
+			Expect(body["items"]).NotTo(BeNil())
+			items := body["items"].([]interface{})
+			Expect(items).To(HaveLen(2))
+
+			item1 := items[0].(map[string]interface{})
+			Expect(item1).ToNot(HaveKey("approval_ruleset_bindings"))
+
+			item2 := items[1].(map[string]interface{})
+			Expect(item2).ToNot(HaveKey("approval_ruleset_bindings"))
+		})
 	})
-	if !assert.NoError(t, err) {
-		return
-	}
 
-	req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications"), nil)
-	if !assert.NoError(t, err) {
-		return
-	}
-	ctx.ServeHTTP(req)
+	Describe("GET /applications/:id", func() {
+		var app dbmodels.Application
+		var body gin.H
 
-	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
-		return
-	}
-	body, err := ctx.BodyJSON()
-	if !assert.NoError(t, err) {
-		return
-	}
+		BeforeEach(func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	if !assert.NotEmpty(t, body["items"]) {
-		return
-	}
-	items := body["items"].([]interface{})
-	if !assert.Equal(t, 2, len(items)) {
-		return
-	}
+				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	item1 := items[0].(map[string]interface{})
-	assert.Equal(t, app1.ID, item1["id"])
-	assert.Equal(t, float64(1), item1["version_number"])
-	assert.Equal(t, float64(1), item1["adjustment_number"])
-	assert.Equal(t, app1.LatestAdjustment.DisplayName, item1["display_name"])
-	assert.Equal(t, app1.LatestAdjustment.Enabled, item1["enabled"])
-	assert.NotNil(t, item1["created_at"])
-	assert.NotNil(t, item1["updated_at"])
-	assert.Empty(t, item1["approval_ruleset_bindings"])
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app,
+					ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	item2 := items[1].(map[string]interface{})
-	assert.Equal(t, app2.ID, item2["id"])
-	assert.Equal(t, float64(1), item2["version_number"])
-	assert.Equal(t, float64(1), item2["adjustment_number"])
-	assert.Equal(t, app2.LatestAdjustment.DisplayName, item2["display_name"])
-	assert.Equal(t, app2.LatestAdjustment.Enabled, item2["enabled"])
-	assert.NotNil(t, item2["created_at"])
-	assert.NotNil(t, item2["updated_at"])
-	assert.Empty(t, item2["approval_ruleset_bindings"])
-}
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
 
-func TestGetApplication(t *testing.T) {
-	ctx, err := SetupHTTPTestContext()
-	if !assert.NoError(t, err) {
-		return
-	}
+			req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications/%s", app.ID), nil)
+			Expect(err).ToNot(HaveOccurred())
+			ctx.ServeHTTP(req)
 
-	var app dbmodels.Application
-	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
-		if err != nil {
-			return err
-		}
+			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			body, err = ctx.BodyJSON()
+			Expect(err).ToNot(HaveOccurred())
+		})
 
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
-		if err != nil {
-			return err
-		}
+		It("outputs the latest version", func() {
+			Expect(body["id"]).To(Equal(app.ID))
+			Expect(body["version_number"]).To(Equal(float64(1)))
+			Expect(body["adjustment_number"]).To(Equal(float64(1)))
+			Expect(body["display_name"]).To(Equal(app.LatestAdjustment.DisplayName))
+			Expect(body["enabled"]).To(Equal(app.LatestAdjustment.Enabled))
+			Expect(body["created_at"]).ToNot(BeNil())
+			Expect(body["updated_at"]).ToNot(BeNil())
+		})
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app,
-			ruleset, nil)
-		if err != nil {
-			return err
-		}
+		It("outputs approval ruleset bindings", func() {
+			Expect(body["approval_ruleset_bindings"]).ToNot(BeEmpty())
 
-		return nil
+			bindings := body["approval_ruleset_bindings"].([]interface{})
+			Expect(bindings).To(HaveLen(1))
+
+			binding := bindings[0].(map[string]interface{})
+			Expect(binding["mode"]).To(Equal("enforcing"))
+			Expect(binding["version_number"]).To(Equal(float64(1)))
+			Expect(binding["adjustment_number"]).To(Equal(float64(1)))
+			Expect(binding["approval_ruleset"]).ToNot(BeNil())
+
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset["id"]).To(Equal("ruleset1"))
+			Expect(ruleset["version_number"]).To(Equal(float64(1)))
+			Expect(ruleset["adjustment_number"]).To(Equal(float64(1)))
+		})
 	})
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications/%s", app.ID), nil)
-	if !assert.NoError(t, err) {
-		return
-	}
-	ctx.ServeHTTP(req)
-
-	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
-		return
-	}
-	body, err := ctx.BodyJSON()
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	assert.Equal(t, app.ID, body["id"])
-	assert.Equal(t, float64(1), body["version_number"])
-	assert.Equal(t, float64(1), body["adjustment_number"])
-	assert.Equal(t, app.LatestAdjustment.DisplayName, body["display_name"])
-	assert.Equal(t, app.LatestAdjustment.Enabled, body["enabled"])
-	assert.NotNil(t, body["created_at"])
-	assert.NotNil(t, body["updated_at"])
-	if !assert.NotEmpty(t, body["approval_ruleset_bindings"]) {
-		return
-	}
-
-	bindings := body["approval_ruleset_bindings"].([]interface{})
-	if !assert.Equal(t, 1, len(bindings)) {
-		return
-	}
-
-	binding := bindings[0].(map[string]interface{})
-	assert.Equal(t, "enforcing", binding["mode"])
-	assert.Equal(t, float64(1), binding["version_number"])
-	assert.Equal(t, float64(1), binding["adjustment_number"])
-	if !assert.NotNil(t, binding["approval_ruleset"]) {
-		return
-	}
-
-	ruleset := binding["approval_ruleset"].(map[string]interface{})
-	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["version_number"])
-	assert.Equal(t, float64(1), ruleset["adjustment_number"])
-}
+})

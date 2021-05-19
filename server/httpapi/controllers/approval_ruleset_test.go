@@ -1,225 +1,175 @@
 package controllers
 
 import (
-	"testing"
+	"github.com/gin-gonic/gin"
+	. "github.com/onsi/gomega"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
-func TestGetAllApprovalRulesets(t *testing.T) {
-	ctx, err := SetupHTTPTestContext()
-	if !assert.NoError(t, err) {
-		return
-	}
+var _ = Describe("approval-ruleset API", func() {
+	var ctx HTTPTestContext
+	var err error
 
-	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
-		if err != nil {
-			return err
-		}
-
-		app1, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
-			func(app *dbmodels.Application) {
-				app.ID = "app1"
-			},
-			func(adjustment *dbmodels.ApplicationAdjustment) {
-				adjustment.DisplayName = "App 1"
-			})
-		if err != nil {
-			return err
-		}
-		app2, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
-			func(app *dbmodels.Application) {
-				app.ID = "app2"
-			},
-			func(adjustment *dbmodels.ApplicationAdjustment) {
-				adjustment.DisplayName = "App 2"
-			})
-		if err != nil {
-			return err
-		}
-
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1, ruleset, nil)
-		if err != nil {
-			return err
-		}
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app2, ruleset, nil)
-		if err != nil {
-			return err
-		}
-
-		release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app1, nil)
-		if err != nil {
-			return err
-		}
-		release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
-		if err != nil {
-			return err
-		}
-		release3, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
-		if err != nil {
-			return err
-		}
-
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
-		if err != nil {
-			return err
-		}
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
-		if err != nil {
-			return err
-		}
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	BeforeEach(func() {
+		ctx, err = SetupHTTPTestContext()
+		Expect(err).ToNot(HaveOccurred())
 	})
-	if !assert.NoError(t, err) {
-		return
-	}
 
-	req, err := ctx.NewRequestWithAuth("GET", "/v1/approval-rulesets", nil)
-	if !assert.NoError(t, err) {
-		return
-	}
-	ctx.ServeHTTP(req)
+	Describe("GET /approval-rulesets", func() {
+		var body gin.H
 
-	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
-		return
-	}
-	body, err := ctx.BodyJSON()
-	if !assert.NoError(t, err) {
-		return
-	}
+		BeforeEach(func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	if !assert.NotNil(t, body["items"]) {
-		return
-	}
-	items := body["items"].([]interface{})
-	if !assert.Equal(t, 1, len(items)) {
-		return
-	}
+				app1, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+					func(app *dbmodels.Application) {
+						app.ID = "app1"
+					},
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.DisplayName = "App 1"
+					})
+				Expect(err).ToNot(HaveOccurred())
 
-	ruleset := items[0].(map[string]interface{})
-	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["version_number"])
-	assert.Equal(t, float64(1), ruleset["adjustment_number"])
-	assert.Equal(t, float64(2), ruleset["num_bound_applications"])
-	assert.Equal(t, float64(3), ruleset["num_bound_releases"])
-}
+				app2, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+					func(app *dbmodels.Application) {
+						app.ID = "app2"
+					},
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.DisplayName = "App 2"
+					})
+				Expect(err).ToNot(HaveOccurred())
 
-func TestGetApprovalRuleset(t *testing.T) {
-	ctx, err := SetupHTTPTestContext()
-	if !assert.NoError(t, err) {
-		return
-	}
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	var mockRelease dbmodels.Release
-	var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
-	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
-		if err != nil {
-			return err
-		}
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app2, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-		app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
-		if err != nil {
-			return err
-		}
+				release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app1, nil)
+				Expect(err).ToNot(HaveOccurred())
+				release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
+				Expect(err).ToNot(HaveOccurred())
+				release3, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-		_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
-		if err != nil {
-			return err
-		}
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset,
+					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset,
+					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset,
+					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-		mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
-		if err != nil {
-			return err
-		}
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
 
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
-			*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
-		if err != nil {
-			return err
-		}
+			req, err := ctx.NewRequestWithAuth("GET", "/v1/approval-rulesets", nil)
+			Expect(err).ToNot(HaveOccurred())
+			ctx.ServeHTTP(req)
 
-		mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
-			ruleset.LatestVersion.ID, *ruleset.LatestAdjustment, nil)
-		if err != nil {
-			return err
-		}
+			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			body, err = ctx.BodyJSON()
+			Expect(err).ToNot(HaveOccurred())
+		})
 
-		return nil
+		It("outputs all approval rulesets", func() {
+			Expect(body["items"]).NotTo(BeNil())
+			items := body["items"].([]interface{})
+			Expect(items).To(HaveLen(1))
+
+			ruleset := items[0].(map[string]interface{})
+			Expect(ruleset["id"]).To(Equal("ruleset1"))
+			Expect(ruleset["version_number"]).To(Equal(float64(1)))
+			Expect(ruleset["adjustment_number"]).To(Equal(float64(1)))
+			Expect(ruleset["num_bound_applications"]).To(Equal(float64(2)))
+			Expect(ruleset["num_bound_releases"]).To(Equal(float64(3)))
+		})
 	})
-	if !assert.NoError(t, err) {
-		return
-	}
 
-	req, err := ctx.NewRequestWithAuth("GET", "/v1/approval-rulesets/ruleset1", nil)
-	if !assert.NoError(t, err) {
-		return
-	}
-	ctx.ServeHTTP(req)
+	Describe("GET /approval-rulesets/:id", func() {
+		var mockRelease dbmodels.Release
+		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
+		var ruleset gin.H
 
-	if !assert.Equal(t, 200, ctx.HttpRecorder.Code) {
-		return
-	}
-	ruleset, err := ctx.BodyJSON()
-	if !assert.NoError(t, err) {
-		return
-	}
+		BeforeEach(func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["version_number"])
-	assert.Equal(t, float64(1), ruleset["adjustment_number"])
+				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	if !assert.NotEmpty(t, ruleset["application_approval_ruleset_bindings"]) {
-		return
-	}
-	appBindings := ruleset["application_approval_ruleset_bindings"].([]interface{})
-	if !assert.Equal(t, 1, len(appBindings)) {
-		return
-	}
-	appBinding := appBindings[0].(map[string]interface{})
-	assert.Equal(t, "enforcing", appBinding["mode"])
-	if !assert.NotNil(t, appBinding["application"]) {
-		return
-	}
-	app := appBinding["application"].(map[string]interface{})
-	assert.Equal(t, "app1", app["id"])
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	if !assert.NotEmpty(t, ruleset["release_approval_ruleset_bindings"]) {
-		return
-	}
-	releaseBindings := ruleset["release_approval_ruleset_bindings"].([]interface{})
-	if !assert.Equal(t, 1, len(releaseBindings)) {
-		return
-	}
-	releaseBinding := releaseBindings[0].(map[string]interface{})
-	assert.Equal(t, "enforcing", releaseBinding["mode"])
-	if !assert.NotNil(t, releaseBinding["release"]) {
-		return
-	}
-	release := releaseBinding["release"].(map[string]interface{})
-	assert.Equal(t, float64(mockRelease.ID), release["id"])
-	if !assert.NotNil(t, release["application"]) {
-		return
-	}
-	app = release["application"].(map[string]interface{})
-	assert.Equal(t, "app1", app["id"])
+				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
 
-	if !assert.NotEmpty(t, ruleset["approval_rules"]) {
-		return
-	}
-	rules := ruleset["approval_rules"].([]interface{})
-	if !assert.Equal(t, 1, len(rules)) {
-		return
-	}
-	rule := rules[0].(map[string]interface{})
-	assert.Equal(t, float64(mockScheduleApprovalRule.ID), rule["id"])
-	assert.Equal(t, mockScheduleApprovalRule.BeginTime.String, rule["begin_time"])
-}
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
+					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+					ruleset.LatestVersion.ID, *ruleset.LatestAdjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			req, err := ctx.NewRequestWithAuth("GET", "/v1/approval-rulesets/ruleset1", nil)
+			Expect(err).ToNot(HaveOccurred())
+			ctx.ServeHTTP(req)
+			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+
+			ruleset, err = ctx.BodyJSON()
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("outputs the latest version", func() {
+			Expect(ruleset["id"]).To(Equal("ruleset1"))
+			Expect(ruleset["version_number"]).To(Equal(float64(1)))
+			Expect(ruleset["adjustment_number"]).To(Equal(float64(1)))
+		})
+
+		It("outputs application bindings", func() {
+			Expect(ruleset["application_approval_ruleset_bindings"]).ToNot(BeEmpty())
+			appBindings := ruleset["application_approval_ruleset_bindings"].([]interface{})
+			Expect(appBindings).To(HaveLen(1))
+			appBinding := appBindings[0].(map[string]interface{})
+			Expect(appBinding["mode"]).To(Equal("enforcing"))
+			app := appBinding["application"].(map[string]interface{})
+			Expect(app["id"]).To(Equal("app1"))
+		})
+
+		It("outputs release bindings", func() {
+			Expect(ruleset["release_approval_ruleset_bindings"]).ToNot(BeEmpty())
+			releaseBindings := ruleset["release_approval_ruleset_bindings"].([]interface{})
+			Expect(releaseBindings).To(HaveLen(1))
+			releaseBinding := releaseBindings[0].(map[string]interface{})
+			Expect(releaseBinding["mode"]).To(Equal("enforcing"))
+			Expect(releaseBinding["release"]).ToNot(BeNil())
+			release := releaseBinding["release"].(map[string]interface{})
+			Expect(release["id"]).To(Equal(float64(mockRelease.ID)))
+			Expect(release["application"]).ToNot(BeNil())
+			app := release["application"].(map[string]interface{})
+			Expect(app["id"]).To(Equal("app1"))
+		})
+
+		It("outputs rules", func() {
+			Expect(ruleset["approval_rules"]).ToNot(BeEmpty())
+			rules := ruleset["approval_rules"].([]interface{})
+			Expect(rules).To(HaveLen(1))
+			rule := rules[0].(map[string]interface{})
+			Expect(rule["id"]).To(Equal(float64(mockScheduleApprovalRule.ID)))
+			Expect(rule["begin_time"]).To(Equal(mockScheduleApprovalRule.BeginTime.String))
+		})
+	})
+})

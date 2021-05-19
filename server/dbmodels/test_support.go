@@ -52,7 +52,7 @@ func CreateMockServiceAccountWithAdminRole(db *gorm.DB, organization Organizatio
 }
 
 // CreateMockApplicationWith1Version ...
-func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, customizeFunc func(*Application), adjustmentCustomizeFunc func(*ApplicationAdjustment)) (Application, error) {
+func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, customizeFunc func(app *Application), adjustmentCustomizeFunc func(adjustment *ApplicationAdjustment)) (Application, error) {
 	result := Application{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
@@ -114,7 +114,7 @@ func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, c
 
 // CreateMockReleaseWithInProgressState ...
 func CreateMockReleaseWithInProgressState(db *gorm.DB, organization Organization, application Application,
-	customizeFunc func(*Release)) (Release, error) {
+	customizeFunc func(release *Release)) (Release, error) {
 
 	result := Release{
 		BaseModel: BaseModel{

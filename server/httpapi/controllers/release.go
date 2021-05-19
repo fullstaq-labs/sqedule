@@ -76,7 +76,7 @@ func (ctx Context) GetReleases(ginctx *gin.Context) {
 	outputList := make([]json.ReleaseWithAssociations, 0, len(releases))
 	for _, release := range releases {
 		outputList = append(outputList,
-			json.CreateFromDbReleaseWithAssociations(release, len(applicationID) == 0, nil))
+			json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -187,15 +187,17 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
-	err = approvalrulesprocessing.ProcessInBackground(ctx.Db, orgID, job)
-	if err != nil {
-		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if ctx.AutoProcessReleaseInBackground {
+		err = approvalrulesprocessing.ProcessInBackground(ctx.Db, orgID, job)
+		if err != nil {
+			ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 
 	// Generate response
 
 	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &releaseRulesetBindings)
-	ginctx.JSON(http.StatusOK, output)
+	ginctx.JSON(http.StatusCreated, output)
 }
 
 func (ctx Context) GetRelease(ginctx *gin.Context) {

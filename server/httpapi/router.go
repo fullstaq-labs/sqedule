@@ -11,7 +11,7 @@ import (
 )
 
 func (ctx Context) SetupRouter(engine *gin.Engine) error {
-	controllerCtx := controllers.Context{Db: ctx.Db}
+	controllerCtx := controllers.NewContext(ctx.Db)
 	jwtAuthMiddleware, orgMemberLookupMiddleware, err := ctx.newAuthMiddlewares()
 	if err != nil {
 		return err

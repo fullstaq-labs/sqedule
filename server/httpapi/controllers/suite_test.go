@@ -6,11 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/gin-gonic/gin"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 	"gorm.io/gorm"
 )
 
@@ -76,7 +79,7 @@ func SetupHTTPTestContext() (HTTPTestContext, error) {
 	routingGroup := ctx.Engine.Group("/v1")
 	routingGroup.Use(orgMemberLookupMiddleware)
 
-	ctx.HttpCtx = Context{Db: ctx.Db}
+	ctx.HttpCtx = NewContext(ctx.Db)
 	ctx.HttpCtx.InstallRoutes(routingGroup)
 
 	ctx.HttpRecorder = httptest.NewRecorder()
@@ -108,3 +111,18 @@ func SetupHTTPTestAuthentication(req *http.Request, organization dbmodels.Organi
 	req.Header.Set("TestOrgMemberType", string(orgMember.Type()))
 	req.Header.Set("TestOrgMemberID", orgMember.ID())
 }
+
+func TestControllers(t *testing.T) {
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.RunSpecs(t, "Controllers Suite")
+}
+
+var Describe = ginkgo.Describe
+var PDescribe = ginkgo.PDescribe
+var FDescribe = ginkgo.FDescribe
+var BeforeEach = ginkgo.BeforeEach
+var It = ginkgo.It
+var PIt = ginkgo.PIt
+var FIt = ginkgo.FIt
+var Specify = ginkgo.Specify
+var FSpecify = ginkgo.FSpecify
