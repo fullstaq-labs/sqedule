@@ -1,7 +1,7 @@
 package dbmodels
 
 type BaseModel struct {
-	OrganizationID string       `gorm:"primaryKey; not null"`
+	OrganizationID string       `gorm:"type:citext; primaryKey; not null"`
 	Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
