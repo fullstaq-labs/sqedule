@@ -80,8 +80,22 @@ var migration20201021000110 = gormigrate.Migration{
 			return err
 		}
 
-		return tx.AutoMigrate(&ApplicationApprovalRulesetBinding{}, ApplicationApprovalRulesetBindingMajorVersion{},
-			ApplicationApprovalRulesetBindingMinorVersion{})
+		err = tx.AutoMigrate(&ApplicationApprovalRulesetBinding{})
+		if err != nil {
+			return err
+		}
+
+		err = tx.AutoMigrate(&ApplicationApprovalRulesetBindingMajorVersion{})
+		if err != nil {
+			return err
+		}
+
+		err = tx.AutoMigrate(&ApplicationApprovalRulesetBindingMinorVersion{})
+		if err != nil {
+			return err
+		}
+
+		return nil
 	},
 	Rollback: func(tx *gorm.DB) error {
 		err := tx.Migrator().DropTable("application_approval_ruleset_binding_minor_versions",
