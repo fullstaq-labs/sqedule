@@ -1,9 +1,12 @@
 package dbmodels
 
 import (
+	"database/sql"
 	"reflect"
 	"strings"
+	"time"
 
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"gorm.io/gorm"
 )
 
@@ -30,6 +33,24 @@ type IReviewableMinorVersion interface {
 // IReviewableCompositeKey ...
 type IReviewableCompositeKey interface {
 	GormValue() interface{}
+}
+
+type ReviewableBase struct {
+	CreatedAt time.Time `gorm:"not null"`
+}
+
+type ReviewableVersionBase struct {
+	ID            uint64    `gorm:"primaryKey; autoIncrement; not null"`
+	VersionNumber *uint32   `gorm:"type:int; check:(version_number > 0)"`
+	CreatedAt     time.Time `gorm:"not null"`
+	UpdatedAt     time.Time `gorm:"not null"`
+}
+
+type ReviewableAdjustmentBase struct {
+	VersionNumber  uint32            `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
+	ReviewState    reviewstate.State `gorm:"type:review_state; not null"`
+	ReviewComments sql.NullString
+	CreatedAt      time.Time `gorm:"not null"`
 }
 
 // LoadReviewablesLatestVersions loads the latest MajorVersion and MinorVersion records associated

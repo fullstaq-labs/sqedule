@@ -1,11 +1,8 @@
 package dbmodels
 
 import (
-	"database/sql"
 	"reflect"
-	"time"
 
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -13,34 +10,26 @@ import (
 // Application ...
 type Application struct {
 	BaseModel
-	ID                 string                   `gorm:"type:citext; primaryKey; not null"`
-	CreatedAt          time.Time                `gorm:"not null"`
+	ID string `gorm:"type:citext; primaryKey; not null"`
+	ReviewableBase
 	LatestMajorVersion *ApplicationMajorVersion `gorm:"-"`
 	LatestMinorVersion *ApplicationMinorVersion `gorm:"-"`
 }
 
 // ApplicationMajorVersion ...
 type ApplicationMajorVersion struct {
-	OrganizationID string       `gorm:"type:citext; primaryKey; not null; index:application_major_version_idx,unique"`
-	Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	ID             uint64       `gorm:"primaryKey; autoIncrement; not null"`
-	ApplicationID  string       `gorm:"type:citext; not null; index:application_major_version_idx,unique"`
-	VersionNumber  *uint32      `gorm:"type:int; index:application_major_version_idx,sort:desc,where:version_number IS NOT NULL,unique; check:(version_number > 0)"`
-	CreatedAt      time.Time    `gorm:"not null"`
-	UpdatedAt      time.Time    `gorm:"not null"`
-
-	Application Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	BaseModel
+	ReviewableVersionBase
+	ApplicationID string      `gorm:"type:citext; not null"`
+	Application   Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
 // ApplicationMinorVersion ...
 type ApplicationMinorVersion struct {
 	BaseModel
-	ApplicationMajorVersionID uint64            `gorm:"primaryKey; not null"`
-	VersionNumber             uint32            `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
-	ReviewState               reviewstate.State `gorm:"type:review_state; not null"`
-	ReviewComments            sql.NullString
-	CreatedAt                 time.Time `gorm:"not null"`
-	Enabled                   bool      `gorm:"not null; default:true"`
+	ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
+	ReviewableAdjustmentBase
+	Enabled bool `gorm:"not null; default:true"`
 
 	DisplayName string `gorm:"not null"`
 

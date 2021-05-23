@@ -69,11 +69,15 @@ func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, c
 
 	var majorVersionNumber uint32 = 1
 	var majorVersion = ApplicationMajorVersion{
-		OrganizationID: organization.ID,
-		Organization:   organization,
-		ApplicationID:  result.ID,
-		Application:    result,
-		VersionNumber:  &majorVersionNumber,
+		BaseModel: BaseModel{
+			OrganizationID: organization.ID,
+			Organization:   organization,
+		},
+		ReviewableVersionBase: ReviewableVersionBase{
+			VersionNumber: &majorVersionNumber,
+		},
+		ApplicationID: result.ID,
+		Application:   result,
 	}
 	savetx = db.Omit(clause.Associations).Create(&majorVersion)
 	if savetx.Error != nil {
@@ -85,10 +89,12 @@ func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, c
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
+		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
+			VersionNumber: 1,
+			ReviewState:   reviewstate.Approved,
+		},
 		ApplicationMajorVersionID: majorVersion.ID,
 		ApplicationMajorVersion:   majorVersion,
-		VersionNumber:             1,
-		ReviewState:               reviewstate.Approved,
 		DisplayName:               "App 1",
 	}
 	if minorVersionCustomizeFunc != nil {
@@ -142,11 +148,15 @@ func CreateMockRulesetWith1Version(db *gorm.DB, organization Organization, id st
 	}
 
 	majorVersion := ApprovalRulesetMajorVersion{
-		OrganizationID:    organization.ID,
-		Organization:      organization,
+		BaseModel: BaseModel{
+			OrganizationID: organization.ID,
+			Organization:   organization,
+		},
+		ReviewableVersionBase: ReviewableVersionBase{
+			VersionNumber: &majorVersionNumber,
+		},
 		ApprovalRulesetID: ruleset.ID,
 		ApprovalRuleset:   ruleset,
-		VersionNumber:     &majorVersionNumber,
 	}
 	savetx = db.Omit(clause.Associations).Create(&majorVersion)
 	if savetx.Error != nil {
@@ -158,10 +168,12 @@ func CreateMockRulesetWith1Version(db *gorm.DB, organization Organization, id st
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
+		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
+			VersionNumber: 1,
+			ReviewState:   reviewstate.Approved,
+		},
 		ApprovalRulesetMajorVersionID: majorVersion.ID,
 		ApprovalRulesetMajorVersion:   majorVersion,
-		VersionNumber:                 1,
-		ReviewState:                   reviewstate.Approved,
 		DisplayName:                   "Ruleset",
 		Description:                   "",
 	}
@@ -221,11 +233,15 @@ func CreateMockApplicationRulesetBindingWithEnforcingMode1Version(db *gorm.DB, o
 // CreateMockApplicationApprovalRulesetBindingMajorVersion ...
 func CreateMockApplicationApprovalRulesetBindingMajorVersion(db *gorm.DB, organization Organization, application Application, binding ApplicationApprovalRulesetBinding, versionNumber *uint32) (ApplicationApprovalRulesetBindingMajorVersion, error) {
 	result := ApplicationApprovalRulesetBindingMajorVersion{
-		OrganizationID:                    organization.ID,
-		Organization:                      organization,
-		ApplicationID:                     application.ID,
-		ApprovalRulesetID:                 binding.ApprovalRulesetID,
-		VersionNumber:                     versionNumber,
+		BaseModel: BaseModel{
+			OrganizationID: organization.ID,
+			Organization:   organization,
+		},
+		ApplicationID:     application.ID,
+		ApprovalRulesetID: binding.ApprovalRulesetID,
+		ReviewableVersionBase: ReviewableVersionBase{
+			VersionNumber: versionNumber,
+		},
 		ApplicationApprovalRulesetBinding: binding,
 	}
 	savetx := db.Omit(clause.Associations).Create(&result)
@@ -247,10 +263,12 @@ func CreateMockApplicationApprovalRulesetBindingMinorVersion(db *gorm.DB, organi
 		},
 		ApplicationApprovalRulesetBindingMajorVersionID: majorVersion.ID,
 		ApplicationApprovalRulesetBindingMajorVersion:   majorVersion,
-		VersionNumber: 1,
-		ReviewState:   reviewstate.Approved,
-		Enabled:       true,
-		Mode:          approvalrulesetbindingmode.Enforcing,
+		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
+			VersionNumber: 1,
+			ReviewState:   reviewstate.Approved,
+		},
+		Enabled: true,
+		Mode:    approvalrulesetbindingmode.Enforcing,
 	}
 	if customizeFunc != nil {
 		customizeFunc(&result)
