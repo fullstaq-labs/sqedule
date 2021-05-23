@@ -1,6 +1,7 @@
 package approvalrulesprocessing
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -24,11 +25,11 @@ type Engine struct {
 var errTemporary = errors.New("temporary error, retry later")
 
 func (engine *Engine) Run() error {
-	err := engine.lock()
+	locktx, err := engine.lock()
 	if err != nil {
 		return fmt.Errorf("Error acquiring lock: %w", err)
 	}
-	defer engine.unlock()
+	defer engine.unlock(locktx)
 
 	rulesetContents, err := engine.loadRules()
 	if err != nil {
@@ -128,14 +129,36 @@ func (engine *Engine) processRules(rulesetContents dbmodels.ApprovalRulesetConte
 	return finalResultState, finalError
 }
 
-func (engine Engine) lock() error {
-	return engine.Db.Exec("SELECT pg_advisory_lock(?)", engine.getPostgresAdvisoryLockID()).Error
+func (engine Engine) lock() (*gorm.DB, error) {
+	// Go's database connections are automatically pooled. We reserve a transaction here (to be passed to unlock())
+	// in order to ensure that we release the lock from the same database connection.
+	tx := engine.Db.Begin()
+	if tx.Error != nil {
+		return nil, fmt.Errorf("Error starting a transaction: %w", tx.Error)
+	}
+
+	tx2 := tx.Exec("SELECT pg_advisory_lock(?) AS result", engine.getPostgresAdvisoryLockID())
+	if tx2.Error != nil {
+		return nil, tx2.Error
+	}
+
+	return tx, nil
 }
 
-func (engine Engine) unlock() {
-	// We don't care about the error. If the unlock fails then it means our
-	// connection is broken, meaning PostgreSQL automatically releases our lock).
-	engine.Db.Exec("SELECT pg_advisory_unlock(?)", engine.getPostgresAdvisoryLockID())
+func (engine Engine) unlock(locktx *gorm.DB) {
+	var result struct {
+		Result bool
+	}
+	tx := locktx.Raw("SELECT pg_advisory_unlock(?) AS result", engine.getPostgresAdvisoryLockID()).Scan(&result)
+	if tx.Error != nil {
+		engine.Db.Logger.Warn(context.Background(), "Error releasing advisory lock %d: %s",
+			engine.getPostgresAdvisoryLockID(), tx.Error.Error())
+	}
+
+	if !result.Result {
+		engine.Db.Logger.Warn(context.Background(), "Error releasing advisory lock %d: database returned false",
+			engine.getPostgresAdvisoryLockID())
+	}
 }
 
 func (engine Engine) getPostgresAdvisoryLockID() uint64 {

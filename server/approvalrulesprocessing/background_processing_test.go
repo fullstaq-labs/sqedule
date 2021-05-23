@@ -113,7 +113,8 @@ var _ = Describe("Background processing", func() {
 		})
 
 		It("processes all ReleaseBackgroundJobs in the background", func() {
-			ProcessAllPendingReleasesInBackground(db)
+			err := ProcessAllPendingReleasesInBackground(db)
+			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() (int64, error) {
 				var count int64
