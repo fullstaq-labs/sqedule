@@ -276,7 +276,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 150,
     valueGetter: ({ row }) => row.approval_ruleset.id,
     renderCell: ({ row }) => (
-      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.major_version_number)}/${encodeURIComponent(row.approval_ruleset.minor_version_number)}`}>
+      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.version_number)}`}>
         <a>{row.approval_ruleset.id}</a>
       </Link>
     ),
@@ -287,7 +287,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 250,
     valueGetter: ({ row }) => row.approval_ruleset.display_name,
     renderCell: ({ row }) => (
-      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.major_version_number)}/${encodeURIComponent(row.approval_ruleset.minor_version_number)}`}>
+      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.version_number)}`}>
         <a>{row.approval_ruleset.display_name}</a>
       </Link>
     ),
@@ -296,7 +296,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'version',
     headerName: 'Version',
     width: 120,
-    valueGetter: ({ row }) => `${row.approval_ruleset.major_version_number}.${row.approval_ruleset.minor_version_number}`,
+    valueGetter: ({ row }) => row.approval_ruleset.version_number,
   },
   {
     field: 'mode',

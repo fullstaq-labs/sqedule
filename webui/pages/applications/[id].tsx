@@ -203,7 +203,7 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Latest version</TableCell>
-              <TableCell>{data.major_version_number}.{data.minor_version_number}</TableCell>
+              <TableCell>{data.version_number}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Enabled</TableCell>
@@ -254,7 +254,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 150,
     valueGetter: ({ row }) => row.approval_ruleset.id,
     renderCell: ({ row }) => (
-      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.major_version_number)}/${encodeURIComponent(row.approval_ruleset.minor_version_number)}`}>
+      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.version_number)}`}>
         <a>{row.approval_ruleset.id}</a>
       </Link>
     ),
@@ -265,7 +265,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 250,
     valueGetter: ({ row }) => row.approval_ruleset.display_name,
     renderCell: ({ row }) => (
-      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.major_version_number)}/${encodeURIComponent(row.approval_ruleset.minor_version_number)}`}>
+      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.version_number)}`}>
         <a>{row.approval_ruleset.display_name}</a>
       </Link>
     ),
@@ -274,7 +274,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'latest_version',
     headerName: 'Latest version',
     width: 130,
-    valueGetter: ({ row }) => `${row.approval_ruleset.major_version_number}.${row.approval_ruleset.minor_version_number}`,
+    valueGetter: ({ row }) => row.approval_ruleset.version_number,
   },
   {
     field: 'enabled',

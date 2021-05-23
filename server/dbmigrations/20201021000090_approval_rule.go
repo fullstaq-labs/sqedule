@@ -24,21 +24,28 @@ var migration20201021000090 = gormigrate.Migration{
 			Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
-		type ApprovalRulesetMinorVersion struct {
+		type ReviewableAdjustmentBase struct {
+			AdjustmentNumber uint32 `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
+			ReviewState      string `gorm:"type:review_state; not null"`
+			ReviewComments   sql.NullString
+			CreatedAt        time.Time `gorm:"not null"`
+		}
+
+		type ApprovalRulesetAdjustment struct {
 			BaseModel
-			ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
-			VersionNumber                 uint32 `gorm:"type:int; primaryKey; not null; check:(version_number >= 0)"`
+			ApprovalRulesetVersionID uint64 `gorm:"primaryKey; not null"`
+			ReviewableAdjustmentBase
 		}
 
 		// ApprovalRule ...
 		type ApprovalRule struct {
 			BaseModel
-			ID                                uint64                      `gorm:"primaryKey; autoIncrement; not null"`
-			ApprovalRulesetMajorVersionID     uint64                      `gorm:"not null"`
-			ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; not null; check:(approval_ruleset_minor_version_number >= 0)"`
-			ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-			Enabled                           bool                        `gorm:"not null; default:true"`
-			CreatedAt                         time.Time                   `gorm:"not null"`
+			ID                              uint64                    `gorm:"primaryKey; autoIncrement; not null"`
+			ApprovalRulesetVersionID        uint64                    `gorm:"not null"`
+			ApprovalRulesetAdjustmentNumber uint32                    `gorm:"type:int; not null; check:(approval_ruleset_adjustment_number >= 0)"`
+			ApprovalRulesetAdjustment       ApprovalRulesetAdjustment `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID,ApprovalRulesetAdjustmentNumber; references:OrganizationID,ApprovalRulesetVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			Enabled                         bool                      `gorm:"not null; default:true"`
+			CreatedAt                       time.Time                 `gorm:"not null"`
 		}
 
 		// HTTPApiApprovalRule ...
@@ -88,19 +95,19 @@ var migration20201021000090 = gormigrate.Migration{
 		}
 
 		err = tx.Exec("CREATE INDEX http_api_approval_rules_version_idx ON http_api_approval_rules " +
-			"(organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number)").Error
+			"(organization_id, approval_ruleset_version_id, approval_ruleset_adjustment_number)").Error
 		if err != nil {
 			return err
 		}
 
 		err = tx.Exec("CREATE INDEX schedule_approval_rules_version_idx ON schedule_approval_rules " +
-			"(organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number)").Error
+			"(organization_id, approval_ruleset_version_id, approval_ruleset_adjustment_number)").Error
 		if err != nil {
 			return err
 		}
 
 		err = tx.Exec("CREATE INDEX manual_approval_rules_version_idx ON manual_approval_rules " +
-			"(organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number)").Error
+			"(organization_id, approval_ruleset_version_id, approval_ruleset_adjustment_number)").Error
 		if err != nil {
 			return err
 		}

@@ -38,16 +38,20 @@ var migration20201021000150 = gormigrate.Migration{
 			Name string `gorm:"type:citext; primaryKey; not null"`
 		}
 
-		type ApplicationMinorVersion struct {
-			BaseModel
-			ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
-			VersionNumber             uint32 `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
+		type ReviewableAdjustmentBase struct {
+			AdjustmentNumber uint32 `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
 		}
 
-		type ApprovalRulesetMinorVersion struct {
+		type ApplicationAdjustment struct {
 			BaseModel
-			ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
-			VersionNumber                 uint32 `gorm:"primaryKey; not null"`
+			ApplicationVersionID uint64 `gorm:"primaryKey; not null"`
+			ReviewableAdjustmentBase
+		}
+
+		type ApprovalRulesetAdjustment struct {
+			BaseModel
+			ApprovalRulesetVersionID uint64 `gorm:"primaryKey; not null"`
+			ReviewableAdjustmentBase
 		}
 
 		type ReleaseEvent struct {
@@ -95,13 +99,13 @@ var migration20201021000150 = gormigrate.Migration{
 
 			// Subject association
 
-			ApplicationMajorVersionID     *uint64                 `gorm:"check:((CASE WHEN application_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_minor_version_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
-			ApplicationMinorVersionNumber *uint32                 `gorm:"type:int; check:((application_major_version_id IS NULL) = (application_minor_version_number IS NULL))"`
-			ApplicationMinorVersion       ApplicationMinorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID,ApplicationMinorVersionNumber; references:OrganizationID,ApplicationMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApplicationVersionID        *uint64               `gorm:"check:((CASE WHEN application_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
+			ApplicationAdjustmentNumber *uint32               `gorm:"type:int; check:((application_version_id IS NULL) = (application_adjustment_number IS NULL))"`
+			ApplicationAdjustment       ApplicationAdjustment `gorm:"foreignKey:OrganizationID,ApplicationVersionID,ApplicationAdjustmentNumber; references:OrganizationID,ApplicationVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
-			ApprovalRulesetMajorVersionID     *uint64
-			ApprovalRulesetMinorVersionNumber *uint32                     `gorm:"type:int; check:((approval_ruleset_major_version_id IS NULL) = (approval_ruleset_minor_version_number IS NULL))"`
-			ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApprovalRulesetVersionID        *uint64
+			ApprovalRulesetAdjustmentNumber *uint32                   `gorm:"type:int; check:((approval_ruleset_version_id IS NULL) = (approval_ruleset_adjustment_number IS NULL))"`
+			ApprovalRulesetAdjustment       ApprovalRulesetAdjustment `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID,ApprovalRulesetAdjustmentNumber; references:OrganizationID,ApprovalRulesetVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 			ManualApprovalRuleOutcomeID *uint64
 			ManualApprovalRuleOutcome   ManualApprovalRuleOutcome `gorm:"foreignKey:OrganizationID,ManualApprovalRuleOutcomeID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`

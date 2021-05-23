@@ -9,8 +9,8 @@ import (
 
 type ApprovalRuleset struct {
 	ID                 string    `json:"id"`
-	MajorVersionNumber *uint32   `json:"major_version_number"`
-	MinorVersionNumber uint32    `json:"minor_version_number"`
+	VersionNumber      *uint32   `json:"version_number"`
+	AdjustmentNumber   uint32    `json:"adjustment_number"`
 	DisplayName        string    `json:"display_name"`
 	Description        string    `json:"description"`
 	GloballyApplicable bool      `json:"globally_applicable"`
@@ -34,65 +34,65 @@ type ApprovalRulesetWithBindingAndRuleAssocations struct {
 	ApprovalRules                      []map[string]interface{}                                      `json:"approval_rules"`
 }
 
-func CreateFromDbApprovalRuleset(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion) ApprovalRuleset {
+func CreateFromDbApprovalRuleset(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, adjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRuleset {
 	var reviewComments *string
-	if minorVersion.ReviewComments.Valid {
-		reviewComments = &minorVersion.ReviewComments.String
+	if adjustment.ReviewComments.Valid {
+		reviewComments = &adjustment.ReviewComments.String
 	}
 
 	result := ApprovalRuleset{
 		ID:                 ruleset.ID,
-		MajorVersionNumber: majorVersion.VersionNumber,
-		MinorVersionNumber: minorVersion.VersionNumber,
-		DisplayName:        minorVersion.DisplayName,
-		Description:        minorVersion.Description,
-		GloballyApplicable: minorVersion.GloballyApplicable,
-		ReviewState:        string(minorVersion.ReviewState),
+		VersionNumber:      version.VersionNumber,
+		AdjustmentNumber:   adjustment.AdjustmentNumber,
+		DisplayName:        adjustment.DisplayName,
+		Description:        adjustment.Description,
+		GloballyApplicable: adjustment.GloballyApplicable,
+		ReviewState:        string(adjustment.ReviewState),
 		ReviewComments:     reviewComments,
-		Enabled:            minorVersion.Enabled,
+		Enabled:            adjustment.Enabled,
 		CreatedAt:          ruleset.CreatedAt,
-		UpdatedAt:          minorVersion.CreatedAt,
+		UpdatedAt:          adjustment.CreatedAt,
 	}
 	return result
 }
 
-func CreateFromDbApprovalRulesetWithStats(ruleset dbmodels.ApprovalRulesetWithStats, majorVersion dbmodels.ApprovalRulesetMajorVersion,
-	minorVersion dbmodels.ApprovalRulesetMinorVersion) ApprovalRulesetWithStats {
+func CreateFromDbApprovalRulesetWithStats(ruleset dbmodels.ApprovalRulesetWithStats, version dbmodels.ApprovalRulesetVersion,
+	adjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetWithStats {
 
 	result := ApprovalRulesetWithStats{
-		ApprovalRuleset:      CreateFromDbApprovalRuleset(ruleset.ApprovalRuleset, majorVersion, minorVersion),
+		ApprovalRuleset:      CreateFromDbApprovalRuleset(ruleset.ApprovalRuleset, version, adjustment),
 		NumBoundApplications: ruleset.NumBoundApplications,
 		NumBoundReleases:     ruleset.NumBoundReleases,
 	}
 	return result
 }
 
-func CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset dbmodels.ApprovalRuleset, majorVersion dbmodels.ApprovalRulesetMajorVersion, minorVersion dbmodels.ApprovalRulesetMinorVersion,
+func CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, adjustment dbmodels.ApprovalRulesetAdjustment,
 	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithBindingAndRuleAssocations {
 
 	var ruleTypesProcessed uint = 0
 
 	result := ApprovalRulesetWithBindingAndRuleAssocations{
-		ApprovalRuleset:                    CreateFromDbApprovalRuleset(ruleset, majorVersion, minorVersion),
+		ApprovalRuleset:                    CreateFromDbApprovalRuleset(ruleset, version, adjustment),
 		ApplicationApprovalRulesetBindings: make([]ApplicationApprovalRulesetBindingWithApplicationAssociation, 0, len(appBindings)),
 		ReleaseApprovalRulesetBindings:     make([]ReleaseApprovalRulesetBindingWithReleaseAssociation, 0, len(releaseBindings)),
 		ApprovalRules:                      make([]map[string]interface{}, 0),
 	}
 
 	for _, binding := range appBindings {
-		if binding.LatestMajorVersion == nil {
-			panic("Application approval rule binding must have an associated latest major version")
+		if binding.LatestVersion == nil {
+			panic("Application approval rule binding must have an associated latest version")
 		}
-		if binding.LatestMajorVersion.VersionNumber == nil {
-			panic("Application approval rule binding's latest major version must be finalized")
+		if binding.LatestVersion.VersionNumber == nil {
+			panic("Application approval rule binding's latest version must be finalized")
 		}
-		if binding.LatestMinorVersion == nil {
-			panic("Application approval rule binding must have an associated latest minor version")
+		if binding.LatestAdjustment == nil {
+			panic("Application approval rule binding must have an associated latest adjustment")
 		}
 
 		result.ApplicationApprovalRulesetBindings = append(result.ApplicationApprovalRulesetBindings,
 			CreateFromDbApplicationApprovalRulesetBindingWithApplicationAssociation(binding,
-				*binding.LatestMajorVersion, *binding.LatestMinorVersion))
+				*binding.LatestVersion, *binding.LatestAdjustment))
 	}
 
 	for _, binding := range releaseBindings {

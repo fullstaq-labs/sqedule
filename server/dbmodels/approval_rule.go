@@ -14,12 +14,12 @@ const NumApprovalRuleTypes = 3
 
 type ApprovalRule struct {
 	BaseModel
-	ID                                uint64                      `gorm:"primaryKey; autoIncrement; not null"`
-	ApprovalRulesetMajorVersionID     uint64                      `gorm:"not null"`
-	ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; not null; check:(approval_ruleset_minor_version_number >= 0)"`
-	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	Enabled                           bool                        `gorm:"not null; default:true"`
-	CreatedAt                         time.Time                   `gorm:"not null"`
+	ID                              uint64                    `gorm:"primaryKey; autoIncrement; not null"`
+	ApprovalRulesetVersionID        uint64                    `gorm:"not null"`
+	ApprovalRulesetAdjustmentNumber uint32                    `gorm:"type:int; not null; check:(approval_ruleset_adjustment_number >= 0)"`
+	ApprovalRulesetAdjustment       ApprovalRulesetAdjustment `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID,ApprovalRulesetAdjustmentNumber; references:OrganizationID,ApprovalRulesetVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Enabled                         bool                      `gorm:"not null; default:true"`
+	CreatedAt                       time.Time                 `gorm:"not null"`
 
 	// BindingMode is the mode with which the containing Ruleset is bound to some entity.
 	// This is only set by `FindApprovalRulesBoundToRelease()`. It's not a real table
@@ -67,8 +67,8 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 
 	const joinConditionString = "LEFT JOIN release_approval_ruleset_bindings " +
 		"ON approval_rules.organization_id = release_approval_ruleset_bindings.organization_id " +
-		"AND approval_rules.approval_ruleset_major_version_id = release_approval_ruleset_bindings.approval_ruleset_major_version_id " +
-		"AND approval_rules.approval_ruleset_minor_version_number = release_approval_ruleset_bindings.approval_ruleset_minor_version_number"
+		"AND approval_rules.approval_ruleset_version_id = release_approval_ruleset_bindings.approval_ruleset_version_id " +
+		"AND approval_rules.approval_ruleset_adjustment_number = release_approval_ruleset_bindings.approval_ruleset_adjustment_number"
 	const selector = "approval_rules.*, release_approval_ruleset_bindings.mode AS binding_mode"
 
 	ruleTypesProcessed++
@@ -108,13 +108,13 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 	return result, nil
 }
 
-func FindApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, rulesetVersionKey ApprovalRulesetVersionKey) (ApprovalRulesetContents, error) {
+func FindApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, key ApprovalRulesetVersionAndAdjustmentKey) (ApprovalRulesetContents, error) {
 	var result ApprovalRulesetContents
 	var query, tx *gorm.DB
 	var ruleTypesProcessed uint = 0
 
-	query = db.Where("organization_id = ? AND approval_ruleset_major_version_id = ? AND approval_ruleset_minor_version_number = ?",
-		organizationID, rulesetVersionKey.MajorVersionID, rulesetVersionKey.MinorVersionNumber)
+	query = db.Where("organization_id = ? AND approval_ruleset_version_id = ? AND approval_ruleset_adjustment_number = ?",
+		organizationID, key.VersionID, key.AdjustmentNumber)
 
 	ruleTypesProcessed++
 	tx = db.Where(query).Find(&result.HTTPApiApprovalRules)

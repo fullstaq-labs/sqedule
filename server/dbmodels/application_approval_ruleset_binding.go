@@ -7,43 +7,39 @@ import (
 	"gorm.io/gorm"
 )
 
-// ApplicationApprovalRulesetBindingPrimaryKey ...
 type ApplicationApprovalRulesetBindingPrimaryKey struct {
 	ApplicationID     string `gorm:"type:citext; primaryKey; not null"`
 	ApprovalRulesetID string `gorm:"type:citext; primaryKey; not null"`
 }
 
-// ApplicationApprovalRulesetBinding ...
 type ApplicationApprovalRulesetBinding struct {
 	BaseModel
 	ApplicationApprovalRulesetBindingPrimaryKey
 	ReviewableBase
-	Application        Application                                    `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	ApprovalRuleset    ApprovalRuleset                                `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	LatestMajorVersion *ApplicationApprovalRulesetBindingMajorVersion `gorm:"-"`
-	LatestMinorVersion *ApplicationApprovalRulesetBindingMinorVersion `gorm:"-"`
+	Application      Application                                  `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ApprovalRuleset  ApprovalRuleset                              `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	LatestVersion    *ApplicationApprovalRulesetBindingVersion    `gorm:"-"`
+	LatestAdjustment *ApplicationApprovalRulesetBindingAdjustment `gorm:"-"`
 }
 
-// ApplicationApprovalRulesetBindingMajorVersion ...
-type ApplicationApprovalRulesetBindingMajorVersion struct {
+type ApplicationApprovalRulesetBindingVersion struct {
 	BaseModel
-	ApplicationID     string `gorm:"type:citext; not null; index:app_approval_ruleset_binding_major_version_idx,unique"`
-	ApprovalRulesetID string `gorm:"type:citext; not null; index:app_approval_ruleset_binding_major_version_idx,unique"`
+	ApplicationID     string `gorm:"type:citext; not null"`
+	ApprovalRulesetID string `gorm:"type:citext; not null"`
 	ReviewableVersionBase
 
 	ApplicationApprovalRulesetBinding ApplicationApprovalRulesetBinding `gorm:"foreignKey:OrganizationID,ApplicationID,ApprovalRulesetID; references:OrganizationID,ApplicationID,ApprovalRulesetID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ApplicationApprovalRulesetBindingMinorVersion ...
-type ApplicationApprovalRulesetBindingMinorVersion struct {
+type ApplicationApprovalRulesetBindingAdjustment struct {
 	BaseModel
-	ApplicationApprovalRulesetBindingMajorVersionID uint64 `gorm:"primaryKey; not null"`
+	ApplicationApprovalRulesetBindingVersionID uint64 `gorm:"primaryKey; not null"`
 	ReviewableAdjustmentBase
 	Enabled bool `gorm:"not null; default:true"`
 
 	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
 
-	ApplicationApprovalRulesetBindingMajorVersion ApplicationApprovalRulesetBindingMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	ApplicationApprovalRulesetBindingVersion ApplicationApprovalRulesetBindingVersion `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
 // FindAllApplicationApprovalRulesetBindings ...
@@ -85,10 +81,10 @@ func LoadApplicationApprovalRulesetBindingsLatestVersions(db *gorm.DB, organizat
 		reflect.TypeOf(ApplicationApprovalRulesetBinding{}.ApplicationApprovalRulesetBindingPrimaryKey),
 		[]string{"application_id", "approval_ruleset_id"},
 		reflect.TypeOf([]interface{}{}),
-		reflect.TypeOf(ApplicationApprovalRulesetBindingMajorVersion{}),
-		reflect.TypeOf(ApplicationApprovalRulesetBindingMajorVersion{}.ID),
-		"application_approval_ruleset_binding_major_version_id",
-		reflect.TypeOf(ApplicationApprovalRulesetBindingMinorVersion{}),
+		reflect.TypeOf(ApplicationApprovalRulesetBindingVersion{}),
+		reflect.TypeOf(ApplicationApprovalRulesetBindingVersion{}.ID),
+		"application_approval_ruleset_binding_version_id",
+		reflect.TypeOf(ApplicationApprovalRulesetBindingAdjustment{}),
 		organizationID,
 		reviewables,
 	)

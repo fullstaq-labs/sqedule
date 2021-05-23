@@ -44,7 +44,7 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 	outputList := make([]json.ApprovalRulesetWithStats, 0, len(rulesets))
 	for _, ruleset := range rulesets {
 		outputList = append(outputList, json.CreateFromDbApprovalRulesetWithStats(ruleset,
-			*ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion))
+			*ruleset.LatestVersion, *ruleset.LatestAdjustment))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -74,9 +74,9 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionKey{
-		MajorVersionID:     ruleset.LatestMajorVersion.ID,
-		MinorVersionNumber: ruleset.LatestMinorVersion.VersionNumber,
+	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionAndAdjustmentKey{
+		VersionID:        ruleset.LatestVersion.ID,
+		AdjustmentNumber: ruleset.LatestAdjustment.AdjustmentNumber,
 	})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
@@ -115,7 +115,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	output := json.CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset, *ruleset.LatestMajorVersion,
-		*ruleset.LatestMinorVersion, appBindings, releaseBindings, rules)
+	output := json.CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset, *ruleset.LatestVersion,
+		*ruleset.LatestAdjustment, appBindings, releaseBindings, rules)
 	ginctx.JSON(http.StatusOK, output)
 }

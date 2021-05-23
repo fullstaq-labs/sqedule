@@ -36,10 +36,10 @@ var migration20201021000080 = gormigrate.Migration{
 		}
 
 		type ReviewableAdjustmentBase struct {
-			VersionNumber  uint32 `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
-			ReviewState    string `gorm:"type:review_state; not null"`
-			ReviewComments sql.NullString
-			CreatedAt      time.Time `gorm:"not null"`
+			AdjustmentNumber uint32 `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
+			ReviewState      string `gorm:"type:review_state; not null"`
+			ReviewComments   sql.NullString
+			CreatedAt        time.Time `gorm:"not null"`
 		}
 
 		type ApprovalRuleset struct {
@@ -48,16 +48,16 @@ var migration20201021000080 = gormigrate.Migration{
 			ReviewableBase
 		}
 
-		type ApprovalRulesetMajorVersion struct {
+		type ApprovalRulesetVersion struct {
 			BaseModel
 			ReviewableVersionBase
 			ApprovalRulesetID string          `gorm:"type:citext; not null"`
 			ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
-		type ApprovalRulesetMinorVersion struct {
+		type ApprovalRulesetAdjustment struct {
 			BaseModel
-			ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
+			ApprovalRulesetVersionID uint64 `gorm:"primaryKey; not null"`
 			ReviewableAdjustmentBase
 			Enabled bool `gorm:"not null; default:true"`
 
@@ -65,35 +65,35 @@ var migration20201021000080 = gormigrate.Migration{
 			Description        string `gorm:"not null"`
 			GloballyApplicable bool   `gorm:"not null; default:false"`
 
-			ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApprovalRulesetVersion ApprovalRulesetVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
-		err := tx.AutoMigrate(&ApprovalRuleset{}, &ApprovalRulesetMajorVersion{},
-			&ApprovalRulesetMinorVersion{})
+		err := tx.AutoMigrate(&ApprovalRuleset{}, &ApprovalRulesetVersion{},
+			&ApprovalRulesetAdjustment{})
 		if err != nil {
 			return err
 		}
 
-		err = tx.Exec("CREATE UNIQUE INDEX approval_ruleset_major_version_idx" +
-			" ON approval_ruleset_major_versions (organization_id, approval_ruleset_id, version_number DESC)" +
+		err = tx.Exec("CREATE UNIQUE INDEX approval_ruleset_version_idx" +
+			" ON approval_ruleset_versions (organization_id, approval_ruleset_id, version_number DESC)" +
 			" WHERE (version_number IS NOT NULL)").Error
 		if err != nil {
 			return err
 		}
 
-		err = tx.Exec("CREATE INDEX approval_ruleset_minor_versions_globally_applicable_idx" +
-			" ON approval_ruleset_minor_versions (organization_id, globally_applicable)" +
+		err = tx.Exec("CREATE INDEX approval_ruleset_adjustments_globally_applicable_idx" +
+			" ON approval_ruleset_adjustments (organization_id, globally_applicable)" +
 			" WHERE globally_applicable").Error
 		if err != nil {
 			return err
 		}
 
-		// Work around bug in Gorm: MinorVersion.VersionNumber shouldn't be autoincrement.
-		err = tx.Exec("ALTER TABLE approval_ruleset_minor_versions ALTER COLUMN version_number DROP DEFAULT").Error
+		// Work around bug in Gorm: Adjustment.VersionNumber shouldn't be autoincrement.
+		err = tx.Exec("ALTER TABLE approval_ruleset_adjustments ALTER COLUMN adjustment_number DROP DEFAULT").Error
 		if err != nil {
 			return err
 		}
-		err = tx.Exec("DROP SEQUENCE approval_ruleset_minor_versions_version_number_seq").Error
+		err = tx.Exec("DROP SEQUENCE approval_ruleset_adjustments_adjustment_number_seq").Error
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ var migration20201021000080 = gormigrate.Migration{
 		return nil
 	},
 	Rollback: func(tx *gorm.DB) error {
-		return tx.Migrator().DropTable("approval_ruleset_minor_versions",
-			"approval_ruleset_major_versions", "approval_rulesets")
+		return tx.Migrator().DropTable("approval_ruleset_adjustments",
+			"approval_ruleset_versions", "approval_rulesets")
 	},
 }

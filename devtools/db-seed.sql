@@ -31,16 +31,16 @@ INSERT INTO applications (organization_id, id, created_at) VALUES (
     'app1',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_major_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'app1',
     1,
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_minor_versions (organization_id, application_major_version_id, version_number, review_state, created_at, display_name) VALUES (
+INSERT INTO application_adjustments (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name) VALUES (
     'org1',
-    (SELECT id FROM application_major_versions WHERE organization_id = 'org1' AND application_id = 'app1' AND version_number = 1 LIMIT 1),
+    (SELECT id FROM application_versions WHERE organization_id = 'org1' AND application_id = 'app1' AND version_number = 1 LIMIT 1),
     1,
     'approved',
     NOW(),
@@ -52,16 +52,16 @@ INSERT INTO applications (organization_id, id, created_at) VALUES (
     'app2',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_major_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'app2',
     1,
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_minor_versions (organization_id, application_major_version_id, version_number, review_state, created_at, display_name) VALUES (
+INSERT INTO application_adjustments (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name) VALUES (
     'org1',
-    (SELECT id FROM application_major_versions WHERE organization_id = 'org1' AND application_id = 'app2' AND version_number = 1 LIMIT 1),
+    (SELECT id FROM application_versions WHERE organization_id = 'org1' AND application_id = 'app2' AND version_number = 1 LIMIT 1),
     1,
     'approved',
     NOW(),
@@ -75,16 +75,16 @@ INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
     'only afternoon',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_major_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'only afternoon',
     1,
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_major_version_id, version_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
+INSERT INTO approval_ruleset_adjustments (organization_id, approval_ruleset_version_id, adjustment_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
     'org1',
-    (SELECT id FROM approval_ruleset_major_versions
+    (SELECT id FROM approval_ruleset_versions
         WHERE organization_id = 'org1'
         AND approval_ruleset_id = 'only afternoon'
         AND version_number = 1
@@ -98,19 +98,19 @@ INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_m
 ) ON CONFLICT DO NOTHING;
 DO $$
 DECLARE
-    major_version_id BIGINT;
+    version_id BIGINT;
 BEGIN
-    SELECT id INTO major_version_id FROM approval_ruleset_major_versions
+    SELECT id INTO version_id FROM approval_ruleset_versions
         WHERE organization_id = 'org1'
         AND approval_ruleset_id = 'only afternoon'
         AND version_number = 1
         LIMIT 1;
     IF (SELECT COUNT(*) FROM schedule_approval_rules WHERE organization_id = 'org1'
-        AND approval_ruleset_major_version_id = major_version_id AND approval_ruleset_minor_version_number = 1 LIMIT 1) = 0
+        AND approval_ruleset_version_id = version_id AND approval_ruleset_adjustment_number = 1 LIMIT 1) = 0
     THEN
-        INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+        INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_version_id, approval_ruleset_adjustment_number, created_at, begin_time, end_time) VALUES (
             'org1',
-            major_version_id,
+            version_id,
             1,
             NOW(),
             '12:00',
@@ -124,16 +124,16 @@ INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
     'only evening',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_major_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'only evening',
     1,
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_major_version_id, version_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
+INSERT INTO approval_ruleset_adjustments (organization_id, approval_ruleset_version_id, adjustment_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
     'org1',
-    (SELECT id FROM approval_ruleset_major_versions
+    (SELECT id FROM approval_ruleset_versions
         WHERE organization_id = 'org1'
         AND approval_ruleset_id = 'only evening'
         AND version_number = 1
@@ -147,19 +147,19 @@ INSERT INTO approval_ruleset_minor_versions (organization_id, approval_ruleset_m
 ) ON CONFLICT DO NOTHING;
 DO $$
 DECLARE
-    major_version_id BIGINT;
+    version_id BIGINT;
 BEGIN
-    SELECT id INTO major_version_id FROM approval_ruleset_major_versions
+    SELECT id INTO version_id FROM approval_ruleset_versions
         WHERE organization_id = 'org1'
         AND approval_ruleset_id = 'only evening'
         AND version_number = 1
         LIMIT 1;
     IF (SELECT COUNT(*) FROM schedule_approval_rules WHERE organization_id = 'org1'
-        AND approval_ruleset_major_version_id = major_version_id AND approval_ruleset_minor_version_number = 1 LIMIT 1) = 0
+        AND approval_ruleset_version_id = version_id AND approval_ruleset_adjustment_number = 1 LIMIT 1) = 0
     THEN
-        INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, created_at, begin_time, end_time) VALUES (
+        INSERT INTO schedule_approval_rules (organization_id, approval_ruleset_version_id, approval_ruleset_adjustment_number, created_at, begin_time, end_time) VALUES (
             'org1',
-            major_version_id,
+            version_id,
             1,
             NOW(),
             '18:00',
@@ -174,7 +174,7 @@ INSERT INTO application_approval_ruleset_bindings (organization_id, application_
     'only afternoon',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_major_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'app1',
     'only afternoon',
@@ -182,9 +182,9 @@ INSERT INTO application_approval_ruleset_binding_major_versions (organization_id
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_minor_versions (organization_id, application_approval_ruleset_binding_major_version_id, version_number, review_state, created_at, mode) VALUES (
+INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, review_state, created_at, mode) VALUES (
     'org1',
-    (SELECT id FROM application_approval_ruleset_binding_major_versions
+    (SELECT id FROM application_approval_ruleset_binding_versions
         WHERE organization_id = 'org1' AND application_id = 'app1'
         AND approval_ruleset_id = 'only afternoon' AND version_number = 1
         LIMIT 1),
@@ -200,7 +200,7 @@ INSERT INTO application_approval_ruleset_bindings (organization_id, application_
     'only afternoon',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_major_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'app2',
     'only afternoon',
@@ -208,9 +208,9 @@ INSERT INTO application_approval_ruleset_binding_major_versions (organization_id
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_minor_versions (organization_id, application_approval_ruleset_binding_major_version_id, version_number, review_state, created_at, mode) VALUES (
+INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, review_state, created_at, mode) VALUES (
     'org1',
-    (SELECT id FROM application_approval_ruleset_binding_major_versions
+    (SELECT id FROM application_approval_ruleset_binding_versions
         WHERE organization_id = 'org1' AND application_id = 'app2'
         AND approval_ruleset_id = 'only afternoon' AND version_number = 1
         LIMIT 1),
@@ -226,7 +226,7 @@ INSERT INTO application_approval_ruleset_bindings (organization_id, application_
     'only evening',
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_major_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
     'org1',
     'app2',
     'only evening',
@@ -234,9 +234,9 @@ INSERT INTO application_approval_ruleset_binding_major_versions (organization_id
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_minor_versions (organization_id, application_approval_ruleset_binding_major_version_id, version_number, review_state, created_at, mode) VALUES (
+INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, review_state, created_at, mode) VALUES (
     'org1',
-    (SELECT id FROM application_approval_ruleset_binding_major_versions
+    (SELECT id FROM application_approval_ruleset_binding_versions
         WHERE organization_id = 'org1' AND application_id = 'app2'
         AND approval_ruleset_id = 'only evening' AND version_number = 1
         LIMIT 1),
@@ -301,12 +301,12 @@ BEGIN
             'app1',
             (current_date || ' 13:00')::timestamp with time zone
         );
-        INSERT INTO release_approval_ruleset_bindings (organization_id, application_id, release_id, approval_ruleset_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, mode) VALUES (
+        INSERT INTO release_approval_ruleset_bindings (organization_id, application_id, release_id, approval_ruleset_id, approval_ruleset_version_id, approval_ruleset_adjustment_number, mode) VALUES (
             'org1',
             'app1',
             (SELECT currval('releases_id_seq')),
             'only afternoon',
-            (SELECT id FROM approval_ruleset_major_versions
+            (SELECT id FROM approval_ruleset_versions
                 WHERE organization_id = 'org1'
                 AND approval_ruleset_id = 'only afternoon'
                 AND version_number = 1
@@ -328,12 +328,12 @@ BEGIN
             'app1',
             (current_date || ' 18:00')::timestamp with time zone
         );
-        INSERT INTO release_approval_ruleset_bindings (organization_id, application_id, release_id, approval_ruleset_id, approval_ruleset_major_version_id, approval_ruleset_minor_version_number, mode) VALUES (
+        INSERT INTO release_approval_ruleset_bindings (organization_id, application_id, release_id, approval_ruleset_id, approval_ruleset_version_id, approval_ruleset_adjustment_number, mode) VALUES (
             'org1',
             'app1',
             (SELECT currval('releases_id_seq')),
             'only afternoon',
-            (SELECT id FROM approval_ruleset_major_versions
+            (SELECT id FROM approval_ruleset_versions
                 WHERE organization_id = 'org1'
                 AND approval_ruleset_id = 'only afternoon'
                 AND version_number = 1
@@ -348,12 +348,12 @@ END $$;
 DO $$
 DECLARE
     n_apps INT;
-    n_major_versions INT;
-    n_minor_versions INT;
+    n_versions INT;
+    n_adjustments INT;
 BEGIN
     n_apps := 12;
-    n_major_versions := 60;
-    n_minor_versions := 15;
+    n_versions := 60;
+    n_adjustments := 15;
 
     -- Create applications for org2
     INSERT INTO applications (organization_id, id, created_at)
@@ -364,21 +364,21 @@ BEGIN
     FROM generate_series(1, n_apps) series
     ON CONFLICT DO NOTHING;
 
-    IF (SELECT COUNT(*) FROM application_major_versions WHERE organization_id = 'org2' AND application_id = 'app1' LIMIT 1) = 0 THEN
-        -- For each application, create (n_major_versions - 1) major versions that are finalized
-        INSERT INTO application_major_versions
+    IF (SELECT COUNT(*) FROM application_versions WHERE organization_id = 'org2' AND application_id = 'app1' LIMIT 1) = 0 THEN
+        -- For each application, create (n_versions - 1) versions that are finalized
+        INSERT INTO application_versions
             (organization_id, application_id, version_number, created_at, updated_at)
         SELECT
             'org2' AS organization_id,
             'app' || app_nums AS application_id,
-            major_nums AS version_number,
+            version_nums AS version_number,
             NOW() AS created_at,
             NOW() AS updated_at
         FROM generate_series(1, n_apps) app_nums,
-            generate_series(1, n_major_versions) major_nums;
+            generate_series(1, n_versions) version_nums;
 
-        -- For each application, create 1 major version that's still draft
-        INSERT INTO application_major_versions
+        -- For each application, create 1 proposal version
+        INSERT INTO application_versions
             (organization_id, application_id, created_at, updated_at)
         SELECT
             'org2' AS organization_id,
@@ -387,39 +387,39 @@ BEGIN
             NOW() AS updated_at
         FROM generate_series(1, n_apps) app_nums;
 
-        -- For each major version, create (n_minor_versions - 1) minor versions that are not yet approved
-        INSERT INTO application_minor_versions
-            (organization_id, application_major_version_id, version_number, review_state, created_at, display_name)
+        -- For each version, create (n_adjustments - 1) adjustments that are not yet approved
+        INSERT INTO application_adjustments
+            (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name)
         SELECT
             'org2' AS organization_id,
-            major_versions.id AS application_major_version_id,
-            minor_nums AS version_number,
+            versions.id AS application_version_id,
+            adjustment_nums AS adjustment_number,
             'draft' AS review_state,
             NOW() AS created_at,
-            'Draft ' || minor_nums AS display_name
+            'Draft ' || adjustment_nums AS display_name
         FROM generate_series(1, n_apps) app_nums,
-            generate_series(1, n_major_versions) major_nums,
-            generate_series(1, n_minor_versions - 1) minor_nums,
-            application_major_versions major_versions
-        WHERE major_versions.organization_id = 'org2'
-        AND major_versions.application_id = 'app' || app_nums
-        AND major_versions.version_number = major_nums
-        ORDER BY major_nums, minor_nums;
+            generate_series(1, n_versions) version_nums,
+            generate_series(1, n_adjustments - 1) adjustment_nums,
+            application_versions versions
+        WHERE versions.organization_id = 'org2'
+        AND versions.application_id = 'app' || app_nums
+        AND versions.version_number = version_nums
+        ORDER BY version_nums, adjustment_nums;
 
-        -- For each major version, create 1 minor version that is approved
-        INSERT INTO application_minor_versions
-            (organization_id, application_major_version_id, version_number, review_state, created_at, display_name)
+        -- For each version, create 1 adjustment that is approved
+        INSERT INTO application_adjustments
+            (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name)
         SELECT
             'org2' AS organization_id,
-            major_versions.id AS application_major_version_id,
-            n_minor_versions AS version_number,
+            versions.id AS application_version_id,
+            n_adjustments AS adjustment_number,
             'approved' AS review_state,
             NOW() AS created_at,
             'Final'
         FROM generate_series(1, n_apps) app_nums,
-            application_major_versions major_versions
-        WHERE major_versions.organization_id = 'org2'
-        AND major_versions.application_id = 'app' || app_nums;
+            application_versions versions
+        WHERE versions.organization_id = 'org2'
+        AND versions.application_id = 'app' || app_nums;
     END IF;
 END $$;
 

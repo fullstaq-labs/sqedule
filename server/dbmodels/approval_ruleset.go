@@ -7,27 +7,24 @@ import (
 	"gorm.io/gorm"
 )
 
-// ApprovalRuleset ...
 type ApprovalRuleset struct {
 	BaseModel
 	ID string `gorm:"type:citext; primaryKey; not null"`
 	ReviewableBase
-	LatestMajorVersion *ApprovalRulesetMajorVersion `gorm:"-"`
-	LatestMinorVersion *ApprovalRulesetMinorVersion `gorm:"-"`
+	LatestVersion    *ApprovalRulesetVersion    `gorm:"-"`
+	LatestAdjustment *ApprovalRulesetAdjustment `gorm:"-"`
 }
 
-// ApprovalRulesetMajorVersion ...
-type ApprovalRulesetMajorVersion struct {
+type ApprovalRulesetVersion struct {
 	BaseModel
 	ReviewableVersionBase
 	ApprovalRulesetID string          `gorm:"type:citext; not null"`
 	ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ApprovalRulesetMinorVersion ...
-type ApprovalRulesetMinorVersion struct {
+type ApprovalRulesetAdjustment struct {
 	BaseModel
-	ApprovalRulesetMajorVersionID uint64 `gorm:"primaryKey; not null"`
+	ApprovalRulesetVersionID uint64 `gorm:"primaryKey; not null"`
 	ReviewableAdjustmentBase
 	Enabled bool `gorm:"not null; default:true"`
 
@@ -36,14 +33,14 @@ type ApprovalRulesetMinorVersion struct {
 	// TODO: this doesn't work because of the lack of a rule binding mode. move to level of rule binding.
 	GloballyApplicable bool `gorm:"not null; default:false"`
 
-	ApprovalRulesetMajorVersion ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	ApprovalRulesetVersion ApprovalRulesetVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ApprovalRulesetVersionKey uniquely identifies a specific major+minor version
+// ApprovalRulesetVersionAndAdjustmentKey uniquely identifies a specific Version+Adjustment
 // of an ApprovalRuleset.
-type ApprovalRulesetVersionKey struct {
-	MajorVersionID     uint64
-	MinorVersionNumber uint32
+type ApprovalRulesetVersionAndAdjustmentKey struct {
+	VersionID        uint64
+	AdjustmentNumber uint32
 }
 
 type ApprovalRulesetWithStats struct {
@@ -159,10 +156,10 @@ func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rule
 		reflect.TypeOf(ApprovalRuleset{}.ID),
 		[]string{"approval_ruleset_id"},
 		reflect.TypeOf(ApprovalRuleset{}.ID),
-		reflect.TypeOf(ApprovalRulesetMajorVersion{}),
-		reflect.TypeOf(ApprovalRulesetMajorVersion{}.ID),
-		"approval_ruleset_major_version_id",
-		reflect.TypeOf(ApprovalRulesetMinorVersion{}),
+		reflect.TypeOf(ApprovalRulesetVersion{}),
+		reflect.TypeOf(ApprovalRulesetVersion{}.ID),
+		"approval_ruleset_version_id",
+		reflect.TypeOf(ApprovalRulesetAdjustment{}),
 		organizationID,
 		reviewables,
 	)

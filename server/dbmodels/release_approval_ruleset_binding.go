@@ -17,41 +17,41 @@ type ReleaseApprovalRulesetBinding struct {
 	ApprovalRulesetID string          `gorm:"type:citext; primaryKey; not null"`
 	ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
-	ApprovalRulesetMajorVersionID uint64                      `gorm:"not null"`
-	ApprovalRulesetMajorVersion   ApprovalRulesetMajorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	ApprovalRulesetVersionID uint64                 `gorm:"not null"`
+	ApprovalRulesetVersion   ApprovalRulesetVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
-	ApprovalRulesetMinorVersionNumber uint32                      `gorm:"type:int; not null"`
-	ApprovalRulesetMinorVersion       ApprovalRulesetMinorVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetMajorVersionID,ApprovalRulesetMinorVersionNumber; references:OrganizationID,ApprovalRulesetMajorVersionID,VersionNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	ApprovalRulesetAdjustmentNumber uint32                    `gorm:"type:int; not null"`
+	ApprovalRulesetAdjustment       ApprovalRulesetAdjustment `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID,ApprovalRulesetAdjustmentNumber; references:OrganizationID,ApprovalRulesetVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
 }
 
 // NewReleaseApprovalRulesetBindingFromApplicationApprovalRulesetBinding ...
 func NewReleaseApprovalRulesetBindingFromApplicationApprovalRulesetBinding(appRuleBinding ApplicationApprovalRulesetBinding) ReleaseApprovalRulesetBinding {
-	if appRuleBinding.LatestMinorVersion == nil {
-		panic("Given binding must have an associated latest minor version")
+	if appRuleBinding.LatestAdjustment == nil {
+		panic("Given binding must have an associated latest adjustment")
 	}
 
-	if appRuleBinding.ApprovalRuleset.LatestMajorVersion == nil {
-		panic("Given binding's ruleset must have an associated latest major version")
+	if appRuleBinding.ApprovalRuleset.LatestVersion == nil {
+		panic("Given binding's ruleset must have an associated latest version")
 	}
-	if appRuleBinding.ApprovalRuleset.LatestMajorVersion.VersionNumber == nil {
-		panic("Given binding's ruleset's associated latest major version must be finalized")
+	if appRuleBinding.ApprovalRuleset.LatestVersion.VersionNumber == nil {
+		panic("Given binding's ruleset's associated latest version must be finalized")
 	}
-	if appRuleBinding.ApprovalRuleset.LatestMinorVersion == nil {
-		panic("Given binding ruleset's must have an associated latest minor version")
+	if appRuleBinding.ApprovalRuleset.LatestAdjustment == nil {
+		panic("Given binding ruleset's must have an associated latest adjustment")
 	}
 
 	return ReleaseApprovalRulesetBinding{
-		BaseModel:                         appRuleBinding.BaseModel,
-		ApplicationID:                     appRuleBinding.ApplicationID,
-		ApprovalRulesetID:                 appRuleBinding.ApprovalRulesetID,
-		ApprovalRuleset:                   appRuleBinding.ApprovalRuleset,
-		ApprovalRulesetMajorVersionID:     appRuleBinding.ApprovalRuleset.LatestMajorVersion.ID,
-		ApprovalRulesetMajorVersion:       *appRuleBinding.ApprovalRuleset.LatestMajorVersion,
-		ApprovalRulesetMinorVersionNumber: appRuleBinding.ApprovalRuleset.LatestMinorVersion.VersionNumber,
-		ApprovalRulesetMinorVersion:       *appRuleBinding.ApprovalRuleset.LatestMinorVersion,
-		Mode:                              appRuleBinding.LatestMinorVersion.Mode,
+		BaseModel:                       appRuleBinding.BaseModel,
+		ApplicationID:                   appRuleBinding.ApplicationID,
+		ApprovalRulesetID:               appRuleBinding.ApprovalRulesetID,
+		ApprovalRuleset:                 appRuleBinding.ApprovalRuleset,
+		ApprovalRulesetVersionID:        appRuleBinding.ApprovalRuleset.LatestVersion.ID,
+		ApprovalRulesetVersion:          *appRuleBinding.ApprovalRuleset.LatestVersion,
+		ApprovalRulesetAdjustmentNumber: appRuleBinding.ApprovalRuleset.LatestAdjustment.AdjustmentNumber,
+		ApprovalRulesetAdjustment:       *appRuleBinding.ApprovalRuleset.LatestAdjustment,
+		Mode:                            appRuleBinding.LatestAdjustment.Mode,
 	}
 }
 

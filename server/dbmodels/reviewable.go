@@ -10,27 +10,23 @@ import (
 	"gorm.io/gorm"
 )
 
-// IReviewable ...
 type IReviewable interface {
 	GetPrimaryKey() interface{}
-	SetLatestMajorVersion(majorVersion IReviewableMajorVersion)
-	SetLatestMinorVersion(minorVersion IReviewableMinorVersion)
+	SetLatestVersion(version IReviewableVersion)
+	SetLatestAdjustment(adjustment IReviewableAdjustment)
 }
 
-// IReviewableMajorVersion ...
-type IReviewableMajorVersion interface {
+type IReviewableVersion interface {
 	GetID() interface{}
 	GetReviewablePrimaryKey() interface{}
 	AssociateWithReviewable(reviewable IReviewable)
 }
 
-// IReviewableMinorVersion ...
-type IReviewableMinorVersion interface {
-	GetMajorVersionID() interface{}
-	AssociateWithMajorVersion(majorVersion IReviewableMajorVersion)
+type IReviewableAdjustment interface {
+	GetVersionID() interface{}
+	AssociateWithVersion(version IReviewableVersion)
 }
 
-// IReviewableCompositeKey ...
 type IReviewableCompositeKey interface {
 	GormValue() interface{}
 }
@@ -47,41 +43,41 @@ type ReviewableVersionBase struct {
 }
 
 type ReviewableAdjustmentBase struct {
-	VersionNumber  uint32            `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
-	ReviewState    reviewstate.State `gorm:"type:review_state; not null"`
-	ReviewComments sql.NullString
-	CreatedAt      time.Time `gorm:"not null"`
+	AdjustmentNumber uint32            `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
+	ReviewState      reviewstate.State `gorm:"type:review_state; not null"`
+	ReviewComments   sql.NullString
+	CreatedAt        time.Time `gorm:"not null"`
 }
 
-// LoadReviewablesLatestVersions loads the latest MajorVersion and MinorVersion records associated
+// LoadReviewablesLatestVersions loads the latest Version and Adjustment records associated
 // with the given IReviewable records.
 //
-// For each found MajorVersion and MinorVersion record, this function calls `SetLatestMajorVersion()`
-// and `SetLatestMinorVersion()` on the appropriate IReviewable records.
+// For each found Version and Adjustment record, this function calls `SetLatestVersion()`
+// and `SetLatestAdjustment()` on the appropriate IReviewable records.
 //
 // Parameters:
 //
 //  - `primaryKeyType` is the type of the IReviewable's (possibly composite) primary key (excluding OrganizationID).
 //    When the primary key is singular, this is the type of the `ID` field.
 //    When the primary key is composite, then this should be a struct that contains the two keys. Furthermore, this struct must implement `IReviewableCompositeKey`.
-//  - `primaryKeyColumnNamesInMajorVersionTable` are the (possibly composite) foreign key columns, in the MajorVersion's table, that refer to the IReviewable's primary key (excluding OrganizationID).
+//  - `primaryKeyColumnNamesInVersionTable` are the (possibly composite) foreign key columns, in the Version's table, that refer to the IReviewable's primary key (excluding OrganizationID).
 //  - `primaryKeyGormValueType` is the type of the IReviewable's (possibly composite) primary key when passed as a value to a GORM `Where()` clause.
 //    When the primary key is singular, this should be the same as `primaryKeyType`.
 //    When the primary key is composite, this should be the type that's returned by primaryKeyType's `IReviewableCompositeKey.GormValue()` method.
-//  - `majorVersionType` is the type of the MajorVersion struct. It must implement IReviewableMajorVersion.
-//  - `majorVersionIDColumnType` is the type of the MajorVersion's `ID` field.
-//  - `majorVersionIDColumnNameInMinorVersionTable` is the foreign key column, in the MinorVersion's table, that refers to the MajorVersion's `ID` field.
-//  - `minorVersionType` is the type of the MinorVersion struct. It must implement IReviewableMinorVersion.
+//  - `versionType` is the type of the Version struct. It must implement IReviewableVersion.
+//  - `versionIDColumnType` is the type of the Version's `ID` field.
+//  - `versionIDColumnNameInAdjustmentTable` is the foreign key column, in the Adjustment's table, that refers to the Version's `ID` field.
+//  - `adjustmentType` is the type of the Adjustment struct. It must implement IReviewableAdjustment.
 //  - `organizationID` is the organization in which you want to query the records.
-//  - `reviewables` is the list of IReviewables for which you want to load their latest major and minor version records.
+//  - `reviewables` is the list of IReviewables for which you want to load their latest version and adjustment records.
 func LoadReviewablesLatestVersions(db *gorm.DB,
 	primaryKeyType reflect.Type,
-	primaryKeyColumnNamesInMajorVersionTable []string,
+	primaryKeyColumnNamesInVersionTable []string,
 	primaryKeyGormValueType reflect.Type,
-	majorVersionType reflect.Type,
-	majorVersionIDColumnType reflect.Type,
-	majorVersionIDColumnNameInMinorVersionTable string,
-	minorVersionType reflect.Type,
+	versionType reflect.Type,
+	versionIDColumnType reflect.Type,
+	versionIDColumnNameInAdjustmentTable string,
+	adjustmentType reflect.Type,
 	organizationID string,
 	reviewables []IReviewable) error {
 
@@ -95,77 +91,77 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	// reviewableIds type  : []actualPrimaryKeyGormValueType
 	// reviewableIds length: len(applications)
 	reviewableIndex, reviewableIds := buildReviewablesIndexAndIDList(primaryKeyType, primaryKeyGormValueType,
-		len(primaryKeyColumnNamesInMajorVersionTable) > 1, reviewables)
+		len(primaryKeyColumnNamesInVersionTable) > 1, reviewables)
 
-	/****** Load associated major versions ******/
+	/****** Load associated versions ******/
 
-	// Type: *[]actualMajorVersionType
-	majorVersions := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(majorVersionType), 0, 0))
-	// Type: map[actualMajorVersionIDColumnType]*actualMajorVersionType
-	majorIndex := reflect.MakeMap(reflect.MapOf(majorVersionIDColumnType, reflect.PtrTo(majorVersionType)))
-	// Type: []actualMajorVersionIDColumnType
-	majorIds := reflect.MakeSlice(reflect.SliceOf(majorVersionIDColumnType), 0, 0)
-	primaryKeyColumnNamesInMajorVersionTableAsCommaString := strings.Join(primaryKeyColumnNamesInMajorVersionTable, ",")
+	// Type: *[]actualVersionType
+	versions := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(versionType), 0, 0))
+	// Type: map[actualVersionIDColumnType]*actualVersionType
+	versionIndex := reflect.MakeMap(reflect.MapOf(versionIDColumnType, reflect.PtrTo(versionType)))
+	// Type: []actualVersionIDColumnType
+	versionIds := reflect.MakeSlice(reflect.SliceOf(versionIDColumnType), 0, 0)
+	primaryKeyColumnNamesInVersionTableAsCommaString := strings.Join(primaryKeyColumnNamesInVersionTable, ",")
 	tx := db.
 		// DISTINCT ON only works on PostgreSQL. When we want to support other databases, have a look at this alternative:
 		// https://stackoverflow.com/a/3800572/20816
-		Select("DISTINCT ON (organization_id, "+primaryKeyColumnNamesInMajorVersionTableAsCommaString+") *").
-		Where("organization_id = ? AND ("+primaryKeyColumnNamesInMajorVersionTableAsCommaString+") IN (?) AND version_number IS NOT NULL",
+		Select("DISTINCT ON (organization_id, "+primaryKeyColumnNamesInVersionTableAsCommaString+") *").
+		Where("organization_id = ? AND ("+primaryKeyColumnNamesInVersionTableAsCommaString+") IN (?) AND version_number IS NOT NULL",
 			organizationID, reviewableIds.Interface()).
-		Order("organization_id, " + primaryKeyColumnNamesInMajorVersionTableAsCommaString + ", version_number DESC").
-		Find(majorVersions.Interface())
+		Order("organization_id, " + primaryKeyColumnNamesInVersionTableAsCommaString + ", version_number DESC").
+		Find(versions.Interface())
 	if tx.Error != nil {
 		return tx.Error
 	}
-	nversions = majorVersions.Elem().Len()
+	nversions = versions.Elem().Len()
 	for i := 0; i < nversions; i++ {
-		majorVersion := reflectMakePtr(majorVersions.Elem().Index(i)).Interface().(IReviewableMajorVersion)
-		majorVersionID := reflect.ValueOf(majorVersion.GetID())
-		reviewableID := majorVersion.GetReviewablePrimaryKey()
+		version := reflectMakePtr(versions.Elem().Index(i)).Interface().(IReviewableVersion)
+		versionID := reflect.ValueOf(version.GetID())
+		reviewableID := version.GetReviewablePrimaryKey()
 		// Example type: []*Application
 		reviewables := reviewableIndex.MapIndex(reflect.ValueOf(reviewableID))
 
 		for i := 0; i < reviewables.Len(); i++ {
 			reviewable := reviewables.Index(i).Interface().(IReviewable)
-			reviewable.SetLatestMajorVersion(majorVersion)
+			reviewable.SetLatestVersion(version)
 		}
 
 		firstMatch := reviewables.Index(0).Interface().(IReviewable)
-		majorVersion.AssociateWithReviewable(firstMatch)
+		version.AssociateWithReviewable(firstMatch)
 
-		majorIndex.SetMapIndex(majorVersionID, reflect.ValueOf(majorVersion))
-		majorIds = reflect.Append(majorIds, majorVersionID)
+		versionIndex.SetMapIndex(versionID, reflect.ValueOf(version))
+		versionIds = reflect.Append(versionIds, versionID)
 	}
 
-	/****** Load associated Minor versions ******/
+	/****** Load associated Adjustments ******/
 
-	// Type: *[]actualMinorVersionType
-	minorVersions := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(minorVersionType), 0, 0))
+	// Type: *[]actualAdjustmentType
+	adjustments := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(adjustmentType), 0, 0))
 	tx = db.
-		Select("DISTINCT ON (organization_id, "+majorVersionIDColumnNameInMinorVersionTable+") *").
-		Where("organization_id = ? AND "+majorVersionIDColumnNameInMinorVersionTable+" IN ?",
-			organizationID, majorIds.Interface()).
-		Order("organization_id, " + majorVersionIDColumnNameInMinorVersionTable + ", version_number DESC").
-		Find(minorVersions.Interface())
+		Select("DISTINCT ON (organization_id, "+versionIDColumnNameInAdjustmentTable+") *").
+		Where("organization_id = ? AND "+versionIDColumnNameInAdjustmentTable+" IN ?",
+			organizationID, versionIds.Interface()).
+		Order("organization_id, " + versionIDColumnNameInAdjustmentTable + ", adjustment_number DESC").
+		Find(adjustments.Interface())
 	if tx.Error != nil {
 		return tx.Error
 	}
-	nversions = minorVersions.Elem().Len()
+	nversions = adjustments.Elem().Len()
 	for i := 0; i < nversions; i++ {
-		// Type: actualMinorVersionType
-		minorVersion := reflectMakePtr(minorVersions.Elem().Index(i)).Interface().(IReviewableMinorVersion)
+		// Type: actualAdjustmentType
+		adjustment := reflectMakePtr(adjustments.Elem().Index(i)).Interface().(IReviewableAdjustment)
 
-		majorVersionID := reflect.ValueOf(minorVersion.GetMajorVersionID())
-		// Type: actualMajorVersionType
-		majorVersion := majorIndex.MapIndex(majorVersionID).Interface().(IReviewableMajorVersion)
-		minorVersion.AssociateWithMajorVersion(majorVersion)
+		versionID := reflect.ValueOf(adjustment.GetVersionID())
+		// Type: actualVersionType
+		version := versionIndex.MapIndex(versionID).Interface().(IReviewableVersion)
+		adjustment.AssociateWithVersion(version)
 
-		reviewablePrimaryKey := reflect.ValueOf(majorVersion.GetReviewablePrimaryKey())
+		reviewablePrimaryKey := reflect.ValueOf(version.GetReviewablePrimaryKey())
 		// Example type: []*Application
 		reviewables := reviewableIndex.MapIndex(reviewablePrimaryKey)
 		for i := 0; i < reviewables.Len(); i++ {
 			reviewable := reviewables.Index(i).Interface().(IReviewable)
-			reviewable.SetLatestMinorVersion(minorVersion)
+			reviewable.SetLatestAdjustment(adjustment)
 		}
 	}
 

@@ -51,7 +51,7 @@ func CreateMockServiceAccountWithAdminRole(db *gorm.DB, organization Organizatio
 }
 
 // CreateMockApplicationWith1Version ...
-func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, customizeFunc func(*Application), minorVersionCustomizeFunc func(*ApplicationMinorVersion)) (Application, error) {
+func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, customizeFunc func(*Application), adjustmentCustomizeFunc func(*ApplicationAdjustment)) (Application, error) {
 	result := Application{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
@@ -67,46 +67,46 @@ func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, c
 		return Application{}, savetx.Error
 	}
 
-	var majorVersionNumber uint32 = 1
-	var majorVersion = ApplicationMajorVersion{
+	var versionNumber uint32 = 1
+	var version = ApplicationVersion{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
 		ReviewableVersionBase: ReviewableVersionBase{
-			VersionNumber: &majorVersionNumber,
+			VersionNumber: &versionNumber,
 		},
 		ApplicationID: result.ID,
 		Application:   result,
 	}
-	savetx = db.Omit(clause.Associations).Create(&majorVersion)
+	savetx = db.Omit(clause.Associations).Create(&version)
 	if savetx.Error != nil {
 		return Application{}, savetx.Error
 	}
 
-	var minorVersion = ApplicationMinorVersion{
+	var adjustment = ApplicationAdjustment{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
 		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
-			VersionNumber: 1,
-			ReviewState:   reviewstate.Approved,
+			AdjustmentNumber: 1,
+			ReviewState:      reviewstate.Approved,
 		},
-		ApplicationMajorVersionID: majorVersion.ID,
-		ApplicationMajorVersion:   majorVersion,
-		DisplayName:               "App 1",
+		ApplicationVersionID: version.ID,
+		ApplicationVersion:   version,
+		DisplayName:          "App 1",
 	}
-	if minorVersionCustomizeFunc != nil {
-		minorVersionCustomizeFunc(&minorVersion)
+	if adjustmentCustomizeFunc != nil {
+		adjustmentCustomizeFunc(&adjustment)
 	}
-	savetx = db.Omit(clause.Associations).Create(&minorVersion)
+	savetx = db.Omit(clause.Associations).Create(&adjustment)
 	if savetx.Error != nil {
 		return Application{}, savetx.Error
 	}
 
-	result.LatestMajorVersion = &majorVersion
-	result.LatestMinorVersion = &minorVersion
+	result.LatestVersion = &version
+	result.LatestAdjustment = &adjustment
 	return result, nil
 }
 
@@ -131,9 +131,9 @@ func CreateMockReleaseWithInProgressState(db *gorm.DB, organization Organization
 }
 
 // CreateMockRulesetWith1Version ...
-func CreateMockRulesetWith1Version(db *gorm.DB, organization Organization, id string, customizeFunc func(*ApprovalRulesetMinorVersion)) (ApprovalRuleset, error) {
+func CreateMockRulesetWith1Version(db *gorm.DB, organization Organization, id string, customizeFunc func(*ApprovalRulesetAdjustment)) (ApprovalRuleset, error) {
 	var savetx *gorm.DB
-	var majorVersionNumber uint32 = 1
+	var versionNumber uint32 = 1
 
 	ruleset := ApprovalRuleset{
 		BaseModel: BaseModel{
@@ -147,54 +147,54 @@ func CreateMockRulesetWith1Version(db *gorm.DB, organization Organization, id st
 		return ApprovalRuleset{}, fmt.Errorf("Error creating ApprovalRuleset: %w", savetx.Error)
 	}
 
-	majorVersion := ApprovalRulesetMajorVersion{
+	version := ApprovalRulesetVersion{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
 		ReviewableVersionBase: ReviewableVersionBase{
-			VersionNumber: &majorVersionNumber,
+			VersionNumber: &versionNumber,
 		},
 		ApprovalRulesetID: ruleset.ID,
 		ApprovalRuleset:   ruleset,
 	}
-	savetx = db.Omit(clause.Associations).Create(&majorVersion)
+	savetx = db.Omit(clause.Associations).Create(&version)
 	if savetx.Error != nil {
-		return ApprovalRuleset{}, fmt.Errorf("Error creating ApprovalRulesetMajorVersion: %w", savetx.Error)
+		return ApprovalRuleset{}, fmt.Errorf("Error creating ApprovalRulesetVersion: %w", savetx.Error)
 	}
 
-	minorVersion := ApprovalRulesetMinorVersion{
+	adjustment := ApprovalRulesetAdjustment{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
 		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
-			VersionNumber: 1,
-			ReviewState:   reviewstate.Approved,
+			AdjustmentNumber: 1,
+			ReviewState:      reviewstate.Approved,
 		},
-		ApprovalRulesetMajorVersionID: majorVersion.ID,
-		ApprovalRulesetMajorVersion:   majorVersion,
-		DisplayName:                   "Ruleset",
-		Description:                   "",
+		ApprovalRulesetVersionID: version.ID,
+		ApprovalRulesetVersion:   version,
+		DisplayName:              "Ruleset",
+		Description:              "",
 	}
 	if customizeFunc != nil {
-		customizeFunc(&minorVersion)
+		customizeFunc(&adjustment)
 	}
-	savetx = db.Omit(clause.Associations).Create(&minorVersion)
+	savetx = db.Omit(clause.Associations).Create(&adjustment)
 	if savetx.Error != nil {
-		return ApprovalRuleset{}, fmt.Errorf("Error creating ApprovalRulesetMinorVersion: %w", savetx.Error)
+		return ApprovalRuleset{}, fmt.Errorf("Error creating ApprovalRulesetAdjustment: %w", savetx.Error)
 	}
 
-	ruleset.LatestMajorVersion = &majorVersion
-	ruleset.LatestMinorVersion = &minorVersion
+	ruleset.LatestVersion = &version
+	ruleset.LatestAdjustment = &adjustment
 	return ruleset, nil
 }
 
 // CreateMockApplicationRulesetBindingWithEnforcingMode1Version ...
-func CreateMockApplicationRulesetBindingWithEnforcingMode1Version(db *gorm.DB, organization Organization, application Application, ruleset ApprovalRuleset, customizeFunc func(*ApplicationApprovalRulesetBindingMinorVersion)) (ApplicationApprovalRulesetBinding, error) {
+func CreateMockApplicationRulesetBindingWithEnforcingMode1Version(db *gorm.DB, organization Organization, application Application, ruleset ApprovalRuleset, customizeFunc func(*ApplicationApprovalRulesetBindingAdjustment)) (ApplicationApprovalRulesetBinding, error) {
 	var binding ApplicationApprovalRulesetBinding
-	var majorVersion ApplicationApprovalRulesetBindingMajorVersion
-	var minorVersion ApplicationApprovalRulesetBindingMinorVersion
+	var version ApplicationApprovalRulesetBindingVersion
+	var adjustment ApplicationApprovalRulesetBindingAdjustment
 	var err error
 
 	binding = ApplicationApprovalRulesetBinding{
@@ -206,10 +206,10 @@ func CreateMockApplicationRulesetBindingWithEnforcingMode1Version(db *gorm.DB, o
 			ApplicationID:     application.ID,
 			ApprovalRulesetID: ruleset.ID,
 		},
-		Application:        application,
-		ApprovalRuleset:    ruleset,
-		LatestMajorVersion: &majorVersion,
-		LatestMinorVersion: &minorVersion,
+		Application:      application,
+		ApprovalRuleset:  ruleset,
+		LatestVersion:    &version,
+		LatestAdjustment: &adjustment,
 	}
 	savetx := db.Omit(clause.Associations).Create(&binding)
 	if savetx.Error != nil {
@@ -217,22 +217,22 @@ func CreateMockApplicationRulesetBindingWithEnforcingMode1Version(db *gorm.DB, o
 	}
 
 	var versionNumber uint32 = 1
-	majorVersion, err = CreateMockApplicationApprovalRulesetBindingMajorVersion(db, organization, application, binding, &versionNumber)
+	version, err = CreateMockApplicationApprovalRulesetBindingVersion(db, organization, application, binding, &versionNumber)
 	if err != nil {
-		return ApplicationApprovalRulesetBinding{}, fmt.Errorf("Error creating ApplicationApprovalRulesetBindingMajorVersion: %w", err)
+		return ApplicationApprovalRulesetBinding{}, fmt.Errorf("Error creating ApplicationApprovalRulesetBindingVersion: %w", err)
 	}
 
-	minorVersion, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(db, organization, majorVersion, customizeFunc)
+	adjustment, err = CreateMockApplicationApprovalRulesetBindingAdjustment(db, organization, version, customizeFunc)
 	if err != nil {
-		return ApplicationApprovalRulesetBinding{}, fmt.Errorf("Error creating ApplicationApprovalRulesetBindingMinorVersion: %w", savetx.Error)
+		return ApplicationApprovalRulesetBinding{}, fmt.Errorf("Error creating ApplicationApprovalRulesetBindingAdjustment: %w", savetx.Error)
 	}
 
 	return binding, nil
 }
 
-// CreateMockApplicationApprovalRulesetBindingMajorVersion ...
-func CreateMockApplicationApprovalRulesetBindingMajorVersion(db *gorm.DB, organization Organization, application Application, binding ApplicationApprovalRulesetBinding, versionNumber *uint32) (ApplicationApprovalRulesetBindingMajorVersion, error) {
-	result := ApplicationApprovalRulesetBindingMajorVersion{
+// CreateMockApplicationApprovalRulesetBindingVersion ...
+func CreateMockApplicationApprovalRulesetBindingVersion(db *gorm.DB, organization Organization, application Application, binding ApplicationApprovalRulesetBinding, versionNumber *uint32) (ApplicationApprovalRulesetBindingVersion, error) {
+	result := ApplicationApprovalRulesetBindingVersion{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
@@ -246,26 +246,25 @@ func CreateMockApplicationApprovalRulesetBindingMajorVersion(db *gorm.DB, organi
 	}
 	savetx := db.Omit(clause.Associations).Create(&result)
 	if savetx.Error != nil {
-		return ApplicationApprovalRulesetBindingMajorVersion{}, savetx.Error
+		return ApplicationApprovalRulesetBindingVersion{}, savetx.Error
 	}
 
 	return result, nil
 }
 
-// CreateMockApplicationApprovalRulesetBindingMinorVersion ...
-func CreateMockApplicationApprovalRulesetBindingMinorVersion(db *gorm.DB, organization Organization, majorVersion ApplicationApprovalRulesetBindingMajorVersion,
-	customizeFunc func(*ApplicationApprovalRulesetBindingMinorVersion)) (ApplicationApprovalRulesetBindingMinorVersion, error) {
+func CreateMockApplicationApprovalRulesetBindingAdjustment(db *gorm.DB, organization Organization, version ApplicationApprovalRulesetBindingVersion,
+	customizeFunc func(*ApplicationApprovalRulesetBindingAdjustment)) (ApplicationApprovalRulesetBindingAdjustment, error) {
 
-	result := ApplicationApprovalRulesetBindingMinorVersion{
+	result := ApplicationApprovalRulesetBindingAdjustment{
 		BaseModel: BaseModel{
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
-		ApplicationApprovalRulesetBindingMajorVersionID: majorVersion.ID,
-		ApplicationApprovalRulesetBindingMajorVersion:   majorVersion,
+		ApplicationApprovalRulesetBindingVersionID: version.ID,
+		ApplicationApprovalRulesetBindingVersion:   version,
 		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
-			VersionNumber: 1,
-			ReviewState:   reviewstate.Approved,
+			AdjustmentNumber: 1,
+			ReviewState:      reviewstate.Approved,
 		},
 		Enabled: true,
 		Mode:    approvalrulesetbindingmode.Enforcing,
@@ -275,7 +274,7 @@ func CreateMockApplicationApprovalRulesetBindingMinorVersion(db *gorm.DB, organi
 	}
 	savetx := db.Omit(clause.Associations).Create(&result)
 	if savetx.Error != nil {
-		return ApplicationApprovalRulesetBindingMinorVersion{}, savetx.Error
+		return ApplicationApprovalRulesetBindingAdjustment{}, savetx.Error
 	}
 
 	return result, nil
@@ -289,15 +288,15 @@ func CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(db *gorm
 
 	// Ruleset 1: permissive
 
-	ruleset1, err := CreateMockRulesetWith1Version(db, organization, "ruleset1", func(minorVersion *ApprovalRulesetMinorVersion) {
-		minorVersion.DisplayName = "Ruleset 1"
+	ruleset1, err := CreateMockRulesetWith1Version(db, organization, "ruleset1", func(adjustment *ApprovalRulesetAdjustment) {
+		adjustment.DisplayName = "Ruleset 1"
 	})
 	if err != nil {
 		return ApplicationApprovalRulesetBinding{}, ApplicationApprovalRulesetBinding{}, err
 	}
 	ruleset1Binding, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(db, organization, application,
-		ruleset1, func(minorVersion *ApplicationApprovalRulesetBindingMinorVersion) {
-			minorVersion.Mode = approvalrulesetbindingmode.Permissive
+		ruleset1, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+			adjustment.Mode = approvalrulesetbindingmode.Permissive
 		})
 	if err != nil {
 		return ApplicationApprovalRulesetBinding{}, ApplicationApprovalRulesetBinding{}, err
@@ -305,8 +304,8 @@ func CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(db *gorm
 
 	// Ruleset 2: enforcing
 
-	ruleset2, err := CreateMockRulesetWith1Version(db, organization, "ruleset2", func(minorVersion *ApprovalRulesetMinorVersion) {
-		minorVersion.DisplayName = "Ruleset 2"
+	ruleset2, err := CreateMockRulesetWith1Version(db, organization, "ruleset2", func(adjustment *ApprovalRulesetAdjustment) {
+		adjustment.DisplayName = "Ruleset 2"
 	})
 	if err != nil {
 		return ApplicationApprovalRulesetBinding{}, ApplicationApprovalRulesetBinding{}, err
@@ -322,7 +321,7 @@ func CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(db *gorm
 
 // CreateMockReleaseRulesetBindingWithEnforcingMode1Version ...
 func CreateMockReleaseRulesetBindingWithEnforcingMode1Version(db *gorm.DB, organization Organization, release Release,
-	ruleset ApprovalRuleset, rulesetMajorVersion ApprovalRulesetMajorVersion, rulesetMinorVersion ApprovalRulesetMinorVersion,
+	ruleset ApprovalRuleset, rulesetVersion ApprovalRulesetVersion, rulesetAdjustment ApprovalRulesetAdjustment,
 	customizeFunc func(*ReleaseApprovalRulesetBinding)) (ReleaseApprovalRulesetBinding, error) {
 
 	result := ReleaseApprovalRulesetBinding{
@@ -330,16 +329,16 @@ func CreateMockReleaseRulesetBindingWithEnforcingMode1Version(db *gorm.DB, organ
 			OrganizationID: organization.ID,
 			Organization:   organization,
 		},
-		ApplicationID:                     release.ApplicationID,
-		ReleaseID:                         release.ID,
-		Release:                           release,
-		ApprovalRulesetID:                 ruleset.ID,
-		ApprovalRuleset:                   ruleset,
-		ApprovalRulesetMajorVersionID:     rulesetMajorVersion.ID,
-		ApprovalRulesetMajorVersion:       rulesetMajorVersion,
-		ApprovalRulesetMinorVersionNumber: rulesetMinorVersion.VersionNumber,
-		ApprovalRulesetMinorVersion:       rulesetMinorVersion,
-		Mode:                              approvalrulesetbindingmode.Enforcing,
+		ApplicationID:                   release.ApplicationID,
+		ReleaseID:                       release.ID,
+		Release:                         release,
+		ApprovalRulesetID:               ruleset.ID,
+		ApprovalRuleset:                 ruleset,
+		ApprovalRulesetVersionID:        rulesetVersion.ID,
+		ApprovalRulesetVersion:          rulesetVersion,
+		ApprovalRulesetAdjustmentNumber: rulesetAdjustment.AdjustmentNumber,
+		ApprovalRulesetAdjustment:       rulesetAdjustment,
+		Mode:                            approvalrulesetbindingmode.Enforcing,
 	}
 	savetx := db.Omit(clause.Associations).Create(&result)
 	if savetx.Error != nil {
@@ -371,8 +370,8 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 }
 
 // CreateMockScheduleApprovalRuleWholeDay ...
-func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organization, rulesetMajorVersionID uint64,
-	rulesetMinorVersion ApprovalRulesetMinorVersion, customizeFunc func(*ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
+func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organization, rulesetVersionID uint64,
+	rulesetAdjustment ApprovalRulesetAdjustment, customizeFunc func(*ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
 
 	result := ScheduleApprovalRule{
 		ApprovalRule: ApprovalRule{
@@ -380,10 +379,10 @@ func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organizati
 				OrganizationID: organization.ID,
 				Organization:   organization,
 			},
-			ApprovalRulesetMajorVersionID:     rulesetMajorVersionID,
-			ApprovalRulesetMinorVersionNumber: rulesetMinorVersion.VersionNumber,
-			ApprovalRulesetMinorVersion:       rulesetMinorVersion,
-			Enabled:                           true,
+			ApprovalRulesetVersionID:        rulesetVersionID,
+			ApprovalRulesetAdjustmentNumber: rulesetAdjustment.AdjustmentNumber,
+			ApprovalRulesetAdjustment:       rulesetAdjustment,
+			Enabled:                         true,
 		},
 		BeginTime: sql.NullString{String: "0:00:00", Valid: true},
 		EndTime:   sql.NullString{String: "23:59:59", Valid: true},

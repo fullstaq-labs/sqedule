@@ -41,10 +41,10 @@ var migration20201021000110 = gormigrate.Migration{
 		}
 
 		type ReviewableAdjustmentBase struct {
-			VersionNumber  uint32 `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
-			ReviewState    string `gorm:"type:review_state; not null"`
-			ReviewComments sql.NullString
-			CreatedAt      time.Time `gorm:"not null"`
+			AdjustmentNumber uint32 `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
+			ReviewState      string `gorm:"type:review_state; not null"`
+			ReviewComments   sql.NullString
+			CreatedAt        time.Time `gorm:"not null"`
 		}
 
 		type ApprovalRuleset struct {
@@ -65,7 +65,7 @@ var migration20201021000110 = gormigrate.Migration{
 			ApprovalRuleset ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 		}
 
-		type ApplicationApprovalRulesetBindingMajorVersion struct {
+		type ApplicationApprovalRulesetBindingVersion struct {
 			BaseModel
 			ApplicationID     string `gorm:"type:citext; not null"`
 			ApprovalRulesetID string `gorm:"type:citext; not null"`
@@ -74,15 +74,15 @@ var migration20201021000110 = gormigrate.Migration{
 			ApplicationApprovalRulesetBinding ApplicationApprovalRulesetBinding `gorm:"foreignKey:OrganizationID,ApplicationID,ApprovalRulesetID; references:OrganizationID,ApplicationID,ApprovalRulesetID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
-		type ApplicationApprovalRulesetBindingMinorVersion struct {
+		type ApplicationApprovalRulesetBindingAdjustment struct {
 			BaseModel
-			ApplicationApprovalRulesetBindingMajorVersionID uint64 `gorm:"primaryKey; not null"`
+			ApplicationApprovalRulesetBindingVersionID uint64 `gorm:"primaryKey; not null"`
 			ReviewableAdjustmentBase
 			Enabled bool `gorm:"not null; default:true"`
 
 			Mode string `gorm:"type:approval_ruleset_binding_mode; not null"`
 
-			ApplicationApprovalRulesetBindingMajorVersion ApplicationApprovalRulesetBindingMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApplicationApprovalRulesetBindingVersion ApplicationApprovalRulesetBindingVersion `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
 		err := tx.Exec("CREATE TYPE approval_ruleset_binding_mode AS ENUM " +
@@ -95,30 +95,28 @@ var migration20201021000110 = gormigrate.Migration{
 		if err != nil {
 			return err
 		}
-
-		err = tx.AutoMigrate(&ApplicationApprovalRulesetBindingMajorVersion{})
+		err = tx.AutoMigrate(&ApplicationApprovalRulesetBindingVersion{})
+		if err != nil {
+			return err
+		}
+		err = tx.AutoMigrate(&ApplicationApprovalRulesetBindingAdjustment{})
 		if err != nil {
 			return err
 		}
 
-		err = tx.AutoMigrate(&ApplicationApprovalRulesetBindingMinorVersion{})
-		if err != nil {
-			return err
-		}
-
-		err = tx.Exec("CREATE UNIQUE INDEX app_approval_ruleset_binding_major_version_idx" +
-			" ON application_approval_ruleset_binding_major_versions (organization_id, application_id, approval_ruleset_id, version_number DESC)" +
+		err = tx.Exec("CREATE UNIQUE INDEX app_approval_ruleset_binding_version_idx" +
+			" ON application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number DESC)" +
 			" WHERE (version_number IS NOT NULL)").Error
 		if err != nil {
 			return err
 		}
 
-		// Work around bug in Gorm: MinorVersion.VersionNumber shouldn't be autoincrement.
-		err = tx.Exec("ALTER TABLE application_approval_ruleset_binding_minor_versions ALTER COLUMN version_number DROP DEFAULT").Error
+		// Work around bug in Gorm: Adjustment.VersionNumber shouldn't be autoincrement.
+		err = tx.Exec("ALTER TABLE application_approval_ruleset_binding_adjustments ALTER COLUMN adjustment_number DROP DEFAULT").Error
 		if err != nil {
 			return err
 		}
-		err = tx.Exec("DROP SEQUENCE application_approval_ruleset_binding_minor_v_version_number_seq").Error
+		err = tx.Exec("DROP SEQUENCE application_approval_ruleset_binding_adju_adjustment_number_seq").Error
 		if err != nil {
 			return err
 		}
@@ -126,8 +124,8 @@ var migration20201021000110 = gormigrate.Migration{
 		return nil
 	},
 	Rollback: func(tx *gorm.DB) error {
-		err := tx.Migrator().DropTable("application_approval_ruleset_binding_minor_versions",
-			"application_approval_ruleset_binding_major_versions", "application_approval_ruleset_bindings")
+		err := tx.Migrator().DropTable("application_approval_ruleset_binding_adjustments",
+			"application_approval_ruleset_binding_versions", "application_approval_ruleset_bindings")
 		if err != nil {
 			return err
 		}

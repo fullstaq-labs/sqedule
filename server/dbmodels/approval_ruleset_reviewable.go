@@ -1,45 +1,37 @@
 package dbmodels
 
-// GetPrimaryKey ...
 func (ruleset ApprovalRuleset) GetPrimaryKey() interface{} {
 	return ruleset.ID
 }
 
-// SetLatestMajorVersion ...
-func (ruleset *ApprovalRuleset) SetLatestMajorVersion(majorVersion IReviewableMajorVersion) {
-	ruleset.LatestMajorVersion = majorVersion.(*ApprovalRulesetMajorVersion)
+func (ruleset *ApprovalRuleset) SetLatestVersion(version IReviewableVersion) {
+	ruleset.LatestVersion = version.(*ApprovalRulesetVersion)
 }
 
-// SetLatestMinorVersion ...
-func (ruleset *ApprovalRuleset) SetLatestMinorVersion(minorVersion IReviewableMinorVersion) {
-	ruleset.LatestMinorVersion = minorVersion.(*ApprovalRulesetMinorVersion)
+func (ruleset *ApprovalRuleset) SetLatestAdjustment(adjustment IReviewableAdjustment) {
+	ruleset.LatestAdjustment = adjustment.(*ApprovalRulesetAdjustment)
 }
 
-// GetID ...
-func (major ApprovalRulesetMajorVersion) GetID() interface{} {
+func (major ApprovalRulesetVersion) GetID() interface{} {
 	return major.ID
 }
 
-// GetReviewablePrimaryKey ...
-func (major ApprovalRulesetMajorVersion) GetReviewablePrimaryKey() interface{} {
+func (major ApprovalRulesetVersion) GetReviewablePrimaryKey() interface{} {
 	return major.ApprovalRulesetID
 }
 
-// AssociateWithReviewable ...
-func (major *ApprovalRulesetMajorVersion) AssociateWithReviewable(reviewable IReviewable) {
+func (major *ApprovalRulesetVersion) AssociateWithReviewable(reviewable IReviewable) {
 	ruleset := reviewable.(*ApprovalRuleset)
 	major.ApprovalRulesetID = ruleset.ID
 	major.ApprovalRuleset = *ruleset
 }
 
-// GetMajorVersionID ...
-func (minor ApprovalRulesetMinorVersion) GetMajorVersionID() interface{} {
-	return minor.ApprovalRulesetMajorVersionID
+func (adjustment ApprovalRulesetAdjustment) GetVersionID() interface{} {
+	return adjustment.ApprovalRulesetVersionID
 }
 
-// AssociateWithMajorVersion ...
-func (minor *ApprovalRulesetMinorVersion) AssociateWithMajorVersion(majorVersion IReviewableMajorVersion) {
-	concreteMajorVersion := majorVersion.(*ApprovalRulesetMajorVersion)
-	minor.ApprovalRulesetMajorVersionID = concreteMajorVersion.ID
-	minor.ApprovalRulesetMajorVersion = *concreteMajorVersion
+func (adjustment *ApprovalRulesetAdjustment) AssociateWithVersion(version IReviewableVersion) {
+	concreteVersion := version.(*ApprovalRulesetVersion)
+	adjustment.ApprovalRulesetVersionID = concreteVersion.ID
+	adjustment.ApprovalRulesetVersion = *concreteVersion
 }

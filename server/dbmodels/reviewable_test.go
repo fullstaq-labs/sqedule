@@ -55,7 +55,7 @@ func TestLoadReviewablesLatestVersions(t *testing.T) {
 		return
 	}
 
-	var majorVersionNumber2 uint32 = 2
+	var versionNumber2 uint32 = 2
 	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
 		// Create binding 1
 		binding1, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.org, ctx.app,
@@ -65,27 +65,27 @@ func TestLoadReviewablesLatestVersions(t *testing.T) {
 		}
 
 		// Binding 1: create version 2.1 and 2.2
-		binding1MajorVersion2, err := CreateMockApplicationApprovalRulesetBindingMajorVersion(tx, ctx.org, ctx.app, binding1, &majorVersionNumber2)
+		binding1Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding1, &versionNumber2)
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding1MajorVersion2, nil)
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding1Version2, nil)
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding1MajorVersion2, func(minorVersion *ApplicationApprovalRulesetBindingMinorVersion) {
-			minorVersion.VersionNumber = 2
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding1Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+			adjustment.AdjustmentNumber = 2
 		})
 		if err != nil {
 			return err
 		}
 
-		// Binding 1: Create next major version (no version number) and its minor version
-		binding1MajorVersionNext, err := CreateMockApplicationApprovalRulesetBindingMajorVersion(tx, ctx.org, ctx.app, binding1, nil)
+		// Binding 1: Create next version (no version number) and its adjustment
+		binding1VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding1, nil)
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding1MajorVersionNext, nil)
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding1VersionNext, nil)
 		if err != nil {
 			return err
 		}
@@ -98,33 +98,33 @@ func TestLoadReviewablesLatestVersions(t *testing.T) {
 		}
 
 		// Binding 2: create version 2.1, 2.2 and 2.3
-		binding2MajorVersion2, err := CreateMockApplicationApprovalRulesetBindingMajorVersion(tx, ctx.org, ctx.app, binding2, &majorVersionNumber2)
+		binding2Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding2, &versionNumber2)
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding2MajorVersion2, nil)
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2Version2, nil)
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding2MajorVersion2, func(minorVersion *ApplicationApprovalRulesetBindingMinorVersion) {
-			minorVersion.VersionNumber = 2
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+			adjustment.AdjustmentNumber = 2
 		})
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding2MajorVersion2, func(minorVersion *ApplicationApprovalRulesetBindingMinorVersion) {
-			minorVersion.VersionNumber = 3
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+			adjustment.AdjustmentNumber = 3
 		})
 		if err != nil {
 			return err
 		}
 
-		// Binding 2: Create next major version (no version number) and its minor version
-		binding2MajorVersionNext, err := CreateMockApplicationApprovalRulesetBindingMajorVersion(tx, ctx.org, ctx.app, binding2, nil)
+		// Binding 2: Create next version (no version number) and its adjustment
+		binding2VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding2, nil)
 		if err != nil {
 			return err
 		}
-		_, err = CreateMockApplicationApprovalRulesetBindingMinorVersion(tx, ctx.org, binding2MajorVersionNext, nil)
+		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2VersionNext, nil)
 		if err != nil {
 			return err
 		}
@@ -135,25 +135,25 @@ func TestLoadReviewablesLatestVersions(t *testing.T) {
 		}
 
 		// Run test: binding1's latest version should be 2.2
-		assert.NotNil(t, binding1.LatestMajorVersion)
-		assert.NotNil(t, binding1.LatestMajorVersion.VersionNumber)
-		assert.NotNil(t, binding1.LatestMinorVersion)
-		assert.Equal(t, uint32(2), *binding1.LatestMajorVersion.VersionNumber)
-		assert.Equal(t, uint32(2), binding1.LatestMinorVersion.VersionNumber)
+		assert.NotNil(t, binding1.LatestVersion)
+		assert.NotNil(t, binding1.LatestVersion.VersionNumber)
+		assert.NotNil(t, binding1.LatestAdjustment)
+		assert.Equal(t, uint32(2), *binding1.LatestVersion.VersionNumber)
+		assert.Equal(t, uint32(2), binding1.LatestAdjustment.AdjustmentNumber)
 
 		// Run test: binding1's latest version should be 2.2
-		assert.NotNil(t, binding2.LatestMajorVersion)
-		assert.NotNil(t, binding2.LatestMajorVersion.VersionNumber)
-		assert.NotNil(t, binding2.LatestMinorVersion)
-		assert.Equal(t, uint32(2), *binding2.LatestMajorVersion.VersionNumber)
-		assert.Equal(t, uint32(3), binding2.LatestMinorVersion.VersionNumber)
+		assert.NotNil(t, binding2.LatestVersion)
+		assert.NotNil(t, binding2.LatestVersion.VersionNumber)
+		assert.NotNil(t, binding2.LatestAdjustment)
+		assert.Equal(t, uint32(2), *binding2.LatestVersion.VersionNumber)
+		assert.Equal(t, uint32(3), binding2.LatestAdjustment.AdjustmentNumber)
 
 		return nil
 	})
 	assert.NoError(t, txerr)
 }
 
-func TestLoadReviewablesLatestVersions_noMajorVersions(t *testing.T) {
+func TestLoadReviewablesLatestVersions_noVersions(t *testing.T) {
 	ctx, err := setupLoadReviewablesLatestVersionsTest()
 	if !assert.NoError(t, err) {
 		return
@@ -176,15 +176,15 @@ func TestLoadReviewablesLatestVersions_noMajorVersions(t *testing.T) {
 		// Run test: latest version should not exist
 		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding})
 		assert.NoError(t, err)
-		assert.Nil(t, binding.LatestMajorVersion)
-		assert.Nil(t, binding.LatestMinorVersion)
+		assert.Nil(t, binding.LatestVersion)
+		assert.Nil(t, binding.LatestAdjustment)
 
 		return nil
 	})
 	assert.NoError(t, txerr)
 }
 
-func TestLoadReviewablesLatestVersions_onlyMajorVersionIsUnfinalized(t *testing.T) {
+func TestLoadReviewablesLatestVersions_onlyVersionIsUnfinalized(t *testing.T) {
 	ctx, err := setupLoadReviewablesLatestVersionsTest()
 	if !assert.NoError(t, err) {
 		return
@@ -204,7 +204,7 @@ func TestLoadReviewablesLatestVersions_onlyMajorVersionIsUnfinalized(t *testing.
 			return savetx.Error
 		}
 
-		_, err := CreateMockApplicationApprovalRulesetBindingMajorVersion(tx, ctx.org, ctx.app, binding, nil)
+		_, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding, nil)
 		if err != nil {
 			return err
 		}
@@ -212,15 +212,15 @@ func TestLoadReviewablesLatestVersions_onlyMajorVersionIsUnfinalized(t *testing.
 		// Run test: latest version should not exist
 		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding})
 		assert.NoError(t, err)
-		assert.Nil(t, binding.LatestMajorVersion)
-		assert.Nil(t, binding.LatestMinorVersion)
+		assert.Nil(t, binding.LatestVersion)
+		assert.Nil(t, binding.LatestAdjustment)
 
 		return nil
 	})
 	assert.NoError(t, txerr)
 }
 
-func TestLoadReviewablesLatestVersions_noMinorVersions(t *testing.T) {
+func TestLoadReviewablesLatestVersions_noAdjustments(t *testing.T) {
 	ctx, err := setupLoadReviewablesLatestVersionsTest()
 	if !assert.NoError(t, err) {
 		return
@@ -231,23 +231,23 @@ func TestLoadReviewablesLatestVersions_noMinorVersions(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		binding.LatestMajorVersion = nil
-		binding.LatestMinorVersion = nil
+		binding.LatestVersion = nil
+		binding.LatestAdjustment = nil
 
-		// Create major version 2 with no minor versions
-		var majorVersionNumber2 uint32 = 2
-		_, err = CreateMockApplicationApprovalRulesetBindingMajorVersion(tx, ctx.org, ctx.app, binding, &majorVersionNumber2)
+		// Create version 2 with no adjustments
+		var versionNumber2 uint32 = 2
+		_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding, &versionNumber2)
 		if err != nil {
 			return err
 		}
 
-		// Run test: latest major version should be 2, minor version nil
+		// Run test: latest version should be 2, adjustment version nil
 		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding})
 		assert.NoError(t, err)
-		assert.NotNil(t, binding.LatestMajorVersion)
-		assert.NotNil(t, binding.LatestMajorVersion.VersionNumber)
-		assert.Nil(t, binding.LatestMinorVersion)
-		assert.Equal(t, uint32(2), *binding.LatestMajorVersion.VersionNumber)
+		assert.NotNil(t, binding.LatestVersion)
+		assert.NotNil(t, binding.LatestVersion.VersionNumber)
+		assert.Nil(t, binding.LatestAdjustment)
+		assert.Equal(t, uint32(2), *binding.LatestVersion.VersionNumber)
 
 		return nil
 	})

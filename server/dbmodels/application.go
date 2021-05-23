@@ -7,33 +7,30 @@ import (
 	"gorm.io/gorm"
 )
 
-// Application ...
 type Application struct {
 	BaseModel
 	ID string `gorm:"type:citext; primaryKey; not null"`
 	ReviewableBase
-	LatestMajorVersion *ApplicationMajorVersion `gorm:"-"`
-	LatestMinorVersion *ApplicationMinorVersion `gorm:"-"`
+	LatestVersion    *ApplicationVersion    `gorm:"-"`
+	LatestAdjustment *ApplicationAdjustment `gorm:"-"`
 }
 
-// ApplicationMajorVersion ...
-type ApplicationMajorVersion struct {
+type ApplicationVersion struct {
 	BaseModel
 	ReviewableVersionBase
 	ApplicationID string      `gorm:"type:citext; not null"`
 	Application   Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ApplicationMinorVersion ...
-type ApplicationMinorVersion struct {
+type ApplicationAdjustment struct {
 	BaseModel
-	ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
+	ApplicationVersionID uint64 `gorm:"primaryKey; not null"`
 	ReviewableAdjustmentBase
 	Enabled bool `gorm:"not null; default:true"`
 
 	DisplayName string `gorm:"not null"`
 
-	ApplicationMajorVersion ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	ApplicationVersion ApplicationVersion `gorm:"foreignKey:OrganizationID,ApplicationVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
 // FindAllApplications ...
@@ -115,10 +112,10 @@ func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applicat
 		reflect.TypeOf(Application{}.ID),
 		[]string{"application_id"},
 		reflect.TypeOf(Application{}.ID),
-		reflect.TypeOf(ApplicationMajorVersion{}),
-		reflect.TypeOf(ApplicationMajorVersion{}.ID),
-		"application_major_version_id",
-		reflect.TypeOf(ApplicationMinorVersion{}),
+		reflect.TypeOf(ApplicationVersion{}),
+		reflect.TypeOf(ApplicationVersion{}.ID),
+		"application_version_id",
+		reflect.TypeOf(ApplicationAdjustment{}),
 		organizationID,
 		reviewables,
 	)

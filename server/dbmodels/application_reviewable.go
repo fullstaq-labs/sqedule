@@ -5,41 +5,34 @@ func (app Application) GetPrimaryKey() interface{} {
 	return app.ID
 }
 
-// SetLatestMajorVersion ...
-func (app *Application) SetLatestMajorVersion(majorVersion IReviewableMajorVersion) {
-	app.LatestMajorVersion = majorVersion.(*ApplicationMajorVersion)
+func (app *Application) SetLatestVersion(version IReviewableVersion) {
+	app.LatestVersion = version.(*ApplicationVersion)
 }
 
-// SetLatestMinorVersion ...
-func (app *Application) SetLatestMinorVersion(minorVersion IReviewableMinorVersion) {
-	app.LatestMinorVersion = minorVersion.(*ApplicationMinorVersion)
+func (app *Application) SetLatestAdjustment(adjustment IReviewableAdjustment) {
+	app.LatestAdjustment = adjustment.(*ApplicationAdjustment)
 }
 
-// GetID ...
-func (major ApplicationMajorVersion) GetID() interface{} {
+func (major ApplicationVersion) GetID() interface{} {
 	return major.ID
 }
 
-// GetReviewablePrimaryKey ...
-func (major ApplicationMajorVersion) GetReviewablePrimaryKey() interface{} {
+func (major ApplicationVersion) GetReviewablePrimaryKey() interface{} {
 	return major.ApplicationID
 }
 
-// AssociateWithReviewable ...
-func (major *ApplicationMajorVersion) AssociateWithReviewable(reviewable IReviewable) {
+func (major *ApplicationVersion) AssociateWithReviewable(reviewable IReviewable) {
 	application := reviewable.(*Application)
 	major.ApplicationID = application.ID
 	major.Application = *application
 }
 
-// GetMajorVersionID ...
-func (minor ApplicationMinorVersion) GetMajorVersionID() interface{} {
-	return minor.ApplicationMajorVersionID
+func (adjustment ApplicationAdjustment) GetVersionID() interface{} {
+	return adjustment.ApplicationVersionID
 }
 
-// AssociateWithMajorVersion ...
-func (minor *ApplicationMinorVersion) AssociateWithMajorVersion(majorVersion IReviewableMajorVersion) {
-	concreteMajorVersion := majorVersion.(*ApplicationMajorVersion)
-	minor.ApplicationMajorVersionID = concreteMajorVersion.ID
-	minor.ApplicationMajorVersion = *concreteMajorVersion
+func (adjustment *ApplicationAdjustment) AssociateWithVersion(version IReviewableVersion) {
+	concreteVersion := version.(*ApplicationVersion)
+	adjustment.ApplicationVersionID = concreteVersion.ID
+	adjustment.ApplicationVersion = *concreteVersion
 }

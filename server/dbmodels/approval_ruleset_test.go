@@ -34,9 +34,9 @@ func TestFindApprovalRulesInRulesetVersionSupportsAllRulesetTypes(t *testing.T) 
 	}
 
 	assert.NotPanics(t, func() {
-		FindApprovalRulesInRulesetVersion(db, "org", ApprovalRulesetVersionKey{
-			MajorVersionID:     1,
-			MinorVersionNumber: 1,
+		FindApprovalRulesInRulesetVersion(db, "org", ApprovalRulesetVersionAndAdjustmentKey{
+			VersionID:        1,
+			AdjustmentNumber: 1,
 		})
 	})
 }

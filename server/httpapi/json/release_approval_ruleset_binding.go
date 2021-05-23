@@ -35,6 +35,6 @@ func CreateFromDbReleaseApprovalRulesetBindingWithRulesetAssociation(binding dbm
 	return ReleaseApprovalRulesetBindingWithRulesetAssociation{
 		ReleaseApprovalRulesetBinding: CreateFromDbReleaseApprovalRulesetBinding(binding),
 		ApprovalRuleset: CreateFromDbApprovalRuleset(binding.ApprovalRuleset,
-			binding.ApprovalRulesetMajorVersion, binding.ApprovalRulesetMinorVersion),
+			binding.ApprovalRulesetVersion, binding.ApprovalRulesetAdjustment),
 	}
 }

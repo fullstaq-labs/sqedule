@@ -36,10 +36,10 @@ var migration20201021000050 = gormigrate.Migration{
 		}
 
 		type ReviewableAdjustmentBase struct {
-			VersionNumber  uint32 `gorm:"type:int; primaryKey; not null; check:(version_number > 0)"`
-			ReviewState    string `gorm:"type:review_state; not null"`
-			ReviewComments sql.NullString
-			CreatedAt      time.Time `gorm:"not null"`
+			AdjustmentNumber uint32 `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
+			ReviewState      string `gorm:"type:review_state; not null"`
+			ReviewComments   sql.NullString
+			CreatedAt        time.Time `gorm:"not null"`
 		}
 
 		type Application struct {
@@ -48,43 +48,43 @@ var migration20201021000050 = gormigrate.Migration{
 			ReviewableBase
 		}
 
-		type ApplicationMajorVersion struct {
+		type ApplicationVersion struct {
 			BaseModel
 			ReviewableVersionBase
 			ApplicationID string      `gorm:"type:citext; not null"`
 			Application   Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
-		type ApplicationMinorVersion struct {
+		type ApplicationAdjustment struct {
 			BaseModel
-			ApplicationMajorVersionID uint64 `gorm:"primaryKey; not null"`
+			ApplicationVersionID uint64 `gorm:"primaryKey; not null"`
 			ReviewableAdjustmentBase
 			Enabled bool `gorm:"not null; default:true"`
 
 			DisplayName string `gorm:"not null"`
 
-			ApplicationMajorVersion ApplicationMajorVersion `gorm:"foreignKey:OrganizationID,ApplicationMajorVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+			ApplicationVersion ApplicationVersion `gorm:"foreignKey:OrganizationID,ApplicationVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 		}
 
-		err := tx.AutoMigrate(&Application{}, &ApplicationMajorVersion{},
-			&ApplicationMinorVersion{})
+		err := tx.AutoMigrate(&Application{}, &ApplicationVersion{},
+			&ApplicationAdjustment{})
 		if err != nil {
 			return err
 		}
 
-		err = tx.Exec("CREATE UNIQUE INDEX application_major_version_idx" +
-			" ON application_major_versions (organization_id, application_id, version_number DESC)" +
+		err = tx.Exec("CREATE UNIQUE INDEX application_version_idx" +
+			" ON application_versions (organization_id, application_id, version_number DESC)" +
 			" WHERE (version_number IS NOT NULL)").Error
 		if err != nil {
 			return err
 		}
 
-		// Work around bug in Gorm: MinorVersion.VersionNumber shouldn't be autoincrement.
-		err = tx.Exec("ALTER TABLE application_minor_versions ALTER COLUMN version_number DROP DEFAULT").Error
+		// Work around bug in Gorm: Adjustment.VersionNumber shouldn't be autoincrement.
+		err = tx.Exec("ALTER TABLE application_adjustments ALTER COLUMN adjustment_number DROP DEFAULT").Error
 		if err != nil {
 			return err
 		}
-		err = tx.Exec("DROP SEQUENCE application_minor_versions_version_number_seq").Error
+		err = tx.Exec("DROP SEQUENCE application_adjustments_adjustment_number_seq").Error
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ var migration20201021000050 = gormigrate.Migration{
 		return nil
 	},
 	Rollback: func(tx *gorm.DB) error {
-		return tx.Migrator().DropTable("application_minor_versions",
-			"application_major_versions", "applications")
+		return tx.Migrator().DropTable("application_adjustments",
+			"application_versions", "applications")
 	},
 }

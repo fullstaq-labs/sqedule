@@ -42,7 +42,7 @@ const COLUMNS: ColDef[] = [
     field: 'latest_version',
     headerName: 'Latest version',
     width: 130,
-    valueGetter: ({ row }) => `${row.major_version_number}.${row.minor_version_number}`,
+    valueGetter: ({ row }) => row.version_number,
   },
   {
     field: 'enabled',

@@ -32,8 +32,8 @@ func TestGetAllApplications(t *testing.T) {
 				app.ID = "app2"
 				app.CreatedAt = time.Date(2021, 3, 8, 11, 0, 0, 0, time.Local)
 			},
-			func(minorVersion *dbmodels.ApplicationMinorVersion) {
-				minorVersion.DisplayName = "App 2"
+			func(adjustment *dbmodels.ApplicationAdjustment) {
+				adjustment.DisplayName = "App 2"
 			})
 		if err != nil {
 			return err
@@ -80,20 +80,20 @@ func TestGetAllApplications(t *testing.T) {
 
 	item1 := items[0].(map[string]interface{})
 	assert.Equal(t, app1.ID, item1["id"])
-	assert.Equal(t, float64(1), item1["major_version_number"])
-	assert.Equal(t, float64(1), item1["minor_version_number"])
-	assert.Equal(t, app1.LatestMinorVersion.DisplayName, item1["display_name"])
-	assert.Equal(t, app1.LatestMinorVersion.Enabled, item1["enabled"])
+	assert.Equal(t, float64(1), item1["version_number"])
+	assert.Equal(t, float64(1), item1["adjustment_number"])
+	assert.Equal(t, app1.LatestAdjustment.DisplayName, item1["display_name"])
+	assert.Equal(t, app1.LatestAdjustment.Enabled, item1["enabled"])
 	assert.NotNil(t, item1["created_at"])
 	assert.NotNil(t, item1["updated_at"])
 	assert.Empty(t, item1["approval_ruleset_bindings"])
 
 	item2 := items[1].(map[string]interface{})
 	assert.Equal(t, app2.ID, item2["id"])
-	assert.Equal(t, float64(1), item2["major_version_number"])
-	assert.Equal(t, float64(1), item2["minor_version_number"])
-	assert.Equal(t, app2.LatestMinorVersion.DisplayName, item2["display_name"])
-	assert.Equal(t, app2.LatestMinorVersion.Enabled, item2["enabled"])
+	assert.Equal(t, float64(1), item2["version_number"])
+	assert.Equal(t, float64(1), item2["adjustment_number"])
+	assert.Equal(t, app2.LatestAdjustment.DisplayName, item2["display_name"])
+	assert.Equal(t, app2.LatestAdjustment.Enabled, item2["enabled"])
 	assert.NotNil(t, item2["created_at"])
 	assert.NotNil(t, item2["updated_at"])
 	assert.Empty(t, item2["approval_ruleset_bindings"])
@@ -144,10 +144,10 @@ func TestGetApplication(t *testing.T) {
 	}
 
 	assert.Equal(t, app.ID, body["id"])
-	assert.Equal(t, float64(1), body["major_version_number"])
-	assert.Equal(t, float64(1), body["minor_version_number"])
-	assert.Equal(t, app.LatestMinorVersion.DisplayName, body["display_name"])
-	assert.Equal(t, app.LatestMinorVersion.Enabled, body["enabled"])
+	assert.Equal(t, float64(1), body["version_number"])
+	assert.Equal(t, float64(1), body["adjustment_number"])
+	assert.Equal(t, app.LatestAdjustment.DisplayName, body["display_name"])
+	assert.Equal(t, app.LatestAdjustment.Enabled, body["enabled"])
 	assert.NotNil(t, body["created_at"])
 	assert.NotNil(t, body["updated_at"])
 	if !assert.NotEmpty(t, body["approval_ruleset_bindings"]) {
@@ -161,14 +161,14 @@ func TestGetApplication(t *testing.T) {
 
 	binding := bindings[0].(map[string]interface{})
 	assert.Equal(t, "enforcing", binding["mode"])
-	assert.Equal(t, float64(1), binding["major_version_number"])
-	assert.Equal(t, float64(1), binding["minor_version_number"])
+	assert.Equal(t, float64(1), binding["version_number"])
+	assert.Equal(t, float64(1), binding["adjustment_number"])
 	if !assert.NotNil(t, binding["approval_ruleset"]) {
 		return
 	}
 
 	ruleset := binding["approval_ruleset"].(map[string]interface{})
 	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["major_version_number"])
-	assert.Equal(t, float64(1), ruleset["minor_version_number"])
+	assert.Equal(t, float64(1), ruleset["version_number"])
+	assert.Equal(t, float64(1), ruleset["adjustment_number"])
 }

@@ -221,8 +221,8 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 
 	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(
 		ctx.Db.Preload("ApprovalRuleset").
-			Preload("ApprovalRulesetMajorVersion").
-			Preload("ApprovalRulesetMinorVersion"),
+			Preload("ApprovalRulesetVersion").
+			Preload("ApprovalRulesetAdjustment"),
 		orgID, applicationID, release.ID)
 	if err != nil {
 		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)
@@ -275,8 +275,8 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 
 	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(
 		ctx.Db.Preload("ApprovalRuleset").
-			Preload("ApprovalRulesetMajorVersion").
-			Preload("ApprovalRulesetMinorVersion"),
+			Preload("ApprovalRulesetVersion").
+			Preload("ApprovalRulesetAdjustment"),
 		orgID, applicationID, release.ID)
 	if err != nil {
 		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)

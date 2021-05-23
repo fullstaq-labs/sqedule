@@ -37,7 +37,7 @@ func TestGetRelease(t *testing.T) {
 		}
 
 		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release,
-			ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+			ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
 		if err != nil {
 			return err
 		}
@@ -82,8 +82,8 @@ func TestGetRelease(t *testing.T) {
 
 	ruleset := binding["approval_ruleset"].(map[string]interface{})
 	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["major_version_number"])
-	assert.Equal(t, float64(1), ruleset["minor_version_number"])
+	assert.Equal(t, float64(1), ruleset["version_number"])
+	assert.Equal(t, float64(1), ruleset["adjustment_number"])
 }
 
 func TestCreateRelease(t *testing.T) {

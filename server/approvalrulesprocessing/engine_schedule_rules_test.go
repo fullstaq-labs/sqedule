@@ -85,8 +85,8 @@ func TestProcessScheduleRulesSuccess(t *testing.T) {
 	}
 
 	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
-		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
-		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		ctx.enforcingBinding.ApprovalRuleset.LatestVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestAdjustment,
 		nil)
 	if !assert.NoError(t, err) {
 		return
@@ -136,8 +136,8 @@ func TestProcessScheduleRulesError(t *testing.T) {
 	}
 
 	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
-		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
-		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		ctx.enforcingBinding.ApprovalRuleset.LatestVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestAdjustment,
 		func(r *dbmodels.ScheduleApprovalRule) {
 			r.BeginTime = sql.NullString{String: "0:00:00", Valid: true}
 			r.EndTime = sql.NullString{String: "0:00:01", Valid: true}
@@ -190,8 +190,8 @@ func TestProcessScheduleRulesPermissiveMode(t *testing.T) {
 	}
 
 	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
-		ctx.permissiveBinding.ApprovalRuleset.LatestMajorVersion.ID,
-		*ctx.permissiveBinding.ApprovalRuleset.LatestMinorVersion,
+		ctx.permissiveBinding.ApprovalRuleset.LatestVersion.ID,
+		*ctx.permissiveBinding.ApprovalRuleset.LatestAdjustment,
 		func(r *dbmodels.ScheduleApprovalRule) {
 			r.BeginTime = sql.NullString{String: "0:00:00", Valid: true}
 			r.EndTime = sql.NullString{String: "0:00:01", Valid: true}
@@ -259,8 +259,8 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 	}
 
 	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
-		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
-		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		ctx.enforcingBinding.ApprovalRuleset.LatestVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestAdjustment,
 		nil)
 	if !assert.NoError(t, err) {
 		return
@@ -322,8 +322,8 @@ func TestProcessScheduleRulesRerunFail(t *testing.T) {
 	}
 
 	rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.db, ctx.org,
-		ctx.enforcingBinding.ApprovalRuleset.LatestMajorVersion.ID,
-		*ctx.enforcingBinding.ApprovalRuleset.LatestMinorVersion,
+		ctx.enforcingBinding.ApprovalRuleset.LatestVersion.ID,
+		*ctx.enforcingBinding.ApprovalRuleset.LatestAdjustment,
 		func(r *dbmodels.ScheduleApprovalRule) {
 			r.BeginTime = sql.NullString{String: "1:00", Valid: true}
 			r.EndTime = sql.NullString{String: "1:01", Valid: true}

@@ -89,12 +89,12 @@ Normally, immutability means that something is always immutable. But sometimes, 
 
  * **Eventually immutable** indicates that once a condition is reached, something becomes _permanently_ immutable. This implies that the condition will always stay applicable, once reached. The diagram should document what this condition is.
 
-   The [major version resource](reviewable-concept.md#major-and-minor-versions) in the [Reviewable concept](reviewable-concept.md) is an example of an **eventually fully immutable resource**, with an **eventually immutable relationship** with the minor version resource.
+   The [version resource](reviewable-concept.md#versions-and-adjustments) in the [Reviewable concept](reviewable-concept.md) is an example of an **eventually fully immutable resource**, with an **eventually immutable relationship** with the adjustment resource.
 
-    - Before the major version is approved, new minor versions may be added at will, and the major version object's number is mutable.
-    - Once the major version is approved, it cannot become unapproved again. On approval, a number is permanently assigned to the major version object, and no new minor versions may be added.
+    - Before the version is approved, new adjustments may be added at will, and the version object's number is mutable.
+    - Once the version is approved, it cannot become unapproved again. On approval, a number is permanently assigned to the version object, and no new adjustments may be added.
 
-      The number is the only field in the major version resource that isn't always-immutable, so once a permanent number is assigned, the major version object becomes permanently immutable.
+      The number is the only field in the version resource that isn't always-immutable, so once a permanent number is assigned, the version object becomes permanently immutable.
 
  * **Temporarily immutable** indicates that once a condition is reached, something is only immutable until the condition no longer applies. The diagram should document what this condition is.
 

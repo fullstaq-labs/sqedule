@@ -24,8 +24,8 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 			func(app *dbmodels.Application) {
 				app.ID = "app1"
 			},
-			func(minorVersion *dbmodels.ApplicationMinorVersion) {
-				minorVersion.DisplayName = "App 1"
+			func(adjustment *dbmodels.ApplicationAdjustment) {
+				adjustment.DisplayName = "App 1"
 			})
 		if err != nil {
 			return err
@@ -34,8 +34,8 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 			func(app *dbmodels.Application) {
 				app.ID = "app2"
 			},
-			func(minorVersion *dbmodels.ApplicationMinorVersion) {
-				minorVersion.DisplayName = "App 2"
+			func(adjustment *dbmodels.ApplicationAdjustment) {
+				adjustment.DisplayName = "App 2"
 			})
 		if err != nil {
 			return err
@@ -63,15 +63,15 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 			return err
 		}
 
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
 		if err != nil {
 			return err
 		}
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
 		if err != nil {
 			return err
 		}
-		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset, *ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
 		if err != nil {
 			return err
 		}
@@ -106,8 +106,8 @@ func TestGetAllApprovalRulesets(t *testing.T) {
 
 	ruleset := items[0].(map[string]interface{})
 	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["major_version_number"])
-	assert.Equal(t, float64(1), ruleset["minor_version_number"])
+	assert.Equal(t, float64(1), ruleset["version_number"])
+	assert.Equal(t, float64(1), ruleset["adjustment_number"])
 	assert.Equal(t, float64(2), ruleset["num_bound_applications"])
 	assert.Equal(t, float64(3), ruleset["num_bound_releases"])
 }
@@ -142,13 +142,13 @@ func TestGetApprovalRuleset(t *testing.T) {
 		}
 
 		_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
-			*ruleset.LatestMajorVersion, *ruleset.LatestMinorVersion, nil)
+			*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
 		if err != nil {
 			return err
 		}
 
 		mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
-			ruleset.LatestMajorVersion.ID, *ruleset.LatestMinorVersion, nil)
+			ruleset.LatestVersion.ID, *ruleset.LatestAdjustment, nil)
 		if err != nil {
 			return err
 		}
@@ -174,8 +174,8 @@ func TestGetApprovalRuleset(t *testing.T) {
 	}
 
 	assert.Equal(t, "ruleset1", ruleset["id"])
-	assert.Equal(t, float64(1), ruleset["major_version_number"])
-	assert.Equal(t, float64(1), ruleset["minor_version_number"])
+	assert.Equal(t, float64(1), ruleset["version_number"])
+	assert.Equal(t, float64(1), ruleset["adjustment_number"])
 
 	if !assert.NotEmpty(t, ruleset["application_approval_ruleset_bindings"]) {
 		return

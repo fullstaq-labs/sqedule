@@ -1,54 +1,45 @@
 package dbmodels
 
-// GormValue ...
 func (primaryKey ApplicationApprovalRulesetBindingPrimaryKey) GormValue() interface{} {
 	return []interface{}{primaryKey.ApplicationID, primaryKey.ApprovalRulesetID}
 }
 
-// GetPrimaryKey ...
 func (binding ApplicationApprovalRulesetBinding) GetPrimaryKey() interface{} {
 	return binding.ApplicationApprovalRulesetBindingPrimaryKey
 }
 
-// SetLatestMajorVersion ...
-func (binding *ApplicationApprovalRulesetBinding) SetLatestMajorVersion(majorVersion IReviewableMajorVersion) {
-	binding.LatestMajorVersion = majorVersion.(*ApplicationApprovalRulesetBindingMajorVersion)
+func (binding *ApplicationApprovalRulesetBinding) SetLatestVersion(version IReviewableVersion) {
+	binding.LatestVersion = version.(*ApplicationApprovalRulesetBindingVersion)
 }
 
-// SetLatestMinorVersion ...
-func (binding *ApplicationApprovalRulesetBinding) SetLatestMinorVersion(minorVersion IReviewableMinorVersion) {
-	binding.LatestMinorVersion = minorVersion.(*ApplicationApprovalRulesetBindingMinorVersion)
+func (binding *ApplicationApprovalRulesetBinding) SetLatestAdjustment(adjustment IReviewableAdjustment) {
+	binding.LatestAdjustment = adjustment.(*ApplicationApprovalRulesetBindingAdjustment)
 }
 
-// GetID ...
-func (major ApplicationApprovalRulesetBindingMajorVersion) GetID() interface{} {
+func (major ApplicationApprovalRulesetBindingVersion) GetID() interface{} {
 	return major.ID
 }
 
-// GetReviewablePrimaryKey ...
-func (major ApplicationApprovalRulesetBindingMajorVersion) GetReviewablePrimaryKey() interface{} {
+func (major ApplicationApprovalRulesetBindingVersion) GetReviewablePrimaryKey() interface{} {
 	return ApplicationApprovalRulesetBindingPrimaryKey{
 		ApplicationID:     major.ApplicationID,
 		ApprovalRulesetID: major.ApprovalRulesetID,
 	}
 }
 
-// AssociateWithReviewable ...
-func (major *ApplicationApprovalRulesetBindingMajorVersion) AssociateWithReviewable(reviewable IReviewable) {
+func (major *ApplicationApprovalRulesetBindingVersion) AssociateWithReviewable(reviewable IReviewable) {
 	ruleset := reviewable.(*ApplicationApprovalRulesetBinding)
 	major.ApplicationID = ruleset.ApplicationID
 	major.ApprovalRulesetID = ruleset.ApprovalRulesetID
 	major.ApplicationApprovalRulesetBinding = *ruleset
 }
 
-// GetMajorVersionID ...
-func (minor ApplicationApprovalRulesetBindingMinorVersion) GetMajorVersionID() interface{} {
-	return minor.ApplicationApprovalRulesetBindingMajorVersionID
+func (adjustment ApplicationApprovalRulesetBindingAdjustment) GetVersionID() interface{} {
+	return adjustment.ApplicationApprovalRulesetBindingVersionID
 }
 
-// AssociateWithMajorVersion ...
-func (minor *ApplicationApprovalRulesetBindingMinorVersion) AssociateWithMajorVersion(majorVersion IReviewableMajorVersion) {
-	concreteMajorVersion := majorVersion.(*ApplicationApprovalRulesetBindingMajorVersion)
-	minor.ApplicationApprovalRulesetBindingMajorVersionID = concreteMajorVersion.ID
-	minor.ApplicationApprovalRulesetBindingMajorVersion = *concreteMajorVersion
+func (adjustment *ApplicationApprovalRulesetBindingAdjustment) AssociateWithVersion(version IReviewableVersion) {
+	concreteVersion := version.(*ApplicationApprovalRulesetBindingVersion)
+	adjustment.ApplicationApprovalRulesetBindingVersionID = concreteVersion.ID
+	adjustment.ApplicationApprovalRulesetBindingVersion = *concreteVersion
 }

@@ -209,7 +209,7 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Latest version</TableCell>
-              <TableCell>{data.major_version_number}.{data.minor_version_number}</TableCell>
+              <TableCell>{data.version_number}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Enabled</TableCell>
@@ -390,7 +390,7 @@ const APPLICATION_APPROVAL_RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'latest_version',
     headerName: 'Latest version',
     width: 130,
-    valueGetter: ({ row }) => `${row.application.major_version_number}.${row.application.minor_version_number}`,
+    valueGetter: ({ row }) => row.application.version_number,
   },
   {
     field: 'mode',
