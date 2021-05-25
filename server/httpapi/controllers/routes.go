@@ -10,18 +10,18 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 	rg.PATCH("organizations/:id", ctx.PatchOrganization)
 
 	// Applications
-	rg.GET("applications", ctx.GetAllApplications)
+	rg.GET("applications", ctx.GetApplications)
 	rg.GET("applications/:application_id", ctx.GetApplication)
 
 	// Releases
-	rg.GET("releases", ctx.GetAllReleases)
-	rg.GET("applications/:application_id/releases", ctx.GetAllReleases)
+	rg.GET("releases", ctx.GetReleases)
+	rg.GET("applications/:application_id/releases", ctx.GetReleases)
 	rg.POST("applications/:application_id/releases", ctx.CreateRelease)
 	rg.GET("applications/:application_id/releases/:id", ctx.GetRelease)
 	rg.PATCH("applications/:application_id/releases/:id", ctx.PatchRelease)
 
 	// Approval rulesets
 	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.GetAllApplicationApprovalRulesetBindings)
-	rg.GET("approval-rulesets", ctx.GetAllApprovalRulesets)
+	rg.GET("approval-rulesets", ctx.GetApprovalRulesets)
 	rg.GET("approval-rulesets/:id", ctx.GetApprovalRuleset)
 }

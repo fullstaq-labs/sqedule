@@ -17,12 +17,15 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// GetAllReleases ...
-func (ctx Context) GetAllReleases(ginctx *gin.Context) {
+func (ctx Context) GetReleases(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
+
+	// Check authorization
 
 	if len(applicationID) > 0 {
 		application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
@@ -40,6 +43,8 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	tx, err := dbutils.ApplyDbQueryPagination(ginctx, ctx.Db)
 	if err != nil {
@@ -66,6 +71,8 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 		}
 	}
 
+	// Generate response
+
 	outputList := make([]json.ReleaseWithAssociations, 0, len(releases))
 	for _, release := range releases {
 		outputList = append(outputList,
@@ -74,12 +81,19 @@ func (ctx Context) GetAllReleases(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
 
-// CreateRelease ...
 func (ctx Context) CreateRelease(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 	includeAppJSON := len(applicationID) == 0
+
+	var input json.ReleasePatchablePart
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
 
 	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
 	if err != nil {
@@ -87,17 +101,15 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		return
 	}
 
+	// Check authorization
+
 	authorizer := authz.ApplicationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionCreateRelease, application) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
-	var input json.ReleasePatchablePart
-	if err := ginctx.ShouldBindJSON(&input); err != nil {
-		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
-		return
-	}
+	// Query database
 
 	if includeAppJSON {
 		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&application})
@@ -106,6 +118,8 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return
 		}
 	}
+
+	// Modify database
 
 	var release dbmodels.Release
 	var releaseRulesetBindings []dbmodels.ReleaseApprovalRulesetBinding
@@ -178,12 +192,15 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
+	// Generate response
+
 	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &releaseRulesetBindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// GetRelease ...
 func (ctx Context) GetRelease(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
@@ -213,11 +230,15 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		}
 	}
 
+	// Check authorization
+
 	authorizer := authz.ReleaseAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadRelease, release) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	bindings, err := dbmodels.FindAllReleaseApprovalRulesetBindings(
 		ctx.Db.Preload("ApprovalRuleset").
@@ -229,12 +250,15 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 		return
 	}
 
+	// Generate response
+
 	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// PatchRelease ...
 func (ctx Context) PatchRelease(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
@@ -253,17 +277,21 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
+	var input json.ReleasePatchablePart
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+
+	// Check authorization
+
 	authorizer := authz.ReleaseAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateRelease, release) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
-	var input json.ReleasePatchablePart
-	if err := ginctx.ShouldBindJSON(&input); err != nil {
-		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
-		return
-	}
+	// Query database
 
 	if includeAppJSON {
 		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&release.Application})
@@ -283,11 +311,15 @@ func (ctx Context) PatchRelease(ginctx *gin.Context) {
 		return
 	}
 
+	// Modify database
+
 	json.PatchDbRelease(&release, input)
 	if err = ctx.Db.Save(&release).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Generate response
 
 	output := json.CreateFromDbReleaseWithAssociations(release, includeAppJSON, &bindings)
 	ginctx.JSON(http.StatusOK, output)

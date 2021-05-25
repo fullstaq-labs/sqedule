@@ -11,16 +11,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetAllApprovalRulesets ...
-func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
+func (ctx Context) GetApprovalRulesets(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
+
+	// Check authorization
 
 	authorizer := authz.ApprovalRulesetAuthorizer{}
 	if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApprovalRulesets) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	pagination, err := dbutils.ParsePaginationOptions(ginctx)
 	if err != nil {
@@ -41,6 +46,8 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 		return
 	}
 
+	// Generate response
+
 	outputList := make([]json.ApprovalRulesetWithStats, 0, len(rulesets))
 	for _, ruleset := range rulesets {
 		outputList = append(outputList, json.CreateFromDbApprovalRulesetWithStats(ruleset,
@@ -49,8 +56,9 @@ func (ctx Context) GetAllApprovalRulesets(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
 
-// GetApprovalRuleset ...
 func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	id := ginctx.Param("id")
@@ -61,11 +69,15 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
+	// Check authorization
+
 	authorizer := authz.ApprovalRulesetAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
 		[]*dbmodels.ApprovalRuleset{&ruleset})
@@ -114,6 +126,8 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		respondWithDbQueryError("application latest versions", err, ginctx)
 		return
 	}
+
+	// Generate response
 
 	output := json.CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset, *ruleset.LatestVersion,
 		*ruleset.LatestAdjustment, appBindings, releaseBindings, rules)

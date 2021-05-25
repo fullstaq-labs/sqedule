@@ -11,16 +11,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetAllApplications ...
-func (ctx Context) GetAllApplications(ginctx *gin.Context) {
+func (ctx Context) GetApplications(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
+
+	// Check authorization
 
 	authorizer := authz.ApplicationAuthorizer{}
 	if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApplications) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	tx, err := dbutils.ApplyDbQueryPagination(ginctx, ctx.Db)
 	if err != nil {
@@ -41,6 +46,8 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 		return
 	}
 
+	// Generate response
+
 	outputList := make([]json.Application, 0, len(apps))
 	for _, app := range apps {
 		outputList = append(outputList, json.CreateFromDbApplication(app, *app.LatestVersion, *app.LatestAdjustment, nil))
@@ -48,8 +55,9 @@ func (ctx Context) GetAllApplications(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
 
-// GetApplication ...
 func (ctx Context) GetApplication(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	id := ginctx.Param("application_id")
@@ -66,11 +74,15 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 		return
 	}
 
+	// Check authorization
+
 	authorizer := authz.ApplicationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, app) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	bindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(
 		ctx.Db.Preload("ApprovalRuleset"),
@@ -93,6 +105,8 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 		respondWithDbQueryError("approval ruleset versions", err, ginctx)
 		return
 	}
+
+	// Generate response
 
 	output := json.CreateFromDbApplication(app, *app.LatestVersion, *app.LatestAdjustment, &bindings)
 	ginctx.JSON(http.StatusOK, output)
