@@ -44,6 +44,10 @@ Database:
  * [Database migrations]()
  * [Enum types]()
 
+REST API:
+
+ * [Reviewable resources REST API pattern](reviewable-rest-api-pattern.md)
+
 ## Processes & tasks
 
 Coding:
