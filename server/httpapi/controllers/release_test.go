@@ -113,7 +113,6 @@ func TestCreateRelease(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	fmt.Printf("%#v\n", body)
 	assert.Nil(t, body["application"])
 	assert.Equal(t, "in_progress", body["state"])
 	assert.Nil(t, body["finalized_at"])

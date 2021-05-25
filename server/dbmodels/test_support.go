@@ -3,6 +3,7 @@ package dbmodels
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/organizationmemberrole"
@@ -75,6 +76,7 @@ func CreateMockApplicationWith1Version(db *gorm.DB, organization Organization, c
 		},
 		ReviewableVersionBase: ReviewableVersionBase{
 			VersionNumber: &versionNumber,
+			ApprovedAt:    sql.NullTime{Time: time.Now(), Valid: true},
 		},
 		ApplicationID: result.ID,
 		Application:   result,
@@ -154,6 +156,7 @@ func CreateMockRulesetWith1Version(db *gorm.DB, organization Organization, id st
 		},
 		ReviewableVersionBase: ReviewableVersionBase{
 			VersionNumber: &versionNumber,
+			ApprovedAt:    sql.NullTime{Time: time.Now(), Valid: true},
 		},
 		ApprovalRulesetID: ruleset.ID,
 		ApprovalRuleset:   ruleset,
@@ -241,6 +244,7 @@ func CreateMockApplicationApprovalRulesetBindingVersion(db *gorm.DB, organizatio
 		ApprovalRulesetID: binding.ApprovalRulesetID,
 		ReviewableVersionBase: ReviewableVersionBase{
 			VersionNumber: versionNumber,
+			ApprovedAt:    sql.NullTime{Time: time.Now(), Valid: versionNumber != nil},
 		},
 		ApplicationApprovalRulesetBinding: binding,
 	}

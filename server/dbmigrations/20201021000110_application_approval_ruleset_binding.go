@@ -31,13 +31,14 @@ var migration20201021000110 = gormigrate.Migration{
 
 		type ReviewableBase struct {
 			CreatedAt time.Time `gorm:"not null"`
+			UpdatedAt time.Time `gorm:"not null"`
 		}
 
 		type ReviewableVersionBase struct {
-			ID            uint64    `gorm:"primaryKey; autoIncrement; not null"`
-			VersionNumber *uint32   `gorm:"type:int; check:(version_number > 0)"`
-			CreatedAt     time.Time `gorm:"not null"`
-			UpdatedAt     time.Time `gorm:"not null"`
+			ID            uint64       `gorm:"primaryKey; autoIncrement; not null"`
+			VersionNumber *uint32      `gorm:"type:int; check:(version_number > 0)"`
+			CreatedAt     time.Time    `gorm:"not null"`
+			ApprovedAt    sql.NullTime `gorm:"check:((approved_at IS NULL) = (version_number IS NULL))"`
 		}
 
 		type ReviewableAdjustmentBase struct {

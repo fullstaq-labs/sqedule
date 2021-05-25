@@ -26,12 +26,13 @@ INSERT INTO service_accounts (organization_id, name, password_hash, role, create
 
 
 -- Applications for org1
-INSERT INTO applications (organization_id, id, created_at) VALUES (
+INSERT INTO applications (organization_id, id, created_at, updated_at) VALUES (
     'org1',
     'app1',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_versions (organization_id, application_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'app1',
     1,
@@ -47,12 +48,13 @@ INSERT INTO application_adjustments (organization_id, application_version_id, ad
     'Application 1'
 ) ON CONFLICT DO NOTHING;
 
-INSERT INTO applications (organization_id, id, created_at) VALUES (
+INSERT INTO applications (organization_id, id, created_at, updated_at) VALUES (
     'org1',
     'app2',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_versions (organization_id, application_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_versions (organization_id, application_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'app2',
     1,
@@ -70,12 +72,13 @@ INSERT INTO application_adjustments (organization_id, application_version_id, ad
 
 
 -- Approval rulesets (and bindings) for org1
-INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
+INSERT INTO approval_rulesets (organization_id, id, created_at, updated_at) VALUES(
     'org1',
     'only afternoon',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'only afternoon',
     1,
@@ -119,12 +122,13 @@ BEGIN
     END IF;
 END $$;
 
-INSERT INTO approval_rulesets (organization_id, id, created_at) VALUES(
+INSERT INTO approval_rulesets (organization_id, id, created_at, updated_at) VALUES(
     'org1',
     'only evening',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'only evening',
     1,
@@ -168,13 +172,14 @@ BEGIN
     END IF;
 END $$;
 
-INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
+INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at, updated_at) VALUES (
     'org1',
     'app1',
     'only afternoon',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'app1',
     'only afternoon',
@@ -194,13 +199,14 @@ INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, a
     'enforcing'
 ) ON CONFLICT DO NOTHING;
 
-INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
+INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at, updated_at) VALUES (
     'org1',
     'app2',
     'only afternoon',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'app2',
     'only afternoon',
@@ -220,13 +226,14 @@ INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, a
     'enforcing'
 ) ON CONFLICT DO NOTHING;
 
-INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at) VALUES (
+INSERT INTO application_approval_ruleset_bindings (organization_id, application_id, approval_ruleset_id, created_at, updated_at) VALUES (
     'org1',
     'app2',
     'only evening',
+    NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, updated_at) VALUES (
+INSERT INTO application_approval_ruleset_binding_versions (organization_id, application_id, approval_ruleset_id, version_number, created_at, approved_at) VALUES (
     'org1',
     'app2',
     'only evening',
@@ -247,7 +254,7 @@ INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, a
 ) ON CONFLICT DO NOTHING;
 
 
--- Deployment requests for org1
+-- Releases for org1
 DO $$
 DECLARE
     n_releases INT;
@@ -356,10 +363,11 @@ BEGIN
     n_adjustments := 15;
 
     -- Create applications for org2
-    INSERT INTO applications (organization_id, id, created_at)
+    INSERT INTO applications (organization_id, id, created_at, updated_at)
     SELECT
         'org2' AS organization_id,
         'app' || series AS application_id,
+        NOW(),
         NOW()
     FROM generate_series(1, n_apps) series
     ON CONFLICT DO NOTHING;
@@ -367,24 +375,23 @@ BEGIN
     IF (SELECT COUNT(*) FROM application_versions WHERE organization_id = 'org2' AND application_id = 'app1' LIMIT 1) = 0 THEN
         -- For each application, create (n_versions - 1) versions that are finalized
         INSERT INTO application_versions
-            (organization_id, application_id, version_number, created_at, updated_at)
+            (organization_id, application_id, version_number, created_at, approved_at)
         SELECT
             'org2' AS organization_id,
             'app' || app_nums AS application_id,
             version_nums AS version_number,
             NOW() AS created_at,
-            NOW() AS updated_at
+            NOW() AS approved_at
         FROM generate_series(1, n_apps) app_nums,
             generate_series(1, n_versions) version_nums;
 
         -- For each application, create 1 proposal version
         INSERT INTO application_versions
-            (organization_id, application_id, created_at, updated_at)
+            (organization_id, application_id, created_at)
         SELECT
             'org2' AS organization_id,
             'app' || app_nums AS application_id,
-            NOW() AS created_at,
-            NOW() AS updated_at
+            NOW() AS created_at
         FROM generate_series(1, n_apps) app_nums;
 
         -- For each version, create (n_adjustments - 1) adjustments that are not yet approved
