@@ -17,7 +17,7 @@ type ApplicationApprovalRulesetBindingWithApplicationAssociation struct {
 
 type ApplicationApprovalRulesetBindingWithRulesetAssociation struct {
 	ApplicationApprovalRulesetBinding
-	ApprovalRuleset ApprovalRuleset `json:"approval_ruleset"`
+	ApprovalRuleset ApprovalRulesetWithLatestApprovedVersion `json:"approval_ruleset"`
 }
 
 func CreateFromDbApplicationApprovalRulesetBinding(binding dbmodels.ApplicationApprovalRulesetBinding, version dbmodels.ApplicationApprovalRulesetBindingVersion,
@@ -65,7 +65,7 @@ func CreateFromDbApplicationApprovalRulesetBindingWithRulesetAssociation(binding
 
 	return ApplicationApprovalRulesetBindingWithRulesetAssociation{
 		ApplicationApprovalRulesetBinding: CreateFromDbApplicationApprovalRulesetBinding(binding, version, adjustment),
-		ApprovalRuleset: CreateFromDbApprovalRuleset(binding.ApprovalRuleset,
+		ApprovalRuleset: CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset,
 			*binding.ApprovalRuleset.LatestVersion, *binding.ApprovalRuleset.LatestAdjustment),
 	}
 }

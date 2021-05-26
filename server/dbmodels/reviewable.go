@@ -207,3 +207,23 @@ func reflectMakePtr(val reflect.Value) reflect.Value {
 	ptr.Elem().Set(val)
 	return ptr
 }
+
+// FinalizeReviewableProposal transitions a Reviewable's proposal to either in the 'reviewing' state or the 'approved' state,
+// depending on whether a review of this proposal is required.
+func FinalizeReviewableProposal(version *ReviewableVersionBase, adjustment *ReviewableAdjustmentBase, latestVersionNumber uint32, requiresReview bool) {
+	if requiresReview {
+		markProposalAsReviewing(adjustment)
+	} else {
+		markProposalAsApproved(version, latestVersionNumber+1, adjustment)
+	}
+}
+
+func markProposalAsReviewing(adjustment *ReviewableAdjustmentBase) {
+	adjustment.ReviewState = reviewstate.Reviewing
+}
+
+func markProposalAsApproved(version *ReviewableVersionBase, versionNumber uint32, adjustment *ReviewableAdjustmentBase) {
+	adjustment.ReviewState = reviewstate.Approved
+	version.VersionNumber = &versionNumber
+	version.ApprovedAt = sql.NullTime{Time: time.Now(), Valid: true}
+}

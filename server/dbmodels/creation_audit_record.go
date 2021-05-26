@@ -40,7 +40,7 @@ type CreationAuditRecord struct {
 	ReleaseCancelledEvent   ReleaseCancelledEvent `gorm:"foreignKey:OrganizationID,ReleaseCancelledEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// NewCreationAuditRecord ...
+// NewCreationAuditRecord returns an unsaved CreationAuditRecord with the given properties.
 func NewCreationAuditRecord(organizationID string, creator IOrganizationMember, creatorIP string) CreationAuditRecord {
 	result := CreationAuditRecord{
 		BaseModel: BaseModel{OrganizationID: organizationID},

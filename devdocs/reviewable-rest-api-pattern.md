@@ -6,7 +6,7 @@ This document describes a pattern for REST API endpoints for CRUD operations on 
 
 ### POST /resources
 
-Creates a new Resource with one version. You may specify whether to immediately submit this version for approval, or to keep it as a proposal. The resulting resource version could either be a proposal or an approved version.
+Creates a new Resource with one version. You may specify whether to immediately submit this version for approval, or to keep it as a draft proposal. The resulting resource version could either be a proposal or an approved version.
 
 #### Input
 
@@ -14,16 +14,16 @@ The input is a `ResourceInput`:
 
 ~~~javascript
 {
-    // Optional:
-    // Specify "proposal" to keep this version as a proposal,
-    // "final" to submit it for approval, or "abandon" to
-    // create a proposal in the abandoned state.
-    "proposal_state": "proposal" (default) | "final" | "abandon" | null,
-
     // ...non-versioned resource-specific fields here...
 
     // A ResourceVersionInput object
     "version": {
+        // Optional:
+        // Specify "draft" to keep this version as a draft proposal,
+        // "final" to submit it for approval, or "abandon" to
+        // create a proposal in the abandoned state.
+        "proposal_state": "draft" (default) | "final" | "abandon" | null,
+
         "comments": "..." | null,
 
         // ...versioned resource-specific fields here...
@@ -140,16 +140,16 @@ The input is a `ResourceInput`:
 ~~~javascript
 {
     // Optional:
-    // Specify "proposal" to keep the patched version as a proposal,
-    // or "final" to submit it for approval.
-    "proposal_state": "proposal" (default) | "final" | null,
-
-    // Optional:
     // ...non-versioned resource-specific fields here...
 
     // Optional:
     // A ResourceVersionInput object
     "version": null | {
+        // Optional:
+        // Specify "draft" to keep a newly created version as a draft proposal,
+        // or "final" to submit it for approval.
+        "proposal_state": "draft" (default) | "final" | null,
+
         "comments": "..." | null,
 
         // ...versioned resource-specific fields here...
@@ -314,15 +314,15 @@ Adjusts a proposal. You may specify whether to immediately submit this proposal 
 
 #### Input
 
-The input is a `ResourceVersionInputWithState`:
+The input is a `ResourceVersionInput`:
 
 ~~~javascript
 {
     // Optional:
-    // Specify "proposal" to keep the patched proposal in the draft state,
+    // Specify "draft" to keep the patched proposal in the draft state,
     // "final" to submit it for approval, or "abandon" to abandon
     // the proposal.
-    "proposal_state": "proposal" (default) | "final" | "abandon" | null,
+    "proposal_state": "draft" (default) | "final" | "abandon" | null,
 
     "comments": "..." | null,
 

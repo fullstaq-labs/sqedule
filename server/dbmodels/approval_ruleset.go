@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//
+// ******** Types, constants & variables ********/
+//
+
 type ApprovalRuleset struct {
 	BaseModel
 	ID string `gorm:"type:citext; primaryKey; not null"`
@@ -67,12 +71,63 @@ type ApprovalRulesetContents struct {
 	ManualApprovalRules   []ManualApprovalRule
 }
 
+//
+// ******** ApprovalRulesetContents methods ********/
+//
+
 // NumRules returns the total number of rules in this ApprovalRulesetContents.
 func (c ApprovalRulesetContents) NumRules() uint {
 	return uint(len(c.HTTPApiApprovalRules)) +
 		uint(len(c.ScheduleApprovalRules)) +
 		uint(len(c.ManualApprovalRules))
 }
+
+func (c *ApprovalRulesetContents) ForEach(callback func(rule IApprovalRule) error) error {
+	var ruleTypesProcessed uint = 0
+	var err error
+
+	ruleTypesProcessed++
+	for i := range c.HTTPApiApprovalRules {
+		err = callback(&c.HTTPApiApprovalRules[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	ruleTypesProcessed++
+	for i := range c.ScheduleApprovalRules {
+		err = callback(&c.ScheduleApprovalRules[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	ruleTypesProcessed++
+	for i := range c.ManualApprovalRules {
+		err = callback(&c.ManualApprovalRules[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	if ruleTypesProcessed != NumApprovalRuleTypes {
+		panic("Bug: code does not cover all approval rule types")
+	}
+
+	return err
+}
+
+//
+// ******** ApprovalRuleset methods ********/
+//
+
+func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
+	return !hasBoundApplications
+}
+
+//
+// ******** Find/load functions ********/
+//
 
 // FindAllApprovalRulesetsWithStats ...
 func FindAllApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetWithStats, error) {
@@ -126,24 +181,6 @@ func FindApprovalRuleset(db *gorm.DB, organizationID string, id string) (Approva
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {
-	result := make([]*ApprovalRuleset, 0)
-	for i := range rulesets {
-		ruleset := &rulesets[i]
-		result = append(result, &ruleset.ApprovalRuleset)
-	}
-	return result
-}
-
-func CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings []ApplicationApprovalRulesetBinding) []*ApprovalRuleset {
-	result := make([]*ApprovalRuleset, 0)
-	for i := range bindings {
-		binding := &bindings[i]
-		result = append(result, &binding.ApprovalRuleset)
-	}
-	return result
-}
-
 // LoadApprovalRulesetsLatestVersions ...
 func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rulesets []*ApprovalRuleset) error {
 	reviewables := make([]IReviewable, 0, len(rulesets))
@@ -163,4 +200,26 @@ func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rule
 		organizationID,
 		reviewables,
 	)
+}
+
+//
+// ******** Other functions ********/
+//
+
+func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {
+	result := make([]*ApprovalRuleset, 0)
+	for i := range rulesets {
+		ruleset := &rulesets[i]
+		result = append(result, &ruleset.ApprovalRuleset)
+	}
+	return result
+}
+
+func CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings []ApplicationApprovalRulesetBinding) []*ApprovalRuleset {
+	result := make([]*ApprovalRuleset, 0)
+	for i := range bindings {
+		binding := &bindings[i]
+		result = append(result, &binding.ApprovalRuleset)
+	}
+	return result
 }

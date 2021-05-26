@@ -152,8 +152,9 @@ var _ = Describe("approval-ruleset API", func() {
 
 			ruleset := binding["approval_ruleset"].(map[string]interface{})
 			Expect(ruleset["id"]).To(Equal("ruleset1"))
-			Expect(ruleset["version_number"]).To(Equal(float64(1)))
-			Expect(ruleset["adjustment_number"]).To(Equal(float64(1)))
+			Expect(ruleset["latest_approved_version"]).ToNot(BeNil())
+			version := ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version["version_number"]).To(Equal(float64(1)))
 		})
 	})
 })

@@ -1,5 +1,7 @@
 package dbmodels
 
+import "github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+
 func (ruleset ApprovalRuleset) GetPrimaryKey() interface{} {
 	return ruleset.ID
 }
@@ -12,18 +14,43 @@ func (ruleset *ApprovalRuleset) SetLatestAdjustment(adjustment IReviewableAdjust
 	ruleset.LatestAdjustment = adjustment.(*ApprovalRulesetAdjustment)
 }
 
-func (major ApprovalRulesetVersion) GetID() interface{} {
-	return major.ID
+// NewDraftVersion returns an unsaved ApprovalRulesetVersion and ApprovalRulesetAdjustment
+// in draft proposal state.
+func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *ApprovalRulesetAdjustment) {
+	var adjustment ApprovalRulesetAdjustment
+	var version *ApprovalRulesetVersion = &adjustment.ApprovalRulesetVersion
+
+	if ruleset.LatestAdjustment != nil {
+		adjustment = *ruleset.LatestAdjustment
+	}
+
+	version.BaseModel = ruleset.BaseModel
+	version.ReviewableVersionBase = ReviewableVersionBase{}
+	version.ApprovalRuleset = ruleset
+	version.ApprovalRulesetID = ruleset.ID
+
+	adjustment.BaseModel = ruleset.BaseModel
+	adjustment.ApprovalRulesetVersionID = 0
+	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: 1,
+		ReviewState:      reviewstate.Draft,
+	}
+
+	return version, &adjustment
 }
 
-func (major ApprovalRulesetVersion) GetReviewablePrimaryKey() interface{} {
-	return major.ApprovalRulesetID
+func (version ApprovalRulesetVersion) GetID() interface{} {
+	return version.ID
 }
 
-func (major *ApprovalRulesetVersion) AssociateWithReviewable(reviewable IReviewable) {
+func (version ApprovalRulesetVersion) GetReviewablePrimaryKey() interface{} {
+	return version.ApprovalRulesetID
+}
+
+func (version *ApprovalRulesetVersion) AssociateWithReviewable(reviewable IReviewable) {
 	ruleset := reviewable.(*ApprovalRuleset)
-	major.ApprovalRulesetID = ruleset.ID
-	major.ApprovalRuleset = *ruleset
+	version.ApprovalRulesetID = ruleset.ID
+	version.ApprovalRuleset = *ruleset
 }
 
 func (adjustment ApprovalRulesetAdjustment) GetVersionID() interface{} {

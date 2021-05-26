@@ -10,7 +10,24 @@ import (
 	"gorm.io/gorm"
 )
 
-const NumApprovalRuleTypes = 3
+//
+// ******** Types, constants & variables ********/
+//
+
+type ApprovalRuleType string
+
+const (
+	HTTPApiApprovalRuleType  ApprovalRuleType = "http_api"
+	ScheduleApprovalRuleType ApprovalRuleType = "schedule"
+	ManualApprovalRuleType   ApprovalRuleType = "manual"
+
+	NumApprovalRuleTypes uint = 3
+)
+
+type IApprovalRule interface {
+	Type() ApprovalRuleType
+	AssociateWithApprovalRulesetAdjustment(adjustment ApprovalRulesetAdjustment)
+}
 
 type ApprovalRule struct {
 	BaseModel
@@ -51,6 +68,32 @@ type ManualApprovalRule struct {
 	ApprovalPolicy approvalpolicy.Policy `gorm:"type:approval_policy; not null"`
 	Minimum        sql.NullInt32         `gorm:"check:((approval_policy = 'minimum') = (minimum IS NOT NULL))"`
 }
+
+//
+// ******** ApprovalRule methods ********/
+//
+
+func (r *ApprovalRule) AssociateWithApprovalRulesetAdjustment(adjustment ApprovalRulesetAdjustment) {
+	r.ApprovalRulesetVersionID = adjustment.ApprovalRulesetVersionID
+	r.ApprovalRulesetAdjustmentNumber = adjustment.AdjustmentNumber
+	r.ApprovalRulesetAdjustment = adjustment
+}
+
+func (r HTTPApiApprovalRule) Type() ApprovalRuleType {
+	return HTTPApiApprovalRuleType
+}
+
+func (r ScheduleApprovalRule) Type() ApprovalRuleType {
+	return ScheduleApprovalRuleType
+}
+
+func (r ManualApprovalRule) Type() ApprovalRuleType {
+	return ManualApprovalRuleType
+}
+
+//
+// ******** Find/load functions ********/
+//
 
 // FindApprovalRulesBoundToRelease finds all ApprovalRules that are bound to a specific Release.
 // It populates the `BindingMode` field so that you know which ApprovalRules are bound

@@ -1,85 +1,51 @@
 package json
 
 import (
-	"database/sql"
-	"time"
-
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
-type ApprovalRuleset struct {
-	ID                 string    `json:"id"`
-	VersionNumber      *uint32   `json:"version_number"`
-	AdjustmentNumber   uint32    `json:"adjustment_number"`
-	DisplayName        string    `json:"display_name"`
-	Description        string    `json:"description"`
-	GloballyApplicable bool      `json:"globally_applicable"`
-	ReviewState        string    `json:"review_state"`
-	ReviewComments     *string   `json:"review_comments"`
-	Enabled            bool      `json:"enabled"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+//
+// ******** Types, constants & variables ********/
+//
+
+type ApprovalRulesetBase struct {
+	ID                                 string                                                         `json:"id"`
+	ApplicationApprovalRulesetBindings *[]ApplicationApprovalRulesetBindingWithApplicationAssociation `json:"application_approval_ruleset_bindings,omitempty"`
+	NumBoundApplications               *uint                                                          `json:"num_bound_applications,omitempty"`
 }
 
-type ApprovalRulesetWithStats struct {
-	ApprovalRuleset
-	NumBoundApplications uint `json:"num_bound_applications"`
-	NumBoundReleases     uint `json:"num_bound_releases"`
+type ApprovalRulesetWithVersion struct {
+	ReviewableBase
+	ApprovalRulesetBase
+	Version ApprovalRulesetVersion `json:"version"`
 }
 
-type ApprovalRulesetWithBindingAndRuleAssocations struct {
-	ApprovalRuleset
-	ApplicationApprovalRulesetBindings []ApplicationApprovalRulesetBindingWithApplicationAssociation `json:"application_approval_ruleset_bindings"`
-	ReleaseApprovalRulesetBindings     []ReleaseApprovalRulesetBindingWithReleaseAssociation         `json:"release_approval_ruleset_bindings"`
-	ApprovalRules                      []map[string]interface{}                                      `json:"approval_rules"`
+type ApprovalRulesetWithLatestApprovedVersion struct {
+	ReviewableBase
+	ApprovalRulesetBase
+	LatestApprovedVersion *ApprovalRulesetVersion `json:"latest_approved_version"`
 }
 
-func CreateFromDbApprovalRuleset(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, adjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRuleset {
-	var reviewComments *string
-	if adjustment.ReviewComments.Valid {
-		reviewComments = &adjustment.ReviewComments.String
-	}
+type ApprovalRulesetVersion struct {
+	ReviewableVersionBase
+	DisplayName        string         `json:"display_name"`
+	Description        string         `json:"description"`
+	GloballyApplicable bool           `json:"globally_applicable"`
+	Enabled            bool           `json:"enabled"`
+	ApprovalRules      []ApprovalRule `json:"approval_rules"`
 
-	result := ApprovalRuleset{
-		ID:                 ruleset.ID,
-		VersionNumber:      version.VersionNumber,
-		AdjustmentNumber:   adjustment.AdjustmentNumber,
-		DisplayName:        adjustment.DisplayName,
-		Description:        adjustment.Description,
-		GloballyApplicable: adjustment.GloballyApplicable,
-		ReviewState:        string(adjustment.ReviewState),
-		ReviewComments:     reviewComments,
-		Enabled:            adjustment.Enabled,
-		CreatedAt:          ruleset.CreatedAt,
-		UpdatedAt:          adjustment.CreatedAt,
-	}
-	return result
+	NumBoundReleases               *uint                                                  `json:"num_bound_releases,omitempty"`
+	ReleaseApprovalRulesetBindings *[]ReleaseApprovalRulesetBindingWithReleaseAssociation `json:"release_approval_ruleset_bindings,omitempty"`
 }
 
-func CreateFromDbApprovalRulesetWithStats(ruleset dbmodels.ApprovalRulesetWithStats, version dbmodels.ApprovalRulesetVersion,
-	adjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetWithStats {
+//
+// ******** ApprovalRulesetBase methods ********/
+//
 
-	result := ApprovalRulesetWithStats{
-		ApprovalRuleset:      CreateFromDbApprovalRuleset(ruleset.ApprovalRuleset, version, adjustment),
-		NumBoundApplications: ruleset.NumBoundApplications,
-		NumBoundReleases:     ruleset.NumBoundReleases,
-	}
-	return result
-}
+func (base *ApprovalRulesetBase) PopulateFromDbmodelsApplicationApprovalRulesetBinding(bindings []dbmodels.ApplicationApprovalRulesetBinding) {
+	bindingsJSON := make([]ApplicationApprovalRulesetBindingWithApplicationAssociation, 0, len(bindings))
 
-func CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, adjustment dbmodels.ApprovalRulesetAdjustment,
-	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithBindingAndRuleAssocations {
-
-	var ruleTypesProcessed uint = 0
-
-	result := ApprovalRulesetWithBindingAndRuleAssocations{
-		ApprovalRuleset:                    CreateFromDbApprovalRuleset(ruleset, version, adjustment),
-		ApplicationApprovalRulesetBindings: make([]ApplicationApprovalRulesetBindingWithApplicationAssociation, 0, len(appBindings)),
-		ReleaseApprovalRulesetBindings:     make([]ReleaseApprovalRulesetBindingWithReleaseAssociation, 0, len(releaseBindings)),
-		ApprovalRules:                      make([]map[string]interface{}, 0),
-	}
-
-	for _, binding := range appBindings {
+	for _, binding := range bindings {
 		if binding.LatestVersion == nil {
 			panic("Application approval rule binding must have an associated latest version")
 		}
@@ -90,62 +56,126 @@ func CreateFromDbApprovalRulesetWithBindingAndRuleAssociations(ruleset dbmodels.
 			panic("Application approval rule binding must have an associated latest adjustment")
 		}
 
-		result.ApplicationApprovalRulesetBindings = append(result.ApplicationApprovalRulesetBindings,
+		bindingsJSON = append(bindingsJSON,
 			CreateFromDbApplicationApprovalRulesetBindingWithApplicationAssociation(binding,
 				*binding.LatestVersion, *binding.LatestAdjustment))
 	}
 
-	for _, binding := range releaseBindings {
-		result.ReleaseApprovalRulesetBindings = append(result.ReleaseApprovalRulesetBindings,
+	base.ApplicationApprovalRulesetBindings = &bindingsJSON
+}
+
+//
+// ******** ApprovalRulesetVersion methods ********/
+//
+
+func (version *ApprovalRulesetVersion) PopulateFromDbmodelsReleaseApprovalRulesetBindings(bindings []dbmodels.ReleaseApprovalRulesetBinding) {
+	bindingsJSON := make([]ReleaseApprovalRulesetBindingWithReleaseAssociation, 0, len(bindings))
+	for _, binding := range bindings {
+		bindingsJSON = append(bindingsJSON,
 			CreateFromDbReleaseApprovalRulesetBindingWithReleaseAssociation(binding))
 	}
+	version.ReleaseApprovalRulesetBindings = &bindingsJSON
+}
+
+func (version *ApprovalRulesetVersion) PopulateFromDbmodelsApprovalRulesetContents(contents dbmodels.ApprovalRulesetContents) {
+	var ruleTypesProcessed uint = 0
 
 	ruleTypesProcessed++
-	for _, rule := range rules.HTTPApiApprovalRules {
-		subJSON := CreateFromDbApprovalRule(rule.ApprovalRule)
-		subJSON["type"] = "http_api"
-		// TODO
-		result.ApprovalRules = append(result.ApprovalRules, subJSON)
+	for _, rule := range contents.HTTPApiApprovalRules {
+		ruleJSON := ApprovalRule{Type: dbmodels.HTTPApiApprovalRuleType, HTTPApiApprovalRule: rule}
+		version.ApprovalRules = append(version.ApprovalRules, ruleJSON)
 	}
 
 	ruleTypesProcessed++
-	for _, rule := range rules.ScheduleApprovalRules {
-		subJSON := CreateFromDbApprovalRule(rule.ApprovalRule)
-		subJSON["type"] = "schedule"
-		subJSON["begin_time"] = getSqlStringContentsOrNil(rule.BeginTime)
-		subJSON["end_time"] = getSqlStringContentsOrNil(rule.EndTime)
-		subJSON["days_of_week"] = getSqlStringContentsOrNil(rule.DaysOfWeek)
-		subJSON["days_of_month"] = getSqlStringContentsOrNil(rule.DaysOfMonth)
-		subJSON["months_of_year"] = getSqlStringContentsOrNil(rule.MonthsOfYear)
-		result.ApprovalRules = append(result.ApprovalRules, subJSON)
+	for _, rule := range contents.ScheduleApprovalRules {
+		ruleJSON := ApprovalRule{Type: dbmodels.ScheduleApprovalRuleType, ScheduleApprovalRule: rule}
+		version.ApprovalRules = append(version.ApprovalRules, ruleJSON)
 	}
 
 	ruleTypesProcessed++
-	for _, rule := range rules.ManualApprovalRules {
-		subJSON := CreateFromDbApprovalRule(rule.ApprovalRule)
-		subJSON["type"] = "manual"
-		// TODO
-		result.ApprovalRules = append(result.ApprovalRules, subJSON)
+	for _, rule := range contents.ManualApprovalRules {
+		ruleJSON := ApprovalRule{Type: dbmodels.ManualApprovalRuleType, ManualApprovalRule: rule}
+		version.ApprovalRules = append(version.ApprovalRules, ruleJSON)
 	}
 
 	if ruleTypesProcessed != dbmodels.NumApprovalRuleTypes {
 		panic("Bug: code does not cover all approval rule types")
 	}
+}
+
+//
+// ******** Constructor functions ********/
+//
+
+func CreateApprovalRulesetVersion(version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetVersion {
+	return ApprovalRulesetVersion{
+		ReviewableVersionBase: createReviewableVersionBase(version.ReviewableVersionBase, latestAdjustment.ReviewableAdjustmentBase),
+		DisplayName:           latestAdjustment.DisplayName,
+		Description:           latestAdjustment.Description,
+		GloballyApplicable:    latestAdjustment.GloballyApplicable,
+		Enabled:               latestAdjustment.Enabled,
+	}
+}
+
+func CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment,
+	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithVersion {
+
+	result := ApprovalRulesetWithVersion{
+		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
+		ApprovalRulesetBase: ApprovalRulesetBase{
+			ID: ruleset.ID,
+		},
+		Version: CreateApprovalRulesetVersion(version, latestAdjustment),
+	}
+
+	result.ApprovalRulesetBase.PopulateFromDbmodelsApplicationApprovalRulesetBinding(appBindings)
+	result.Version.PopulateFromDbmodelsReleaseApprovalRulesetBindings(releaseBindings)
+	result.Version.PopulateFromDbmodelsApprovalRulesetContents(rules)
 
 	return result
 }
 
-func CreateFromDbApprovalRule(rule dbmodels.ApprovalRule) map[string]interface{} {
-	return map[string]interface{}{
-		"id":         rule.ID,
-		"enabled":    rule.Enabled,
-		"created_at": rule.CreatedAt,
+func CreateApprovalRulesetWithLatestApprovedVersion(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetWithLatestApprovedVersion {
+	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
+
+	return ApprovalRulesetWithLatestApprovedVersion{
+		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
+		ApprovalRulesetBase: ApprovalRulesetBase{
+			ID: ruleset.ID,
+		},
+		LatestApprovedVersion: &versionJSON,
 	}
 }
 
-func getSqlStringContentsOrNil(str sql.NullString) interface{} {
-	if str.Valid {
-		return str.String
+func CreateApprovalRulesetWithLatestApprovedVersionAndStats(ruleset dbmodels.ApprovalRulesetWithStats, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetWithLatestApprovedVersion {
+	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
+	versionJSON.NumBoundReleases = &ruleset.NumBoundReleases
+
+	return ApprovalRulesetWithLatestApprovedVersion{
+		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
+		ApprovalRulesetBase: ApprovalRulesetBase{
+			ID:                   ruleset.ID,
+			NumBoundApplications: &ruleset.NumBoundApplications,
+		},
+		LatestApprovedVersion: &versionJSON,
 	}
-	return nil
+}
+
+func CreateApprovalRulesetWithLatestApprovedVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment,
+	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithLatestApprovedVersion {
+
+	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
+	versionJSON.PopulateFromDbmodelsReleaseApprovalRulesetBindings(releaseBindings)
+	versionJSON.PopulateFromDbmodelsApprovalRulesetContents(rules)
+
+	result := ApprovalRulesetWithLatestApprovedVersion{
+		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
+		ApprovalRulesetBase: ApprovalRulesetBase{
+			ID: ruleset.ID,
+		},
+		LatestApprovedVersion: &versionJSON,
+	}
+	result.ApprovalRulesetBase.PopulateFromDbmodelsApplicationApprovalRulesetBinding(appBindings)
+
+	return result
 }

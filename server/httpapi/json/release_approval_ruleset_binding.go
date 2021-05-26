@@ -10,7 +10,7 @@ type ReleaseApprovalRulesetBinding struct {
 
 type ReleaseApprovalRulesetBindingWithRulesetAssociation struct {
 	ReleaseApprovalRulesetBinding
-	ApprovalRuleset ApprovalRuleset `json:"approval_ruleset"`
+	ApprovalRuleset ApprovalRulesetWithLatestApprovedVersion `json:"approval_ruleset"`
 }
 
 type ReleaseApprovalRulesetBindingWithReleaseAssociation struct {
@@ -34,7 +34,7 @@ func CreateFromDbReleaseApprovalRulesetBindingWithReleaseAssociation(binding dbm
 func CreateFromDbReleaseApprovalRulesetBindingWithRulesetAssociation(binding dbmodels.ReleaseApprovalRulesetBinding) ReleaseApprovalRulesetBindingWithRulesetAssociation {
 	return ReleaseApprovalRulesetBindingWithRulesetAssociation{
 		ReleaseApprovalRulesetBinding: CreateFromDbReleaseApprovalRulesetBinding(binding),
-		ApprovalRuleset: CreateFromDbApprovalRuleset(binding.ApprovalRuleset,
+		ApprovalRuleset: CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset,
 			binding.ApprovalRulesetVersion, binding.ApprovalRulesetAdjustment),
 	}
 }
