@@ -377,6 +377,7 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organization, rulesetVersionID uint64,
 	rulesetAdjustment ApprovalRulesetAdjustment, customizeFunc func(*ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
 
+	enabled := true
 	result := ScheduleApprovalRule{
 		ApprovalRule: ApprovalRule{
 			BaseModel: BaseModel{
@@ -386,7 +387,7 @@ func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organizati
 			ApprovalRulesetVersionID:        rulesetVersionID,
 			ApprovalRulesetAdjustmentNumber: rulesetAdjustment.AdjustmentNumber,
 			ApprovalRulesetAdjustment:       rulesetAdjustment,
-			Enabled:                         true,
+			Enabled:                         &enabled,
 		},
 		BeginTime: sql.NullString{String: "0:00:00", Valid: true},
 		EndTime:   sql.NullString{String: "23:59:59", Valid: true},

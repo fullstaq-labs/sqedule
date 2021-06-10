@@ -18,7 +18,7 @@ type ApprovalRule struct {
 	ApprovalRulesetVersionID        uint64                    `gorm:"not null"`
 	ApprovalRulesetAdjustmentNumber uint32                    `gorm:"type:int; not null; check:(approval_ruleset_adjustment_number >= 0)"`
 	ApprovalRulesetAdjustment       ApprovalRulesetAdjustment `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID,ApprovalRulesetAdjustmentNumber; references:OrganizationID,ApprovalRulesetVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	Enabled                         bool                      `gorm:"not null; default:true"`
+	Enabled                         *bool                     `gorm:"not null; default:true"`
 	CreatedAt                       time.Time                 `gorm:"not null"`
 
 	// BindingMode is the mode with which the containing Ruleset is bound to some entity.
