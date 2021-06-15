@@ -6,7 +6,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 )
 
-// ReleaseEvent ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type ReleaseEvent struct {
 	BaseModel
 	ID            uint64    `gorm:"primaryKey; not null"`
@@ -16,17 +19,14 @@ type ReleaseEvent struct {
 	CreatedAt     time.Time `gorm:"not null"`
 }
 
-// ReleaseCreatedEvent ...
 type ReleaseCreatedEvent struct {
 	ReleaseEvent
 }
 
-// ReleaseCancelledEvent ...
 type ReleaseCancelledEvent struct {
 	ReleaseEvent
 }
 
-// ReleaseRuleProcessedEvent ...
 type ReleaseRuleProcessedEvent struct {
 	ReleaseEvent
 	ResultState  releasestate.State `gorm:"type:release_state; not null"`

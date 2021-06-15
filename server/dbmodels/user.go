@@ -5,7 +5,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// User ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type User struct {
 	OrganizationMember
 	Email     string `gorm:"type:citext; primaryKey; not null"`
@@ -13,15 +16,9 @@ type User struct {
 	LastName  string `gorm:"not null"`
 }
 
-// FindUserByEmail looks up a User by its email address.
-// When not found, returns a `gorm.ErrRecordNotFound` error.
-func FindUserByEmail(db *gorm.DB, organizationID string, email string) (User, error) {
-	var result User
-
-	tx := db.Where("organization_id = ? AND email = ?", organizationID, email)
-	tx.Take(&result)
-	return result, dbutils.CreateFindOperationError(tx)
-}
+//
+// ******** User methods ********/
+//
 
 // Type returns a name of the concrete type. This name is short,
 // suitable for machine use, not user display purposes.
@@ -39,4 +36,18 @@ func (user User) ID() string {
 // for user display, i.e. "email" (for User) and "service account name" (for ServiceAccount).
 func (user User) IDTypeDisplayName() string {
 	return "email"
+}
+
+//
+// ******** Find/load functions ********/
+//
+
+// FindUserByEmail looks up a User by its email address.
+// When not found, returns a `gorm.ErrRecordNotFound` error.
+func FindUserByEmail(db *gorm.DB, organizationID string, email string) (User, error) {
+	var result User
+
+	tx := db.Where("organization_id = ? AND email = ?", organizationID, email)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
 }

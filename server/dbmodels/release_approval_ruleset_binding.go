@@ -6,7 +6,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// ReleaseApprovalRulesetBinding ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type ReleaseApprovalRulesetBinding struct {
 	BaseModel
 
@@ -26,7 +29,10 @@ type ReleaseApprovalRulesetBinding struct {
 	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
 }
 
-// NewReleaseApprovalRulesetBindingFromApplicationApprovalRulesetBinding ...
+//
+// ******** Constructor functions ********/
+//
+
 func NewReleaseApprovalRulesetBindingFromApplicationApprovalRulesetBinding(appRuleBinding ApplicationApprovalRulesetBinding) ReleaseApprovalRulesetBinding {
 	if appRuleBinding.LatestAdjustment == nil {
 		panic("Given binding must have an associated latest adjustment")
@@ -55,7 +61,6 @@ func NewReleaseApprovalRulesetBindingFromApplicationApprovalRulesetBinding(appRu
 	}
 }
 
-// CreateReleaseApprovalRulesetBindings ...
 func CreateReleaseApprovalRulesetBindings(db *gorm.DB, releaseID uint64, appRuleBindings []ApplicationApprovalRulesetBinding) ([]ReleaseApprovalRulesetBinding, error) {
 	result := make([]ReleaseApprovalRulesetBinding, 0, len(appRuleBindings))
 
@@ -73,7 +78,10 @@ func CreateReleaseApprovalRulesetBindings(db *gorm.DB, releaseID uint64, appRule
 	return result, nil
 }
 
-// FindAllReleaseApprovalRulesetBindings ...
+//
+// ******** Find/load functions ********/
+//
+
 func FindAllReleaseApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string, releaseID uint64) ([]ReleaseApprovalRulesetBinding, error) {
 	var result []ReleaseApprovalRulesetBinding
 	tx := db.Where("organization_id = ? AND application_id = ? AND release_id = ?",

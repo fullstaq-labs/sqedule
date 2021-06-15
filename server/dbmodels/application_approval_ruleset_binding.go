@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//
+// ******** Types, constants & variables ********/
+//
+
 type ApplicationApprovalRulesetBindingPrimaryKey struct {
 	ApplicationID     string `gorm:"type:citext; primaryKey; not null"`
 	ApprovalRulesetID string `gorm:"type:citext; primaryKey; not null"`
@@ -42,7 +46,10 @@ type ApplicationApprovalRulesetBindingAdjustment struct {
 	ApplicationApprovalRulesetBindingVersion ApplicationApprovalRulesetBindingVersion `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// FindAllApplicationApprovalRulesetBindings ...
+//
+// ******** Find/load functions ********/
+//
+
 func FindAllApplicationApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string) ([]ApplicationApprovalRulesetBinding, error) {
 	var result []ApplicationApprovalRulesetBinding
 	tx := db.Where("organization_id = ?", organizationID)
@@ -60,16 +67,6 @@ func FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, o
 	return result, tx.Error
 }
 
-// MakeApplicationApprovalRulesetBindingsPointerArray ...
-func MakeApplicationApprovalRulesetBindingsPointerArray(bindings []ApplicationApprovalRulesetBinding) []*ApplicationApprovalRulesetBinding {
-	result := make([]*ApplicationApprovalRulesetBinding, 0, len(bindings))
-	for i := range bindings {
-		result = append(result, &bindings[i])
-	}
-	return result
-}
-
-// LoadApplicationApprovalRulesetBindingsLatestVersions ...
 func LoadApplicationApprovalRulesetBindingsLatestVersions(db *gorm.DB, organizationID string, bindings []*ApplicationApprovalRulesetBinding) error {
 	reviewables := make([]IReviewable, 0, len(bindings))
 	for _, binding := range bindings {
@@ -88,4 +85,16 @@ func LoadApplicationApprovalRulesetBindingsLatestVersions(db *gorm.DB, organizat
 		organizationID,
 		reviewables,
 	)
+}
+
+//
+// ******** Other functions ********/
+//
+
+func MakeApplicationApprovalRulesetBindingsPointerArray(bindings []ApplicationApprovalRulesetBinding) []*ApplicationApprovalRulesetBinding {
+	result := make([]*ApplicationApprovalRulesetBinding, 0, len(bindings))
+	for i := range bindings {
+		result = append(result, &bindings[i])
+	}
+	return result
 }

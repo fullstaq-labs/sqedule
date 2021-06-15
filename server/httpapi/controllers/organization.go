@@ -10,10 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetCurrentOrganization ...
 func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
+
+	// Check authorization
 
 	authorizer := authz.OrganizationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadOrganization, orgID) {
@@ -21,26 +24,7 @@ func (ctx Context) GetCurrentOrganization(ginctx *gin.Context) {
 		return
 	}
 
-	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
-	if err != nil {
-		respondWithDbQueryError("organization", err, ginctx)
-		return
-	}
-
-	output := json.CreateFromDbOrganization(organization)
-	ginctx.JSON(http.StatusOK, output)
-}
-
-// PatchCurrentOrganization ...
-func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
-	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := orgMember.GetOrganizationID()
-
-	authorizer := authz.OrganizationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
-		respondWithUnauthorizedError(ginctx)
-		return
-	}
+	// Query database
 
 	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
 	if err != nil {
@@ -48,26 +32,19 @@ func (ctx Context) PatchCurrentOrganization(ginctx *gin.Context) {
 		return
 	}
 
-	var input json.Organization
-	if err := ginctx.ShouldBindJSON(&input); err != nil {
-		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
-		return
-	}
-
-	json.PatchDbOrganization(&organization, input)
-	if err = ctx.Db.Save(&organization).Error; err != nil {
-		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// Generate response
 
 	output := json.CreateFromDbOrganization(organization)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// GetOrganization ...
 func (ctx Context) GetOrganization(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := ginctx.Param("id")
+
+	// Check authorization
 
 	authorizer := authz.OrganizationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadOrganization, orgID) {
@@ -75,32 +52,23 @@ func (ctx Context) GetOrganization(ginctx *gin.Context) {
 		return
 	}
 
+	// Query database
+
 	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
 	if err != nil {
 		respondWithDbQueryError("organization", err, ginctx)
 		return
 	}
+
+	// Generate response
 
 	output := json.CreateFromDbOrganization(organization)
 	ginctx.JSON(http.StatusOK, output)
 }
 
-// PatchOrganization ...
-func (ctx Context) PatchOrganization(ginctx *gin.Context) {
+func (ctx Context) UpdateCurrentOrganization(ginctx *gin.Context) {
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
-	orgID := ginctx.Param("id")
-
-	authorizer := authz.OrganizationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
-		respondWithUnauthorizedError(ginctx)
-		return
-	}
-
-	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
-	if err != nil {
-		respondWithDbQueryError("organization", err, ginctx)
-		return
-	}
+	orgID := orgMember.GetOrganizationID()
 
 	var input json.Organization
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
@@ -108,11 +76,74 @@ func (ctx Context) PatchOrganization(ginctx *gin.Context) {
 		return
 	}
 
+	// Check authorization
+
+	authorizer := authz.OrganizationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
+	if err != nil {
+		respondWithDbQueryError("organization", err, ginctx)
+		return
+	}
+
+	// Modify database
+
 	json.PatchDbOrganization(&organization, input)
 	if err = ctx.Db.Save(&organization).Error; err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Generate response
+
+	output := json.CreateFromDbOrganization(organization)
+	ginctx.JSON(http.StatusOK, output)
+}
+
+func (ctx Context) UpdateOrganization(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := ginctx.Param("id")
+
+	var input json.Organization
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.OrganizationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateOrganization, orgID) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	organization, err := dbmodels.FindOrganizationByID(ctx.Db, orgID)
+	if err != nil {
+		respondWithDbQueryError("organization", err, ginctx)
+		return
+	}
+
+	// Modify database
+
+	var organization2 dbmodels.Organization = organization
+	json.PatchDbOrganization(&organization2, input)
+	if err = ctx.Db.Model(&organization).Updates(organization2).Error; err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
 
 	output := json.CreateFromDbOrganization(organization)
 	ginctx.JSON(http.StatusOK, output)

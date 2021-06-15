@@ -10,7 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// Release ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type Release struct {
 	BaseModel
 	ApplicationID  string             `gorm:"type:citext; primaryKey; not null"`
@@ -24,7 +27,18 @@ type Release struct {
 	FinalizedAt    sql.NullTime
 }
 
-// FindAllReleases ...
+//
+// ******** Release methods ********/
+//
+
+func (r Release) Description() string {
+	return fmt.Sprintf("(org=%s, app=%s, releaseID=%d)", r.OrganizationID, r.ApplicationID, r.ID)
+}
+
+//
+// ******** Find/load functions ********/
+//
+
 func FindAllReleases(db *gorm.DB, organizationID string, applicationID string) ([]Release, error) {
 	var result []Release
 	tx := db.Where("organization_id = ?", organizationID)
@@ -45,6 +59,10 @@ func FindRelease(db *gorm.DB, organizationID string, applicationID string, relea
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
+//
+// ******** Other functions ********/
+//
+
 func MakeReleasesPointerArray(releases []Release) []*Release {
 	result := make([]*Release, 0, len(releases))
 	for i := range releases {
@@ -60,8 +78,4 @@ func CollectReleasesWithReleaseApprovalRulesetBindings(bindings []ReleaseApprova
 		result = append(result, &binding.Release)
 	}
 	return result
-}
-
-func (r Release) Description() string {
-	return fmt.Sprintf("(org=%s, app=%s, releaseID=%d)", r.OrganizationID, r.ApplicationID, r.ID)
 }

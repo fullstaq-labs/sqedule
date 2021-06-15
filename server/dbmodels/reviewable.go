@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//
+// ******** Types, constants & variables ********/
+//
+
 type IReviewable interface {
 	GetPrimaryKey() interface{}
 	SetLatestVersion(version IReviewableVersion)
@@ -49,6 +53,10 @@ type ReviewableAdjustmentBase struct {
 	ReviewComments   sql.NullString
 	CreatedAt        time.Time `gorm:"not null"`
 }
+
+//
+// ******** Find/load functions ********/
+//
 
 // LoadReviewablesLatestVersions loads the latest Version and Adjustment records associated
 // with the given IReviewable records.
@@ -201,6 +209,10 @@ func buildReviewablesIndexAndIDList(primaryKeyType reflect.Type, primaryKeyGormV
 
 	return index, ids
 }
+
+//
+// ******** Other functions ********/
+//
 
 func reflectMakePtr(val reflect.Value) reflect.Value {
 	ptr := reflect.New(val.Type())

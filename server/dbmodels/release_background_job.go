@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+//
+// ******** Types, constants & variables ********/
+//
+
 // ReleaseBackgroundJobPostgresLockNamespace is the number at which the PostgreSQL advisory lock should start.
 // Given a ReleaseBackgroundJob with a certain LockID, the corresponding advisory lock ID is
 // `ReleaseBackgroundJobPostgresLockNamespace + LockID`
@@ -29,7 +33,10 @@ type ReleaseBackgroundJob struct {
 	CreatedAt     time.Time `gorm:"not null"`
 }
 
-// CreateReleaseBackgroundJob ...
+//
+// ******** Constructor functions ********/
+//
+
 func CreateReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID string,
 	release Release) (ReleaseBackgroundJob, error) {
 	job, _, err := createReleaseBackgroundJobWithDebug(db, organizationID, applicationID, release, 1000)
@@ -87,6 +94,10 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organizationID string, app
 	}
 	return ReleaseBackgroundJob{}, numTry, fmt.Errorf("Unable to find a free lock sub-ID after %d tries", maxTries)
 }
+
+//
+// ******** Find/load functions ********/
+//
 
 // FindReleaseBackgroundJob looks up a ReleaseBackgroundJob by its application ID and release ID.
 // When not found, returns a `gorm.ErrRecordNotFound` error.

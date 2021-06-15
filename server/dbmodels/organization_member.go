@@ -9,6 +9,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//
+// ******** Types, constants & variables ********/
+//
+
 type OrganizationMemberType string
 
 // These values must be short and must not change, because they're used
@@ -51,6 +55,22 @@ type IOrganizationMember interface {
 	Authenticate(password string) (bool, error)
 }
 
+//
+// ******** OrganizationMember methods ********/
+//
+
+func (orgMember OrganizationMember) GetRole() organizationmemberrole.Role {
+	return orgMember.Role
+}
+
+func (orgMember OrganizationMember) Authenticate(password string) (bool, error) {
+	return argon2.VerifyEncoded([]byte(password), []byte(orgMember.PasswordHash))
+}
+
+//
+// ******** Find/load functions ********/
+//
+
 func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType OrganizationMemberType, orgMemberID string) (IOrganizationMember, error) {
 	switch orgMemberType {
 	case UserType:
@@ -60,12 +80,4 @@ func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType Or
 	default:
 		panic(fmt.Errorf("Bug: unsupported organization member type %s", orgMemberType))
 	}
-}
-
-func (orgMember OrganizationMember) GetRole() organizationmemberrole.Role {
-	return orgMember.Role
-}
-
-func (orgMember OrganizationMember) Authenticate(password string) (bool, error) {
-	return argon2.VerifyEncoded([]byte(password), []byte(orgMember.PasswordHash))
 }

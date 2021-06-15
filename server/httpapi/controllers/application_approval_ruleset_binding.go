@@ -11,8 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetAllApplicationApprovalRulesetBindings ...
-func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context) {
+func (ctx Context) GetApplicationApprovalRulesetBindings(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
 	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
@@ -23,11 +24,15 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 		return
 	}
 
+	// Check authorization
+
 	authorizer := authz.ApplicationAuthorizer{}
 	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
+
+	// Query database
 
 	tx, err := dbutils.ApplyDbQueryPagination(ginctx, ctx.Db)
 	if err != nil {
@@ -55,6 +60,8 @@ func (ctx Context) GetAllApplicationApprovalRulesetBindings(ginctx *gin.Context)
 		respondWithDbQueryError("approval rulesets", err, ginctx)
 		return
 	}
+
+	// Generate response
 
 	outputList := make([]json.ApplicationApprovalRulesetBinding, 0, len(bindings))
 	for _, binding := range bindings {

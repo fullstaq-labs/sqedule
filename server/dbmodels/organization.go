@@ -5,11 +5,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// Organization ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type Organization struct {
 	ID          string `gorm:"type:citext; primaryKey; not null"`
 	DisplayName string `gorm:"not null"`
 }
+
+//
+// ******** Find/load functions ********/
+//
 
 // FindOrganizationByID looks up an Organization by its ID.
 // When not found, returns a `gorm.ErrRecordNotFound` error.

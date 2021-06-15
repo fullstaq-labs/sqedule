@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//
+// ******** Types, constants & variables ********/
+//
+
 type Application struct {
 	BaseModel
 	ID string `gorm:"type:citext; primaryKey; not null"`
@@ -33,7 +37,10 @@ type ApplicationAdjustment struct {
 	ApplicationVersion ApplicationVersion `gorm:"foreignKey:OrganizationID,ApplicationVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// FindAllApplications ...
+//
+// ******** Find/load functions ********/
+//
+
 func FindAllApplications(db *gorm.DB, organizationID string) ([]Application, error) {
 	var result []Application
 	tx := db.Where("organization_id = ?", organizationID)
@@ -66,7 +73,30 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// MakeApplicationsPointerArray ...
+func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applications []*Application) error {
+	reviewables := make([]IReviewable, 0, len(applications))
+	for _, app := range applications {
+		reviewables = append(reviewables, app)
+	}
+
+	return LoadReviewablesLatestVersions(
+		db,
+		reflect.TypeOf(Application{}.ID),
+		[]string{"application_id"},
+		reflect.TypeOf(Application{}.ID),
+		reflect.TypeOf(ApplicationVersion{}),
+		reflect.TypeOf(ApplicationVersion{}.ID),
+		"application_version_id",
+		reflect.TypeOf(ApplicationAdjustment{}),
+		organizationID,
+		reviewables,
+	)
+}
+
+//
+// ******** Other functions ********/
+//
+
 func MakeApplicationsPointerArray(apps []Application) []*Application {
 	result := make([]*Application, 0, len(apps))
 	for i := range apps {
@@ -98,25 +128,4 @@ func CollectApplicationIDs(apps []Application) []string {
 		result = append(result, app.ID)
 	}
 	return result
-}
-
-// LoadApplicationsLatestVersions ...
-func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applications []*Application) error {
-	reviewables := make([]IReviewable, 0, len(applications))
-	for _, app := range applications {
-		reviewables = append(reviewables, app)
-	}
-
-	return LoadReviewablesLatestVersions(
-		db,
-		reflect.TypeOf(Application{}.ID),
-		[]string{"application_id"},
-		reflect.TypeOf(Application{}.ID),
-		reflect.TypeOf(ApplicationVersion{}),
-		reflect.TypeOf(ApplicationVersion{}.ID),
-		"application_version_id",
-		reflect.TypeOf(ApplicationAdjustment{}),
-		organizationID,
-		reviewables,
-	)
 }

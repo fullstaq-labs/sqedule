@@ -7,7 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// ApprovalRuleOutcome ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type ApprovalRuleOutcome struct {
 	BaseModel
 	ID                          uint64                    `gorm:"primaryKey; autoIncrement; not null"`
@@ -17,7 +20,6 @@ type ApprovalRuleOutcome struct {
 	CreatedAt                   time.Time                 `gorm:"not null"`
 }
 
-// HTTPApiApprovalRuleOutcome ...
 type HTTPApiApprovalRuleOutcome struct {
 	ApprovalRuleOutcome
 	HTTPApiApprovalRuleID uint64              `gorm:"not null"`
@@ -27,14 +29,12 @@ type HTTPApiApprovalRuleOutcome struct {
 	ResponseBody          []byte              `gorm:"not null"`
 }
 
-// ScheduleApprovalRuleOutcome ...
 type ScheduleApprovalRuleOutcome struct {
 	ApprovalRuleOutcome
 	ScheduleApprovalRuleID uint64               `gorm:"not null"`
 	ScheduleApprovalRule   ScheduleApprovalRule `gorm:"foreignKey:OrganizationID,ScheduleApprovalRuleID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ManualApprovalRuleOutcome ...
 type ManualApprovalRuleOutcome struct {
 	ApprovalRuleOutcome
 	ManualApprovalRuleID uint64             `gorm:"not null"`
@@ -42,7 +42,10 @@ type ManualApprovalRuleOutcome struct {
 	Comments             sql.NullString
 }
 
-// FindAllScheduleApprovalRuleOutcomes ...
+//
+// ******** Find/load functions ********/
+//
+
 func FindAllScheduleApprovalRuleOutcomes(db *gorm.DB, organizationID string, releaseID uint64) ([]ScheduleApprovalRuleOutcome, error) {
 	var result []ScheduleApprovalRuleOutcome
 

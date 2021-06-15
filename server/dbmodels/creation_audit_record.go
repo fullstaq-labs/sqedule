@@ -5,7 +5,10 @@ import (
 	"time"
 )
 
-// CreationAuditRecord ...
+//
+// ******** Types, constants & variables ********/
+//
+
 type CreationAuditRecord struct {
 	BaseModel
 	ID                   uint64 `gorm:"primaryKey; not null"`
@@ -39,6 +42,10 @@ type CreationAuditRecord struct {
 	ReleaseCancelledEventID *uint64
 	ReleaseCancelledEvent   ReleaseCancelledEvent `gorm:"foreignKey:OrganizationID,ReleaseCancelledEventID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
+
+//
+// ******** Constructor functions ********/
+//
 
 // NewCreationAuditRecord returns an unsaved CreationAuditRecord with the given properties.
 func NewCreationAuditRecord(organizationID string, creator IOrganizationMember, creatorIP string) CreationAuditRecord {

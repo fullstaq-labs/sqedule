@@ -258,7 +258,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, output)
 }
 
-func (ctx Context) PatchRelease(ginctx *gin.Context) {
+func (ctx Context) UpdateRelease(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
