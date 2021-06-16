@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"gorm.io/gorm"
 )
@@ -23,10 +24,12 @@ type IReviewable interface {
 type IReviewableVersion interface {
 	GetID() interface{}
 	GetReviewablePrimaryKey() interface{}
+	GetVersionNumber() *uint32
 	AssociateWithReviewable(reviewable IReviewable)
 }
 
 type IReviewableAdjustment interface {
+	GetReviewState() reviewstate.State
 	GetVersionID() interface{}
 	AssociateWithVersion(version IReviewableVersion)
 }
@@ -52,6 +55,22 @@ type ReviewableAdjustmentBase struct {
 	ReviewState      reviewstate.State `gorm:"type:review_state; not null"`
 	ReviewComments   sql.NullString
 	CreatedAt        time.Time `gorm:"not null"`
+}
+
+//
+// ******** ReviewableVersionBase methods ********/
+//
+
+func (version ReviewableVersionBase) GetVersionNumber() *uint32 {
+	return version.VersionNumber
+}
+
+//
+// ******** ReviewableAdjustmentBase methods ********/
+//
+
+func (adjustment ReviewableAdjustmentBase) GetReviewState() reviewstate.State {
+	return adjustment.ReviewState
 }
 
 //
@@ -105,7 +124,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	/****** Load associated versions ******/
 
 	// Type: *[]actualVersionType
-	versions := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(versionType), 0, 0))
+	versions := lib.ReflectMakeValPtr(reflect.MakeSlice(reflect.SliceOf(versionType), 0, 0))
 	// Type: map[actualVersionIDColumnType]*actualVersionType
 	versionIndex := reflect.MakeMap(reflect.MapOf(versionIDColumnType, reflect.PtrTo(versionType)))
 	// Type: []actualVersionIDColumnType
@@ -124,7 +143,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	}
 	nversions = versions.Elem().Len()
 	for i := 0; i < nversions; i++ {
-		version := reflectMakePtr(versions.Elem().Index(i)).Interface().(IReviewableVersion)
+		version := lib.ReflectMakeValPtr(versions.Elem().Index(i)).Interface().(IReviewableVersion)
 		versionID := reflect.ValueOf(version.GetID())
 		reviewableID := version.GetReviewablePrimaryKey()
 		// Example type: []*Application
@@ -145,7 +164,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	/****** Load associated Adjustments ******/
 
 	// Type: *[]actualAdjustmentType
-	adjustments := reflectMakePtr(reflect.MakeSlice(reflect.SliceOf(adjustmentType), 0, 0))
+	adjustments := lib.ReflectMakeValPtr(reflect.MakeSlice(reflect.SliceOf(adjustmentType), 0, 0))
 	tx = db.
 		Select("DISTINCT ON (organization_id, "+versionIDColumnNameInAdjustmentTable+") *").
 		Where("organization_id = ? AND "+versionIDColumnNameInAdjustmentTable+" IN ?",
@@ -158,7 +177,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 	nversions = adjustments.Elem().Len()
 	for i := 0; i < nversions; i++ {
 		// Type: actualAdjustmentType
-		adjustment := reflectMakePtr(adjustments.Elem().Index(i)).Interface().(IReviewableAdjustment)
+		adjustment := lib.ReflectMakeValPtr(adjustments.Elem().Index(i)).Interface().(IReviewableAdjustment)
 
 		versionID := reflect.ValueOf(adjustment.GetVersionID())
 		// Type: actualVersionType
@@ -214,15 +233,10 @@ func buildReviewablesIndexAndIDList(primaryKeyType reflect.Type, primaryKeyGormV
 // ******** Other functions ********/
 //
 
-func reflectMakePtr(val reflect.Value) reflect.Value {
-	ptr := reflect.New(val.Type())
-	ptr.Elem().Set(val)
-	return ptr
-}
-
 // FinalizeReviewableProposal transitions a Reviewable's proposal to either in the 'reviewing' state or the 'approved' state,
 // depending on whether a review of this proposal is required.
 func FinalizeReviewableProposal(version *ReviewableVersionBase, adjustment *ReviewableAdjustmentBase, latestVersionNumber uint32, requiresReview bool) {
+	// TODO: add support for comments
 	if requiresReview {
 		markProposalAsReviewing(adjustment)
 	} else {
