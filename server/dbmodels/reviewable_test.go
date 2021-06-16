@@ -1,255 +1,187 @@
 package dbmodels
 
 import (
-	"testing"
-
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
-	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type LoadReviewablesLatestVersionsTestContext struct {
-	db       *gorm.DB
-	org      Organization
-	app      Application
-	ruleset1 ApprovalRuleset
-	ruleset2 ApprovalRuleset
-}
-
-func setupLoadReviewablesLatestVersionsTest() (LoadReviewablesLatestVersionsTestContext, error) {
-	var ctx LoadReviewablesLatestVersionsTestContext
+var _ = FDescribe("LoadReviewablesLatestVersions", func() {
+	var db *gorm.DB
 	var err error
+	var org Organization
+	var app Application
+	var ruleset1 ApprovalRuleset
+	var ruleset2 ApprovalRuleset
 
-	ctx.db, err = dbutils.SetupTestDatabase()
-	if err != nil {
-		return LoadReviewablesLatestVersionsTestContext{}, err
-	}
+	BeforeEach(func() {
+		db, err = dbutils.SetupTestDatabase()
+		Expect(err).ToNot(HaveOccurred())
 
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ctx.org, err = CreateMockOrganization(tx, nil)
-		if err != nil {
-			return err
-		}
-		ctx.app, err = CreateMockApplicationWith1Version(tx, ctx.org, nil, nil)
-		if err != nil {
-			return err
-		}
-		ctx.ruleset1, err = CreateMockRulesetWith1Version(tx, ctx.org, "ruleset1", nil)
-		if err != nil {
-			return err
-		}
-		ctx.ruleset2, err = CreateMockRulesetWith1Version(tx, ctx.org, "ruleset2", nil)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return ctx, err
-}
-
-func TestLoadReviewablesLatestVersions(t *testing.T) {
-	ctx, err := setupLoadReviewablesLatestVersionsTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	var versionNumber2 uint32 = 2
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		// Create binding 1
-		binding1, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.org, ctx.app,
-			ctx.ruleset1, nil)
-		if err != nil {
-			return err
-		}
-
-		// Binding 1: create version 2.1 and 2.2
-		binding1Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding1, &versionNumber2)
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding1Version2, nil)
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding1Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
-			adjustment.AdjustmentNumber = 2
-		})
-		if err != nil {
-			return err
-		}
-
-		// Binding 1: Create next version (no version number) and its adjustment
-		binding1VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding1, nil)
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding1VersionNext, nil)
-		if err != nil {
-			return err
-		}
-
-		// Create binding 2
-		binding2, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.org, ctx.app,
-			ctx.ruleset2, nil)
-		if err != nil {
-			return err
-		}
-
-		// Binding 2: create version 2.1, 2.2 and 2.3
-		binding2Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding2, &versionNumber2)
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2Version2, nil)
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
-			adjustment.AdjustmentNumber = 2
-		})
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
-			adjustment.AdjustmentNumber = 3
-		})
-		if err != nil {
-			return err
-		}
-
-		// Binding 2: Create next version (no version number) and its adjustment
-		binding2VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding2, nil)
-		if err != nil {
-			return err
-		}
-		_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.org, binding2VersionNext, nil)
-		if err != nil {
-			return err
-		}
-
-		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding1, &binding2})
-		if !assert.NoError(t, err) {
+		err = db.Transaction(func(tx *gorm.DB) error {
+			org, err = CreateMockOrganization(tx, nil)
+			Expect(err).ToNot(HaveOccurred())
+			app, err = CreateMockApplicationWith1Version(tx, org, nil, nil)
+			Expect(err).ToNot(HaveOccurred())
+			ruleset1, err = CreateMockRulesetWith1Version(tx, org, "ruleset1", nil)
+			Expect(err).ToNot(HaveOccurred())
+			ruleset2, err = CreateMockRulesetWith1Version(tx, org, "ruleset2", nil)
+			Expect(err).ToNot(HaveOccurred())
 			return nil
-		}
-
-		// Run test: binding1's latest version should be 2.2
-		assert.NotNil(t, binding1.LatestVersion)
-		assert.NotNil(t, binding1.LatestVersion.VersionNumber)
-		assert.NotNil(t, binding1.LatestAdjustment)
-		assert.Equal(t, uint32(2), *binding1.LatestVersion.VersionNumber)
-		assert.Equal(t, uint32(2), binding1.LatestAdjustment.AdjustmentNumber)
-
-		// Run test: binding1's latest version should be 2.2
-		assert.NotNil(t, binding2.LatestVersion)
-		assert.NotNil(t, binding2.LatestVersion.VersionNumber)
-		assert.NotNil(t, binding2.LatestAdjustment)
-		assert.Equal(t, uint32(2), *binding2.LatestVersion.VersionNumber)
-		assert.Equal(t, uint32(3), binding2.LatestAdjustment.AdjustmentNumber)
-
-		return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
 	})
-	assert.NoError(t, txerr)
-}
 
-func TestLoadReviewablesLatestVersions_noVersions(t *testing.T) {
-	ctx, err := setupLoadReviewablesLatestVersionsTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		binding := ApplicationApprovalRulesetBinding{
-			BaseModel: BaseModel{
-				OrganizationID: ctx.org.ID,
-			},
-			ApplicationApprovalRulesetBindingPrimaryKey: ApplicationApprovalRulesetBindingPrimaryKey{
-				ApplicationID:     ctx.app.ID,
-				ApprovalRulesetID: ctx.ruleset1.ID,
-			},
-		}
-		savetx := tx.Create(&binding)
-		if savetx.Error != nil {
-			return savetx.Error
-		}
-
-		// Run test: latest version should not exist
-		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding})
-		assert.NoError(t, err)
-		assert.Nil(t, binding.LatestVersion)
-		assert.Nil(t, binding.LatestAdjustment)
-
-		return nil
-	})
-	assert.NoError(t, txerr)
-}
-
-func TestLoadReviewablesLatestVersions_onlyVersionIsUnfinalized(t *testing.T) {
-	ctx, err := setupLoadReviewablesLatestVersionsTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		binding := ApplicationApprovalRulesetBinding{
-			BaseModel: BaseModel{
-				OrganizationID: ctx.org.ID,
-			},
-			ApplicationApprovalRulesetBindingPrimaryKey: ApplicationApprovalRulesetBindingPrimaryKey{
-				ApplicationID:     ctx.app.ID,
-				ApprovalRulesetID: ctx.ruleset1.ID,
-			},
-		}
-		savetx := tx.Create(&binding)
-		if savetx.Error != nil {
-			return savetx.Error
-		}
-
-		_, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding, nil)
-		if err != nil {
-			return err
-		}
-
-		// Run test: latest version should not exist
-		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding})
-		assert.NoError(t, err)
-		assert.Nil(t, binding.LatestVersion)
-		assert.Nil(t, binding.LatestAdjustment)
-
-		return nil
-	})
-	assert.NoError(t, txerr)
-}
-
-func TestLoadReviewablesLatestVersions_noAdjustments(t *testing.T) {
-	ctx, err := setupLoadReviewablesLatestVersionsTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		binding, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.org, ctx.app,
-			ctx.ruleset1, nil)
-		if err != nil {
-			return err
-		}
-		binding.LatestVersion = nil
-		binding.LatestAdjustment = nil
-
-		// Create version 2 with no adjustments
+	It("works", func() {
 		var versionNumber2 uint32 = 2
-		_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.org, ctx.app, binding, &versionNumber2)
-		if err != nil {
-			return err
-		}
+		err = db.Transaction(func(tx *gorm.DB) error {
+			// Create binding 1
+			binding1, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, org, app,
+				ruleset1, nil)
+			Expect(err).ToNot(HaveOccurred())
 
-		// Run test: latest version should be 2, adjustment version nil
-		err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, ctx.org.ID, []*ApplicationApprovalRulesetBinding{&binding})
-		assert.NoError(t, err)
-		assert.NotNil(t, binding.LatestVersion)
-		assert.NotNil(t, binding.LatestVersion.VersionNumber)
-		assert.Nil(t, binding.LatestAdjustment)
-		assert.Equal(t, uint32(2), *binding.LatestVersion.VersionNumber)
+			// Binding 1: create version 2.1 and 2.2
+			binding1Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, &versionNumber2)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1Version2, nil)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+				adjustment.AdjustmentNumber = 2
+			})
+			Expect(err).ToNot(HaveOccurred())
 
-		return nil
+			// Binding 1: Create next version (no version number) and its adjustment
+			binding1VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, nil)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1VersionNext, nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Create binding 2
+			binding2, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, org, app,
+				ruleset2, nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Binding 2: create version 2.1, 2.2 and 2.3
+			binding2Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, &versionNumber2)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, nil)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+				adjustment.AdjustmentNumber = 2
+			})
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
+				adjustment.AdjustmentNumber = 3
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			// Binding 2: Create next version (no version number) and its adjustment
+			binding2VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, nil)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2VersionNext, nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, org.ID, []*ApplicationApprovalRulesetBinding{&binding1, &binding2})
+			Expect(err).ToNot(HaveOccurred())
+
+			// Run test: binding1's latest version should be 2.2
+
+			Expect(binding1.LatestVersion).ToNot(BeNil())
+			Expect(binding1.LatestVersion.VersionNumber).ToNot(BeNil())
+			Expect(binding1.LatestAdjustment).ToNot(BeNil())
+			Expect(*binding1.LatestVersion.VersionNumber).To(BeNumerically("==", 2))
+			Expect(binding1.LatestAdjustment.AdjustmentNumber).To(BeNumerically("==", 2))
+
+			// Run test: binding2's latest version should be 2.3
+			Expect(binding2.LatestVersion).ToNot(BeNil())
+			Expect(binding2.LatestVersion.VersionNumber).ToNot(BeNil())
+			Expect(binding2.LatestAdjustment).ToNot(BeNil())
+			Expect(*binding2.LatestVersion.VersionNumber).To(BeNumerically("==", 2))
+			Expect(binding2.LatestAdjustment.AdjustmentNumber).To(BeNumerically("==", 3))
+
+			return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
 	})
-	assert.NoError(t, txerr)
-}
+
+	It("loads nothing when there are no versions", func() {
+		err = db.Transaction(func(tx *gorm.DB) error {
+			binding := ApplicationApprovalRulesetBinding{
+				BaseModel: BaseModel{
+					OrganizationID: org.ID,
+				},
+				ApplicationApprovalRulesetBindingPrimaryKey: ApplicationApprovalRulesetBindingPrimaryKey{
+					ApplicationID:     app.ID,
+					ApprovalRulesetID: ruleset1.ID,
+				},
+			}
+			savetx := tx.Create(&binding)
+			Expect(savetx.Error).ToNot(HaveOccurred())
+
+			// Run test: latest version should not exist
+			err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, org.ID, []*ApplicationApprovalRulesetBinding{&binding})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(binding.LatestVersion).To(BeNil())
+			Expect(binding.LatestAdjustment).To(BeNil())
+
+			return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	It("loads nothing when there are only proposed versions", func() {
+		err = db.Transaction(func(tx *gorm.DB) error {
+			binding := ApplicationApprovalRulesetBinding{
+				BaseModel: BaseModel{
+					OrganizationID: org.ID,
+				},
+				ApplicationApprovalRulesetBindingPrimaryKey: ApplicationApprovalRulesetBindingPrimaryKey{
+					ApplicationID:     app.ID,
+					ApprovalRulesetID: ruleset1.ID,
+				},
+			}
+			savetx := tx.Create(&binding)
+			Expect(savetx.Error).ToNot(HaveOccurred())
+
+			_, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding, nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Run test: latest version should not exist
+			err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, org.ID, []*ApplicationApprovalRulesetBinding{&binding})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(binding.LatestVersion).To(BeNil())
+			Expect(binding.LatestAdjustment).To(BeNil())
+
+			return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	It("loads no adjustments when there are no adjustments", func() {
+		err = db.Transaction(func(tx *gorm.DB) error {
+			binding, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, org, app,
+				ruleset1, nil)
+			Expect(err).ToNot(HaveOccurred())
+			binding.LatestVersion = nil
+			binding.LatestAdjustment = nil
+
+			// Create version 2 with no adjustments
+			var versionNumber2 uint32 = 2
+			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding, &versionNumber2)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Run test: latest version should be 2, adjustment version nil
+			err = LoadApplicationApprovalRulesetBindingsLatestVersions(tx, org.ID, []*ApplicationApprovalRulesetBinding{&binding})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(binding.LatestVersion).ToNot(BeNil())
+			Expect(binding.LatestVersion.VersionNumber).ToNot(BeNil())
+			Expect(binding.LatestAdjustment).To(BeNil())
+			Expect(*binding.LatestVersion.VersionNumber).To(BeNumerically("==", 2))
+
+			return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
+	})
+})

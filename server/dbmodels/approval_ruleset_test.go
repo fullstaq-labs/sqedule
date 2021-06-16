@@ -1,42 +1,44 @@
 package dbmodels
 
 import (
-	"testing"
-
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
-	"github.com/stretchr/testify/assert"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func TestApprovalRulesetContentsNumRulesSupportsAllRulesetTypes(t *testing.T) {
-	contents := ApprovalRulesetContents{
-		HTTPApiApprovalRules:  []HTTPApiApprovalRule{{}},
-		ScheduleApprovalRules: []ScheduleApprovalRule{{}},
-		ManualApprovalRules:   []ManualApprovalRule{{}},
-	}
-	assert.Equal(t, uint(NumApprovalRuleTypes), contents.NumRules())
-}
-
-func TestFindApprovalRulesBoundToReleaseSupportsAllRulesetTypes(t *testing.T) {
-	db, err := dbutils.SetupTestDatabase()
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	assert.NotPanics(t, func() {
-		FindApprovalRulesBoundToRelease(db, "org", "app", 0)
+var _ = Describe("ApprovalRulesetContents", func() {
+	It("supports all ruleset types", func() {
+		contents := ApprovalRulesetContents{
+			HTTPApiApprovalRules:  []HTTPApiApprovalRule{{}},
+			ScheduleApprovalRules: []ScheduleApprovalRule{{}},
+			ManualApprovalRules:   []ManualApprovalRule{{}},
+		}
+		Expect(contents.NumRules()).To(BeNumerically("==", NumApprovalRuleTypes))
 	})
-}
+})
 
-func TestFindApprovalRulesInRulesetVersionSupportsAllRulesetTypes(t *testing.T) {
-	db, err := dbutils.SetupTestDatabase()
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	assert.NotPanics(t, func() {
-		FindApprovalRulesInRulesetVersion(db, "org", ApprovalRulesetVersionAndAdjustmentKey{
-			VersionID:        1,
-			AdjustmentNumber: 1,
+var _ = Describe("ApprovalRuleset finders", func() {
+	Describe("FindApprovalRulesBoundToRelease", func() {
+		It("supports all ruleset types", func() {
+			db, err := dbutils.SetupTestDatabase()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(func() {
+				FindApprovalRulesBoundToRelease(db, "org", "app", 0)
+			}).ToNot(Panic())
 		})
 	})
-}
+
+	Describe("FindApprovalRulesInRulesetVersion", func() {
+		It("supports all ruleset types", func() {
+			db, err := dbutils.SetupTestDatabase()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(func() {
+				FindApprovalRulesInRulesetVersion(db, "org", ApprovalRulesetVersionAndAdjustmentKey{
+					VersionID:        1,
+					AdjustmentNumber: 1,
+				})
+			}).ToNot(Panic())
+		})
+	})
+})

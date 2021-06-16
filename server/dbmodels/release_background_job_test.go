@@ -1,157 +1,116 @@
 package dbmodels
 
 import (
-	"testing"
-
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
-	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type CreateReleaseBackgroundJobTestContext struct {
-	db      *gorm.DB
-	org     Organization
-	app     Application
-	release Release
-}
-
-func setupCreateReleaseBackgroundJobTest() (CreateReleaseBackgroundJobTestContext, error) {
-	var ctx CreateReleaseBackgroundJobTestContext
+var _ = Describe("ReleaseBackgroundJob", func() {
+	var db *gorm.DB
 	var err error
 
-	ctx.db, err = dbutils.SetupTestDatabase()
-	if err != nil {
-		return CreateReleaseBackgroundJobTestContext{}, err
-	}
+	Describe("creation", func() {
+		var org Organization
+		var app Application
+		var release Release
 
-	err = ctx.db.Transaction(func(tx *gorm.DB) error {
-		ctx.org, err = CreateMockOrganization(tx, nil)
-		if err != nil {
-			return err
-		}
-		ctx.app, err = CreateMockApplicationWith1Version(tx, ctx.org, nil, nil)
-		if err != nil {
-			return err
-		}
-		ctx.release, err = CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, nil)
-		if err != nil {
-			return err
-		}
+		BeforeEach(func() {
+			db, err = dbutils.SetupTestDatabase()
+			Expect(err).ToNot(HaveOccurred())
 
-		return nil
+			err = db.Transaction(func(tx *gorm.DB) error {
+				org, err = CreateMockOrganization(tx, nil)
+				Expect(err).ToNot(HaveOccurred())
+				app, err = CreateMockApplicationWith1Version(tx, org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+				release, err = CreateMockReleaseWithInProgressState(tx, org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("works", func() {
+			err = db.Transaction(func(tx *gorm.DB) error {
+				_, numTries, err := createReleaseBackgroundJobWithDebug(tx, org.ID, app.ID, release, 1)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(numTries).To(BeNumerically("==", 1))
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("picks a random lock ID when the auto-incremented lock ID is already in use", func() {
+			err = db.Transaction(func(tx *gorm.DB) error {
+				release2, err := CreateMockReleaseWithInProgressState(tx, org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create a job and delete it, in order to predict what the next lock ID will be.
+				job, err := CreateReleaseBackgroundJob(tx, org.ID, app.ID, release)
+				Expect(err).ToNot(HaveOccurred())
+				nextLockSubID := (job.LockSubID + 1) % ReleaseBackgroundJobMaxLockSubID
+				err = tx.Delete(&job).Error
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create a job with the predicted next lock ID.
+				job = ReleaseBackgroundJob{
+					BaseModel: BaseModel{
+						OrganizationID: org.ID,
+					},
+					ApplicationID: app.ID,
+					ReleaseID:     release2.ID,
+					LockSubID:     nextLockSubID,
+				}
+				err = tx.Create(&job).Error
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create another job, whose autoincremented lock ID should conflict.
+				job, numTries, err := createReleaseBackgroundJobWithDebug(tx, org.ID, app.ID, release, 100)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(numTries).To(BeNumerically("==", 2))
+				Expect(job.LockSubID).ToNot(Equal((nextLockSubID+1)%ReleaseBackgroundJobMaxLockSubID),
+					"Expect lock sub-ID to be random, not auto-incremented")
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("gives up after too many lock ID picks", func() {
+			err = db.Transaction(func(tx *gorm.DB) error {
+				release2, err := CreateMockReleaseWithInProgressState(tx, org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create a job and delete it, in order to predict what the next lock ID will be.
+				job, err := CreateReleaseBackgroundJob(tx, org.ID, app.ID, release)
+				Expect(err).ToNot(HaveOccurred())
+				nextLockSubID := (job.LockSubID + 1) % ReleaseBackgroundJobMaxLockSubID
+				err = tx.Delete(&job).Error
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create a job with the predicted next lock ID.
+				job = ReleaseBackgroundJob{
+					BaseModel: BaseModel{
+						OrganizationID: org.ID,
+					},
+					ApplicationID: app.ID,
+					ReleaseID:     release2.ID,
+					LockSubID:     nextLockSubID,
+				}
+				err = tx.Create(&job).Error
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create another job, whose autoincremented lock ID should conflict.
+				_, _, err = createReleaseBackgroundJobWithDebug(tx, org.ID, app.ID, release, 1)
+				Expect(err).To(MatchError("Unable to find a free lock sub-ID after 1 tries"))
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
-
-	return ctx, err
-}
-
-func TestCreateReleaseBackgroundJob(t *testing.T) {
-	ctx, err := setupCreateReleaseBackgroundJobTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		_, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org.ID, ctx.app.ID, ctx.release, 1)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-		assert.Equal(t, uint(1), numTries)
-
-		return nil
-	})
-	assert.NoError(t, txerr)
-}
-
-func TestCreateReleaseBackgroundJob_pickRandomLockIDOnIDClash(t *testing.T) {
-	ctx, err := setupCreateReleaseBackgroundJobTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		release2, err := CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, nil)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		// Create a job and delete it, in order to predict what the next lock ID will be.
-		job, err := CreateReleaseBackgroundJob(tx, ctx.org.ID, ctx.app.ID, ctx.release)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-		nextLockSubID := (job.LockSubID + 1) % ReleaseBackgroundJobMaxLockSubID
-		err = tx.Delete(&job).Error
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		// Create a job with the predicted next lock ID.
-		job = ReleaseBackgroundJob{
-			BaseModel: BaseModel{
-				OrganizationID: ctx.org.ID,
-			},
-			ApplicationID: ctx.app.ID,
-			ReleaseID:     release2.ID,
-			LockSubID:     nextLockSubID,
-		}
-		err = tx.Create(&job).Error
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		// Create another job, whose autoincremented lock ID should conflict.
-		job, numTries, err := createReleaseBackgroundJobWithDebug(tx, ctx.org.ID, ctx.app.ID, ctx.release, 100)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-		assert.Equal(t, uint(2), numTries)
-		assert.NotEqual(t, (nextLockSubID+1)%ReleaseBackgroundJobMaxLockSubID, job.LockSubID,
-			"Expect lock sub-ID to be random, not auto-incremented")
-
-		return nil
-	})
-	assert.NoError(t, txerr)
-}
-
-func TestCreateReleaseBackgroundJob_giveUpAfterTooManyLockIDPicks(t *testing.T) {
-	ctx, err := setupCreateReleaseBackgroundJobTest()
-	if !assert.NoError(t, err) {
-		return
-	}
-	txerr := ctx.db.Transaction(func(tx *gorm.DB) error {
-		release2, err := CreateMockReleaseWithInProgressState(tx, ctx.org, ctx.app, nil)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		// Create a job and delete it, in order to predict what the next lock ID will be.
-		job, err := CreateReleaseBackgroundJob(tx, ctx.org.ID, ctx.app.ID, ctx.release)
-		if !assert.NoError(t, err) {
-			return nil
-		}
-		nextLockSubID := (job.LockSubID + 1) % ReleaseBackgroundJobMaxLockSubID
-		err = tx.Delete(&job).Error
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		// Create a job with the predicted next lock ID.
-		job = ReleaseBackgroundJob{
-			BaseModel: BaseModel{
-				OrganizationID: ctx.org.ID,
-			},
-			ApplicationID: ctx.app.ID,
-			ReleaseID:     release2.ID,
-			LockSubID:     nextLockSubID,
-		}
-		err = tx.Create(&job).Error
-		if !assert.NoError(t, err) {
-			return nil
-		}
-
-		// Create another job, whose autoincremented lock ID should conflict.
-		_, _, err = createReleaseBackgroundJobWithDebug(tx, ctx.org.ID, ctx.app.ID, ctx.release, 1)
-		assert.Error(t, err, "Unable to find a free lock ID after 1 tries")
-
-		return nil
-	})
-	assert.NoError(t, txerr)
-}
+})
