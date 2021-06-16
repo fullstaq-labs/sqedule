@@ -6,7 +6,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type CreationAuditRecord struct {
@@ -44,7 +44,7 @@ type CreationAuditRecord struct {
 }
 
 //
-// ******** Constructor functions ********/
+// ******** Constructor functions ********
 //
 
 // NewCreationAuditRecord returns an unsaved CreationAuditRecord with the given properties.

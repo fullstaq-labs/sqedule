@@ -11,7 +11,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ApprovalRuleType string
@@ -70,7 +70,7 @@ type ManualApprovalRule struct {
 }
 
 //
-// ******** ApprovalRule methods ********/
+// ******** ApprovalRule methods ********
 //
 
 func (r *ApprovalRule) AssociateWithApprovalRulesetAdjustment(adjustment ApprovalRulesetAdjustment) {
@@ -92,7 +92,7 @@ func (r ManualApprovalRule) Type() ApprovalRuleType {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // FindApprovalRulesBoundToRelease finds all ApprovalRules that are bound to a specific Release.

@@ -7,6 +7,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
 )
 
+//
+// ******** Types, constants & variables ********
+//
+
 type ReviewableBase struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -25,6 +29,10 @@ type ReviewableVersionInputBase struct {
 	ProposalState proposalstate.ProposalState `json:"proposal_state"`
 	Comments      *string                     `json:"comments"`
 }
+
+//
+// ******** Constructor functions ********
+//
 
 func createReviewableBase(base dbmodels.ReviewableBase) ReviewableBase {
 	return ReviewableBase{

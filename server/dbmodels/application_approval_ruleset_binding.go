@@ -8,7 +8,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ApplicationApprovalRulesetBindingPrimaryKey struct {
@@ -47,7 +47,7 @@ type ApplicationApprovalRulesetBindingAdjustment struct {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 func FindAllApplicationApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string) ([]ApplicationApprovalRulesetBinding, error) {
@@ -88,7 +88,7 @@ func LoadApplicationApprovalRulesetBindingsLatestVersions(db *gorm.DB, organizat
 }
 
 //
-// ******** Other functions ********/
+// ******** Other functions ********
 //
 
 func MakeApplicationApprovalRulesetBindingsPointerArray(bindings []ApplicationApprovalRulesetBinding) []*ApplicationApprovalRulesetBinding {

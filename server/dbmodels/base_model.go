@@ -1,7 +1,7 @@
 package dbmodels
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type BaseModel struct {
@@ -14,7 +14,7 @@ type IBaseModel interface {
 }
 
 //
-// ******** BaseModel methods ********/
+// ******** BaseModel methods ********
 //
 
 func (m BaseModel) GetOrganizationID() string {

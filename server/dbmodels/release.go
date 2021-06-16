@@ -11,7 +11,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type Release struct {
@@ -28,7 +28,7 @@ type Release struct {
 }
 
 //
-// ******** Release methods ********/
+// ******** Release methods ********
 //
 
 func (r Release) Description() string {
@@ -36,7 +36,7 @@ func (r Release) Description() string {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 func FindAllReleases(db *gorm.DB, organizationID string, applicationID string) ([]Release, error) {
@@ -60,7 +60,7 @@ func FindRelease(db *gorm.DB, organizationID string, applicationID string, relea
 }
 
 //
-// ******** Other functions ********/
+// ******** Other functions ********
 //
 
 func MakeReleasesPointerArray(releases []Release) []*Release {

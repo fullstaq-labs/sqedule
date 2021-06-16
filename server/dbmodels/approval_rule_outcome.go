@@ -8,7 +8,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ApprovalRuleOutcome struct {
@@ -43,7 +43,7 @@ type ManualApprovalRuleOutcome struct {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 func FindAllScheduleApprovalRuleOutcomes(db *gorm.DB, organizationID string, releaseID uint64) ([]ScheduleApprovalRuleOutcome, error) {

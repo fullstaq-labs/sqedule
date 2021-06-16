@@ -10,7 +10,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ApprovalRuleInput struct {
@@ -48,7 +48,7 @@ type ManualApprovalRuleInput struct {
 }
 
 //
-// ******** ApprovalRuleInput methods ********/
+// ******** ApprovalRuleInput methods ********
 //
 
 func (input *ApprovalRuleInput) UnmarshalJSON(b []byte) error {
@@ -107,7 +107,7 @@ func (input ApprovalRuleInput) AppendToDbmodelsApprovalRulesetContents(organizat
 }
 
 //
-// ******** ApprovalRuleInputBase methods ********/
+// ******** ApprovalRuleInputBase methods ********
 //
 
 func (input ApprovalRuleInputBase) PopulateDbmodel(model *dbmodels.ApprovalRule) {
@@ -115,7 +115,7 @@ func (input ApprovalRuleInputBase) PopulateDbmodel(model *dbmodels.ApprovalRule)
 }
 
 //
-// ******** HTTPApiApprovalRuleInput methods ********/
+// ******** HTTPApiApprovalRuleInput methods ********
 //
 
 func (input HTTPApiApprovalRuleInput) PopulateDbmodel(model *dbmodels.HTTPApiApprovalRule) {
@@ -128,7 +128,7 @@ func (input HTTPApiApprovalRuleInput) PopulateDbmodel(model *dbmodels.HTTPApiApp
 }
 
 //
-// ******** ScheduleApprovalRuleInput methods ********/
+// ******** ScheduleApprovalRuleInput methods ********
 //
 
 func (input ScheduleApprovalRuleInput) PopulateDbmodel(model *dbmodels.ScheduleApprovalRule) {
@@ -140,7 +140,7 @@ func (input ScheduleApprovalRuleInput) PopulateDbmodel(model *dbmodels.ScheduleA
 }
 
 //
-// ******** ManualApprovalRuleInput methods ********/
+// ******** ManualApprovalRuleInput methods ********
 //
 
 func (input ManualApprovalRuleInput) PopulateDbmodel(model *dbmodels.ManualApprovalRule) {

@@ -12,7 +12,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 // ReleaseBackgroundJobPostgresLockNamespace is the number at which the PostgreSQL advisory lock should start.
@@ -34,7 +34,7 @@ type ReleaseBackgroundJob struct {
 }
 
 //
-// ******** Constructor functions ********/
+// ******** Constructor functions ********
 //
 
 func CreateReleaseBackgroundJob(db *gorm.DB, organizationID string, applicationID string,
@@ -96,7 +96,7 @@ func createReleaseBackgroundJobWithDebug(db *gorm.DB, organizationID string, app
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // FindReleaseBackgroundJob looks up a ReleaseBackgroundJob by its application ID and release ID.

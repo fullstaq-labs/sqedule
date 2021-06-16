@@ -10,7 +10,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type OrganizationMemberType string
@@ -56,7 +56,7 @@ type IOrganizationMember interface {
 }
 
 //
-// ******** OrganizationMember methods ********/
+// ******** OrganizationMember methods ********
 //
 
 func (orgMember OrganizationMember) GetRole() organizationmemberrole.Role {
@@ -68,7 +68,7 @@ func (orgMember OrganizationMember) Authenticate(password string) (bool, error) 
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 func FindOrganizationMember(db *gorm.DB, organizationID string, orgMemberType OrganizationMemberType, orgMemberID string) (IOrganizationMember, error) {

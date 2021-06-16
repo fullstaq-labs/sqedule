@@ -4,6 +4,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
+//
+// ******** Types, constants & variables ********
+//
+
 type ApplicationApprovalRulesetBinding struct {
 	VersionNumber    *uint32 `json:"version_number"`
 	AdjustmentNumber uint32  `json:"adjustment_number"`
@@ -19,6 +23,10 @@ type ApplicationApprovalRulesetBindingWithRulesetAssociation struct {
 	ApplicationApprovalRulesetBinding
 	ApprovalRuleset ApprovalRulesetWithLatestApprovedVersion `json:"approval_ruleset"`
 }
+
+//
+// ******** Constructor functions ********
+//
 
 func CreateFromDbApplicationApprovalRulesetBinding(binding dbmodels.ApplicationApprovalRulesetBinding, version dbmodels.ApplicationApprovalRulesetBindingVersion,
 	adjustment dbmodels.ApplicationApprovalRulesetBindingAdjustment) ApplicationApprovalRulesetBinding {

@@ -6,7 +6,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type Organization struct {
@@ -15,7 +15,7 @@ type Organization struct {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // FindOrganizationByID looks up an Organization by its ID.

@@ -8,7 +8,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ApprovalRuleset struct {
@@ -72,7 +72,7 @@ type ApprovalRulesetContents struct {
 }
 
 //
-// ******** ApprovalRulesetContents methods ********/
+// ******** ApprovalRulesetContents methods ********
 //
 
 // NumRules returns the total number of rules in this ApprovalRulesetContents.
@@ -118,7 +118,7 @@ func (c *ApprovalRulesetContents) ForEach(callback func(rule IApprovalRule) erro
 }
 
 //
-// ******** ApprovalRuleset methods ********/
+// ******** ApprovalRuleset methods ********
 //
 
 func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
@@ -128,7 +128,7 @@ func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplicatio
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // FindAllApprovalRulesetsWithStats ...
@@ -205,7 +205,7 @@ func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rule
 }
 
 //
-// ******** Other functions ********/
+// ******** Other functions ********
 //
 
 func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {

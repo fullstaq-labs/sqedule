@@ -8,7 +8,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type Application struct {
@@ -38,7 +38,7 @@ type ApplicationAdjustment struct {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 func FindAllApplications(db *gorm.DB, organizationID string) ([]Application, error) {
@@ -94,7 +94,7 @@ func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applicat
 }
 
 //
-// ******** Other functions ********/
+// ******** Other functions ********
 //
 
 func MakeApplicationsPointerArray(apps []Application) []*Application {

@@ -5,7 +5,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ApprovalRulesetBase struct {
@@ -39,7 +39,7 @@ type ApprovalRulesetVersion struct {
 }
 
 //
-// ******** ApprovalRulesetBase methods ********/
+// ******** ApprovalRulesetBase methods ********
 //
 
 func (base *ApprovalRulesetBase) PopulateFromDbmodelsApplicationApprovalRulesetBinding(bindings []dbmodels.ApplicationApprovalRulesetBinding) {
@@ -65,7 +65,7 @@ func (base *ApprovalRulesetBase) PopulateFromDbmodelsApplicationApprovalRulesetB
 }
 
 //
-// ******** ApprovalRulesetVersion methods ********/
+// ******** ApprovalRulesetVersion methods ********
 //
 
 func (version *ApprovalRulesetVersion) PopulateFromDbmodelsReleaseApprovalRulesetBindings(bindings []dbmodels.ReleaseApprovalRulesetBinding) {
@@ -104,7 +104,7 @@ func (version *ApprovalRulesetVersion) PopulateFromDbmodelsApprovalRulesetConten
 }
 
 //
-// ******** Constructor functions ********/
+// ******** Constructor functions ********
 //
 
 func CreateApprovalRulesetVersion(version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetVersion {

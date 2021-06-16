@@ -8,6 +8,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 )
 
+//
+// ******** Types, constants & variables ********
+//
+
 type Release struct {
 	ID    uint64 `json:"id"`
 	State string `json:"state"`
@@ -32,6 +36,18 @@ type ReleaseWithAssociations struct {
 	Application             *Application                                           `json:"application,omitempty"`
 	ApprovalRulesetBindings *[]ReleaseApprovalRulesetBindingWithRulesetAssociation `json:"approval_ruleset_bindings,omitempty"`
 }
+
+//
+// ******** Release methods ********
+//
+
+func (release Release) ApprovalStatusIsFinal() bool {
+	return releasestate.State(release.State).IsFinal()
+}
+
+//
+// ******** Constructor functions ********
+//
 
 func CreateFromDbRelease(release dbmodels.Release) Release {
 	result := Release{
@@ -103,6 +119,10 @@ func CreateFromDbReleaseWithAssociations(release dbmodels.Release, includeApplic
 	return result
 }
 
+//
+// ******** Other functions ********
+//
+
 func PatchDbRelease(release *dbmodels.Release, json ReleasePatchablePart) {
 	if json.SourceIdentity != nil {
 		release.SourceIdentity = sql.NullString{String: *json.SourceIdentity, Valid: true}
@@ -110,8 +130,4 @@ func PatchDbRelease(release *dbmodels.Release, json ReleasePatchablePart) {
 	if json.Comments != nil {
 		release.Comments = sql.NullString{String: *json.Comments, Valid: true}
 	}
-}
-
-func (release Release) ApprovalStatusIsFinal() bool {
-	return releasestate.State(release.State).IsFinal()
 }

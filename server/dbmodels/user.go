@@ -6,7 +6,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type User struct {
@@ -17,7 +17,7 @@ type User struct {
 }
 
 //
-// ******** User methods ********/
+// ******** User methods ********
 //
 
 // Type returns a name of the concrete type. This name is short,
@@ -39,7 +39,7 @@ func (user User) IDTypeDisplayName() string {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // FindUserByEmail looks up a User by its email address.

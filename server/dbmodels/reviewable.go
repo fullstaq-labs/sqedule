@@ -12,7 +12,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type IReviewable interface {
@@ -58,7 +58,7 @@ type ReviewableAdjustmentBase struct {
 }
 
 //
-// ******** ReviewableVersionBase methods ********/
+// ******** ReviewableVersionBase methods ********
 //
 
 func (version ReviewableVersionBase) GetVersionNumber() *uint32 {
@@ -66,7 +66,7 @@ func (version ReviewableVersionBase) GetVersionNumber() *uint32 {
 }
 
 //
-// ******** ReviewableAdjustmentBase methods ********/
+// ******** ReviewableAdjustmentBase methods ********
 //
 
 func (adjustment ReviewableAdjustmentBase) GetReviewState() reviewstate.State {
@@ -74,7 +74,7 @@ func (adjustment ReviewableAdjustmentBase) GetReviewState() reviewstate.State {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // LoadReviewablesLatestVersions loads the latest Version and Adjustment records associated
@@ -230,7 +230,7 @@ func buildReviewablesIndexAndIDList(primaryKeyType reflect.Type, primaryKeyGormV
 }
 
 //
-// ******** Other functions ********/
+// ******** Other functions ********
 //
 
 // FinalizeReviewableProposal transitions a Reviewable's proposal to either in the 'reviewing' state or the 'approved' state,

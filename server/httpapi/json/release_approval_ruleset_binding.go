@@ -4,6 +4,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
+//
+// ******** Types, constants & variables ********
+//
+
 type ReleaseApprovalRulesetBinding struct {
 	Mode string `json:"mode"`
 }
@@ -17,6 +21,10 @@ type ReleaseApprovalRulesetBindingWithReleaseAssociation struct {
 	ReleaseApprovalRulesetBinding
 	Release ReleaseWithApplicationAssociation `json:"release"`
 }
+
+//
+// ******** Constructor functions ********
+//
 
 func CreateFromDbReleaseApprovalRulesetBinding(binding dbmodels.ReleaseApprovalRulesetBinding) ReleaseApprovalRulesetBinding {
 	return ReleaseApprovalRulesetBinding{

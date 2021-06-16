@@ -4,6 +4,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
+//
+// ******** Types, constants & variables ********
+//
+
 type ApprovalRulesetInput struct {
 	ID      *string                      `json:"id"`
 	Version *ApprovalRulesetVersionInput `json:"version"`
@@ -17,6 +21,10 @@ type ApprovalRulesetVersionInput struct {
 	ApprovalRules *[]ApprovalRuleInput `json:"approval_rules"`
 }
 
+//
+// ******** ApprovalRulesetVersionInput methods ********
+//
+
 func (input ApprovalRulesetVersionInput) ToDbmodelsApprovalRulesetContents(organizationID string) dbmodels.ApprovalRulesetContents {
 	var contents dbmodels.ApprovalRulesetContents
 	if input.ApprovalRules == nil {
@@ -28,6 +36,10 @@ func (input ApprovalRulesetVersionInput) ToDbmodelsApprovalRulesetContents(organ
 	}
 	return contents
 }
+
+//
+// ******** Other functions ********
+//
 
 func PatchApprovalRuleset(ruleset *dbmodels.ApprovalRuleset, input ApprovalRulesetInput) {
 	if input.ID != nil {

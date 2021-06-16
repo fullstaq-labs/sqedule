@@ -6,6 +6,10 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
+//
+// ******** Types, constants & variables ********
+//
+
 type Application struct {
 	ID                      string                                                     `json:"id"`
 	VersionNumber           *uint32                                                    `json:"version_number"`
@@ -18,6 +22,10 @@ type Application struct {
 	UpdatedAt               time.Time                                                  `json:"updated_at"`
 	ApprovalRulesetBindings *[]ApplicationApprovalRulesetBindingWithRulesetAssociation `json:"approval_ruleset_bindings,omitempty"`
 }
+
+//
+// ******** Constructor functions ********
+//
 
 func CreateFromDbApplication(application dbmodels.Application, version dbmodels.ApplicationVersion, adjustment dbmodels.ApplicationAdjustment,
 	rulesetBindings *[]dbmodels.ApplicationApprovalRulesetBinding) Application {

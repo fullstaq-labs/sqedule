@@ -6,7 +6,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ServiceAccount struct {
@@ -15,7 +15,7 @@ type ServiceAccount struct {
 }
 
 //
-// ******** ServiceAccount methods ********/
+// ******** ServiceAccount methods ********
 //
 
 // Type returns a name of the concrete type. This name is short,
@@ -37,7 +37,7 @@ func (sa ServiceAccount) IDTypeDisplayName() string {
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 // FindServiceAccountByName looks up a ServiceAccount by its name.

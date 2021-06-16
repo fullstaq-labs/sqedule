@@ -7,7 +7,7 @@ import (
 )
 
 //
-// ******** Types, constants & variables ********/
+// ******** Types, constants & variables ********
 //
 
 type ReleaseApprovalRulesetBinding struct {
@@ -30,7 +30,7 @@ type ReleaseApprovalRulesetBinding struct {
 }
 
 //
-// ******** Constructor functions ********/
+// ******** Constructor functions ********
 //
 
 func NewReleaseApprovalRulesetBindingFromApplicationApprovalRulesetBinding(appRuleBinding ApplicationApprovalRulesetBinding) ReleaseApprovalRulesetBinding {
@@ -79,7 +79,7 @@ func CreateReleaseApprovalRulesetBindings(db *gorm.DB, releaseID uint64, appRule
 }
 
 //
-// ******** Find/load functions ********/
+// ******** Find/load functions ********
 //
 
 func FindAllReleaseApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string, releaseID uint64) ([]ReleaseApprovalRulesetBinding, error) {
