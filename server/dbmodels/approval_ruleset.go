@@ -122,7 +122,9 @@ func (c *ApprovalRulesetContents) ForEach(callback func(rule IApprovalRule) erro
 //
 
 func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
-	return !hasBoundApplications
+	return false
+	// TODO: comment out after we've implemented the review steps in the version creation process
+	//return !hasBoundApplications
 }
 
 //
