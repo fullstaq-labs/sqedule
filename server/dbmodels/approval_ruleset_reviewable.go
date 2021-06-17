@@ -6,12 +6,12 @@ func (ruleset ApprovalRuleset) GetPrimaryKey() interface{} {
 	return ruleset.ID
 }
 
-func (ruleset *ApprovalRuleset) SetLatestVersion(version IReviewableVersion) {
-	ruleset.LatestVersion = version.(*ApprovalRulesetVersion)
+func (ruleset ApprovalRuleset) GetPrimaryKeyGormValue() []interface{} {
+	return []interface{}{ruleset.ID}
 }
 
-func (ruleset *ApprovalRuleset) SetLatestAdjustment(adjustment IReviewableAdjustment) {
-	ruleset.LatestAdjustment = adjustment.(*ApprovalRulesetAdjustment)
+func (ruleset *ApprovalRuleset) AssociateWithVersion(version IReviewableVersion) {
+	ruleset.Version = version.(*ApprovalRulesetVersion)
 }
 
 // NewDraftVersion returns an unsaved ApprovalRulesetVersion and ApprovalRulesetAdjustment
@@ -20,14 +20,15 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 	var adjustment ApprovalRulesetAdjustment
 	var version *ApprovalRulesetVersion = &adjustment.ApprovalRulesetVersion
 
-	if ruleset.LatestAdjustment != nil {
-		adjustment = *ruleset.LatestAdjustment
+	if ruleset.Version != nil && ruleset.Version.Adjustment != nil {
+		adjustment = *ruleset.Version.Adjustment
 	}
 
 	version.BaseModel = ruleset.BaseModel
 	version.ReviewableVersionBase = ReviewableVersionBase{}
 	version.ApprovalRuleset = ruleset
 	version.ApprovalRulesetID = ruleset.ID
+	version.Adjustment = &adjustment
 
 	adjustment.BaseModel = ruleset.BaseModel
 	adjustment.ApprovalRulesetVersionID = 0
@@ -47,10 +48,18 @@ func (version ApprovalRulesetVersion) GetReviewablePrimaryKey() interface{} {
 	return version.ApprovalRulesetID
 }
 
+func (version ApprovalRulesetVersion) GetReviewablePrimaryKeyGormValue() []interface{} {
+	return []interface{}{version.ApprovalRulesetID}
+}
+
 func (version *ApprovalRulesetVersion) AssociateWithReviewable(reviewable IReviewable) {
 	ruleset := reviewable.(*ApprovalRuleset)
 	version.ApprovalRulesetID = ruleset.ID
 	version.ApprovalRuleset = *ruleset
+}
+
+func (version *ApprovalRulesetVersion) AssociateWithAdjustment(adjustment IReviewableAdjustment) {
+	version.Adjustment = adjustment.(*ApprovalRulesetAdjustment)
 }
 
 func (adjustment ApprovalRulesetAdjustment) GetVersionID() interface{} {

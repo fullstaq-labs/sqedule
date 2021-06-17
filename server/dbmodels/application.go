@@ -15,8 +15,8 @@ type Application struct {
 	BaseModel
 	ID string `gorm:"type:citext; primaryKey; not null"`
 	ReviewableBase
-	LatestVersion    *ApplicationVersion    `gorm:"-"`
-	LatestAdjustment *ApplicationAdjustment `gorm:"-"`
+
+	Version *ApplicationVersion `gorm:"-"`
 }
 
 type ApplicationVersion struct {
@@ -24,6 +24,8 @@ type ApplicationVersion struct {
 	ReviewableVersionBase
 	ApplicationID string      `gorm:"type:citext; not null"`
 	Application   Application `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	Adjustment *ApplicationAdjustment `gorm:"-"`
 }
 
 type ApplicationAdjustment struct {
@@ -73,6 +75,15 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
+func LoadApplicationsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, applications []*Application) error {
+	err := LoadApplicationsLatestVersions(db, organizationID, applications)
+	if err != nil {
+		return err
+	}
+
+	return LoadApplicationVersionsLatestAdjustments(db, organizationID, CollectApplicationVersions(applications))
+}
+
 func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applications []*Application) error {
 	reviewables := make([]IReviewable, 0, len(applications))
 	for _, app := range applications {
@@ -81,15 +92,25 @@ func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applicat
 
 	return LoadReviewablesLatestVersions(
 		db,
-		reflect.TypeOf(Application{}.ID),
-		[]string{"application_id"},
-		reflect.TypeOf(Application{}.ID),
-		reflect.TypeOf(ApplicationVersion{}),
-		reflect.TypeOf(ApplicationVersion{}.ID),
-		"application_version_id",
-		reflect.TypeOf(ApplicationAdjustment{}),
 		organizationID,
 		reviewables,
+		reflect.TypeOf(ApplicationVersion{}),
+		[]string{"application_id"},
+	)
+}
+
+func LoadApplicationVersionsLatestAdjustments(db *gorm.DB, organizationID string, versions []*ApplicationVersion) error {
+	iversions := make([]IReviewableVersion, 0, len(versions))
+	for _, version := range versions {
+		iversions = append(iversions, version)
+	}
+
+	return LoadReviewableVersionsLatestAdjustments(
+		db,
+		organizationID,
+		iversions,
+		reflect.TypeOf(ApplicationAdjustment{}),
+		"application_version_id",
 	)
 }
 
@@ -97,6 +118,7 @@ func LoadApplicationsLatestVersions(db *gorm.DB, organizationID string, applicat
 // ******** Other functions ********
 //
 
+// MakeApplicationsPointerArray returns a `[]Application` into a `[]*Application`.
 func MakeApplicationsPointerArray(apps []Application) []*Application {
 	result := make([]*Application, 0, len(apps))
 	for i := range apps {
@@ -122,10 +144,22 @@ func CollectApplicationsWithReleases(releases []*Release) []*Application {
 	return result
 }
 
-func CollectApplicationIDs(apps []Application) []string {
-	result := make([]string, 0, len(apps))
-	for _, app := range apps {
+func CollectApplicationIDs(applications []Application) []string {
+	result := make([]string, 0, len(applications))
+	for _, app := range applications {
 		result = append(result, app.ID)
+	}
+	return result
+}
+
+// CollectApplicationVersions turns a `[]*Application` into a list of their associated ApplicationVersions.
+// It does not include nils.
+func CollectApplicationVersions(applications []*Application) []*ApplicationVersion {
+	result := make([]*ApplicationVersion, 0, len(applications))
+	for _, elem := range applications {
+		if elem.Version != nil {
+			result = append(result, elem.Version)
+		}
 	}
 	return result
 }

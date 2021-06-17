@@ -14,6 +14,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+//
+// ******** Operations on resources ********
+//
+
 func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
@@ -125,7 +129,7 @@ func (ctx Context) GetApprovalRulesets(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApprovalRulesetsWithoutStats(rulesets))
 	if err != nil {
 		respondWithDbQueryError("approval ruleset latest versions", err, ginctx)
@@ -137,7 +141,7 @@ func (ctx Context) GetApprovalRulesets(ginctx *gin.Context) {
 	outputList := make([]json.ApprovalRulesetWithLatestApprovedVersion, 0, len(rulesets))
 	for _, ruleset := range rulesets {
 		outputList = append(outputList, json.CreateApprovalRulesetWithLatestApprovedVersionAndStats(ruleset,
-			*ruleset.LatestVersion, *ruleset.LatestAdjustment))
+			*ruleset.Version, *ruleset.Version.Adjustment))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -165,7 +169,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 
 	// Query database
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		[]*dbmodels.ApprovalRuleset{&ruleset})
 	if err != nil {
 		respondWithDbQueryError("approval ruleset latest versions", err, ginctx)
@@ -173,8 +177,8 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 	}
 
 	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionAndAdjustmentKey{
-		VersionID:        ruleset.LatestVersion.ID,
-		AdjustmentNumber: ruleset.LatestAdjustment.AdjustmentNumber,
+		VersionID:        ruleset.Version.ID,
+		AdjustmentNumber: ruleset.Version.Adjustment.AdjustmentNumber,
 	})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
@@ -187,13 +191,13 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
 		return
 	}
-	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appBindings))
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding latest versions", err, ginctx)
 		return
 	}
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApplicationsWithApplicationApprovalRulesetBindings(appBindings))
 	if err != nil {
 		respondWithDbQueryError("application latest versions", err, ginctx)
@@ -206,7 +210,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)
 		return
 	}
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApplicationsWithReleases(dbmodels.CollectReleasesWithReleaseApprovalRulesetBindings(releaseBindings)))
 	if err != nil {
 		respondWithDbQueryError("application latest versions", err, ginctx)
@@ -215,8 +219,8 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 
 	// Generate response
 
-	output := json.CreateApprovalRulesetWithLatestApprovedVersionAndBindingsAndRules(ruleset, *ruleset.LatestVersion,
-		*ruleset.LatestAdjustment, appBindings, releaseBindings, rules)
+	output := json.CreateApprovalRulesetWithLatestApprovedVersionAndBindingsAndRules(ruleset, *ruleset.Version,
+		*ruleset.Version.Adjustment, appBindings, releaseBindings, rules)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -249,15 +253,15 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 
 	// Query database
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
 	if err != nil {
 		respondWithDbQueryError("approval ruleset latest versions", err, ginctx)
 		return
 	}
 
 	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionAndAdjustmentKey{
-		VersionID:        ruleset.LatestVersion.ID,
-		AdjustmentNumber: ruleset.LatestAdjustment.AdjustmentNumber,
+		VersionID:        ruleset.Version.ID,
+		AdjustmentNumber: ruleset.Version.Adjustment.AdjustmentNumber,
 	})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
@@ -270,13 +274,13 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
 		return
 	}
-	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appBindings))
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding latest versions", err, ginctx)
 		return
 	}
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApplicationsWithApplicationApprovalRulesetBindings(appBindings))
 	if err != nil {
 		respondWithDbQueryError("application latest versions", err, ginctx)
@@ -289,7 +293,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 		respondWithDbQueryError("release approval ruleset bindings", err, ginctx)
 		return
 	}
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApplicationsWithReleases(dbmodels.CollectReleasesWithReleaseApprovalRulesetBindings(releaseBindings)))
 	if err != nil {
 		respondWithDbQueryError("application latest versions", err, ginctx)
@@ -311,7 +315,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 			if input.Version.ProposalState == proposalstate.Final {
 				dbmodels.FinalizeReviewableProposal(&version.ReviewableVersionBase,
 					&adjustment.ReviewableAdjustmentBase,
-					*ruleset.LatestVersion.VersionNumber,
+					*ruleset.Version.VersionNumber,
 					ruleset.CheckNewProposalsRequireReview(len(appBindings) > 0))
 			}
 
@@ -332,8 +336,8 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 				return err
 			}
 
-			ruleset.LatestVersion = version
-			ruleset.LatestAdjustment = adjustment
+			ruleset.Version = version
+			ruleset.Version.Adjustment = adjustment
 		}
 
 		return nil
@@ -345,7 +349,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 
 	// Generate response
 
-	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, *ruleset.LatestVersion,
-		*ruleset.LatestAdjustment, appBindings, releaseBindings, rules)
+	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, *ruleset.Version,
+		*ruleset.Version.Adjustment, appBindings, releaseBindings, rules)
 	ginctx.JSON(http.StatusOK, output)
 }

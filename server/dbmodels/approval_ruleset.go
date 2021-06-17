@@ -15,8 +15,8 @@ type ApprovalRuleset struct {
 	BaseModel
 	ID string `gorm:"type:citext; primaryKey; not null"`
 	ReviewableBase
-	LatestVersion    *ApprovalRulesetVersion    `gorm:"-"`
-	LatestAdjustment *ApprovalRulesetAdjustment `gorm:"-"`
+
+	Version *ApprovalRulesetVersion `gorm:"-"`
 }
 
 type ApprovalRulesetVersion struct {
@@ -24,6 +24,8 @@ type ApprovalRulesetVersion struct {
 	ReviewableVersionBase
 	ApprovalRulesetID string          `gorm:"type:citext; not null"`
 	ApprovalRuleset   ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	Adjustment *ApprovalRulesetAdjustment `gorm:"-"`
 }
 
 type ApprovalRulesetAdjustment struct {
@@ -183,7 +185,25 @@ func FindApprovalRuleset(db *gorm.DB, organizationID string, id string) (Approva
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// LoadApprovalRulesetsLatestVersions ...
+// FindApprovalRulesetApprovedVersions finds, for a given ApprovalRuleset, all its approved Versions
+// and returns them ordered by version number (descending).
+func FindApprovalRulesetApprovedVersions(db *gorm.DB, organizationID string, rulesetID string) ([]ApprovalRulesetVersion, error) {
+	var result []ApprovalRulesetVersion
+
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND version_number IS NOT NULL", organizationID, rulesetID).Order("version_number DESC")
+	tx.Find(&result)
+	return result, tx.Error
+}
+
+func LoadApprovalRulesetsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, rulesets []*ApprovalRuleset) error {
+	err := LoadApprovalRulesetsLatestVersions(db, organizationID, rulesets)
+	if err != nil {
+		return err
+	}
+
+	return LoadApprovalRulesetVersionsLatestAdjustments(db, organizationID, CollectApprovalRulesetVersions(rulesets))
+}
+
 func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rulesets []*ApprovalRuleset) error {
 	reviewables := make([]IReviewable, 0, len(rulesets))
 	for _, ruleset := range rulesets {
@@ -192,21 +212,40 @@ func LoadApprovalRulesetsLatestVersions(db *gorm.DB, organizationID string, rule
 
 	return LoadReviewablesLatestVersions(
 		db,
-		reflect.TypeOf(ApprovalRuleset{}.ID),
-		[]string{"approval_ruleset_id"},
-		reflect.TypeOf(ApprovalRuleset{}.ID),
-		reflect.TypeOf(ApprovalRulesetVersion{}),
-		reflect.TypeOf(ApprovalRulesetVersion{}.ID),
-		"approval_ruleset_version_id",
-		reflect.TypeOf(ApprovalRulesetAdjustment{}),
 		organizationID,
 		reviewables,
+		reflect.TypeOf(ApprovalRulesetVersion{}),
+		[]string{"approval_ruleset_id"},
+	)
+}
+
+func LoadApprovalRulesetVersionsLatestAdjustments(db *gorm.DB, organizationID string, versions []*ApprovalRulesetVersion) error {
+	iversions := make([]IReviewableVersion, 0, len(versions))
+	for _, version := range versions {
+		iversions = append(iversions, version)
+	}
+
+	return LoadReviewableVersionsLatestAdjustments(
+		db,
+		organizationID,
+		iversions,
+		reflect.TypeOf(ApprovalRulesetAdjustment{}),
+		"approval_ruleset_version_id",
 	)
 }
 
 //
 // ******** Other functions ********
 //
+
+// MakeApprovalRulesetVersionsPointerArray turns a `[]ApprovalRulesetVersion` into a `[]*ApprovalRulesetVersion`.
+func MakeApprovalRulesetVersionsPointerArray(versions []ApprovalRulesetVersion) []*ApprovalRulesetVersion {
+	result := make([]*ApprovalRulesetVersion, 0, len(versions))
+	for i := range versions {
+		result = append(result, &versions[i])
+	}
+	return result
+}
 
 func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {
 	result := make([]*ApprovalRuleset, 0)
@@ -222,6 +261,18 @@ func CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings []Ap
 	for i := range bindings {
 		binding := &bindings[i]
 		result = append(result, &binding.ApprovalRuleset)
+	}
+	return result
+}
+
+// CollectApprovalRulesetVersions turns a `[]*ApprovalRuleset` into a list of their associated ApprovalRulesetVersions.
+// It does not include nils.
+func CollectApprovalRulesetVersions(rulesets []*ApprovalRuleset) []*ApprovalRulesetVersion {
+	result := make([]*ApprovalRulesetVersion, 0, len(rulesets))
+	for _, elem := range rulesets {
+		if elem.Version != nil {
+			result = append(result, elem.Version)
+		}
 	}
 	return result
 }

@@ -107,13 +107,13 @@ var _ = Describe("approval-ruleset API", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset,
-					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset,
-					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset,
-					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil
@@ -164,11 +164,11 @@ var _ = Describe("approval-ruleset API", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
-					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
-					ruleset.LatestVersion.ID, *ruleset.LatestAdjustment, nil)
+					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil
@@ -252,11 +252,11 @@ var _ = Describe("approval-ruleset API", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
-					*ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
-					ruleset.LatestVersion.ID, *ruleset.LatestAdjustment, nil)
+					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil
@@ -347,11 +347,11 @@ var _ = Describe("approval-ruleset API", func() {
 					Expect(err).ToNot(HaveOccurred())
 
 					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
-						mockRuleset.LatestVersion.ID, *mockRuleset.LatestAdjustment, nil)
+						mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
-						mockRuleset.LatestVersion.ID, *mockRuleset.LatestAdjustment, nil)
+						mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					return nil
@@ -375,9 +375,9 @@ var _ = Describe("approval-ruleset API", func() {
 				},
 				AdjustmentType: reflect.TypeOf(dbmodels.ApprovalRulesetAdjustment{}),
 				GetLatestResourceVersionAndAdjustment: func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment) {
-					err := dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, ctx.Org.ID, []*dbmodels.ApprovalRuleset{&mockRuleset})
+					err := dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApprovalRuleset{&mockRuleset})
 					Expect(err).ToNot(HaveOccurred())
-					return mockRuleset.LatestVersion, mockRuleset.LatestAdjustment
+					return mockRuleset.Version, mockRuleset.Version.Adjustment
 				},
 				VersionedFieldJSONFieldName: "display_name",
 				VersionedFieldUpdatedValue:  "Ruleset 2",

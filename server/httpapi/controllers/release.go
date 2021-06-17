@@ -63,7 +63,7 @@ func (ctx Context) GetReleases(ginctx *gin.Context) {
 	}
 
 	if includeAppJSON {
-		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
 			dbmodels.CollectApplicationsWithReleases(dbmodels.MakeReleasesPointerArray(releases)))
 		if err != nil {
 			respondWithDbQueryError("application versions", err, ginctx)
@@ -112,7 +112,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	// Query database
 
 	if includeAppJSON {
-		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&application})
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&application})
 		if err != nil {
 			respondWithDbQueryError("application versions", err, ginctx)
 			return
@@ -140,12 +140,12 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 		if err != nil {
 			return err
 		}
-		err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(tx, orgID,
+		err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(tx, orgID,
 			dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(appRulesetBindings))
 		if err != nil {
 			return err
 		}
-		err = dbmodels.LoadApprovalRulesetsLatestVersions(tx, orgID,
+		err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(tx, orgID,
 			dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(appRulesetBindings))
 		if err != nil {
 			return err
@@ -224,7 +224,7 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 	}
 
 	if includeAppJSON {
-		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID,
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
 			[]*dbmodels.Application{&release.Application})
 		if err != nil {
 			respondWithDbQueryError("application versions", err, ginctx)
@@ -296,7 +296,7 @@ func (ctx Context) UpdateRelease(ginctx *gin.Context) {
 	// Query database
 
 	if includeAppJSON {
-		err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&release.Application})
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&release.Application})
 		if err != nil {
 			respondWithDbQueryError("application versions", err, ginctx)
 			return

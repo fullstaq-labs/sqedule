@@ -69,20 +69,20 @@ func CreateFromDbRelease(release dbmodels.Release) Release {
 }
 
 func CreateFromDbReleaseWithApplicationAssociation(release dbmodels.Release) ReleaseWithApplicationAssociation {
-	if release.Application.LatestVersion == nil {
-		panic("Associated application must have an associated latest version")
+	if release.Application.Version == nil {
+		panic("Associated application must have an associated version")
 	}
-	if release.Application.LatestVersion.VersionNumber == nil {
-		panic("Associated application's associated latest version must be finalized")
+	if release.Application.Version.VersionNumber == nil {
+		panic("Associated application's associated version must be finalized")
 	}
-	if release.Application.LatestAdjustment == nil {
-		panic("Associated application must have an associated latest adjustment")
+	if release.Application.Version.Adjustment == nil {
+		panic("Associated application must have an associated adjustment")
 	}
 
 	return ReleaseWithApplicationAssociation{
 		Release: CreateFromDbRelease(release),
 		Application: CreateFromDbApplication(release.Application,
-			*release.Application.LatestVersion, *release.Application.LatestAdjustment,
+			*release.Application.Version, *release.Application.Version.Adjustment,
 			nil),
 	}
 }
@@ -94,17 +94,17 @@ func CreateFromDbReleaseWithAssociations(release dbmodels.Release, includeApplic
 		Release: CreateFromDbRelease(release),
 	}
 	if includeApplication {
-		if release.Application.LatestVersion == nil {
-			panic("Associated application must have an associated latest version")
+		if release.Application.Version == nil {
+			panic("Associated application must have an associated version")
 		}
-		if release.Application.LatestVersion.VersionNumber == nil {
-			panic("Associated application's associated latest version must be finalized")
+		if release.Application.Version.VersionNumber == nil {
+			panic("Associated application's associated version must be finalized")
 		}
-		if release.Application.LatestAdjustment == nil {
-			panic("Associated application must have an associated latest adjustment")
+		if release.Application.Version.Adjustment == nil {
+			panic("Associated application must have an associated adjustment")
 		}
 		applicationJSON := CreateFromDbApplication(release.Application,
-			*release.Application.LatestVersion, *release.Application.LatestAdjustment,
+			*release.Application.Version, *release.Application.Version.Adjustment,
 			nil)
 		result.Application = &applicationJSON
 	}

@@ -1,30 +1,37 @@
 package dbmodels
 
-// GetPrimaryKey ...
 func (app Application) GetPrimaryKey() interface{} {
 	return app.ID
 }
 
-func (app *Application) SetLatestVersion(version IReviewableVersion) {
-	app.LatestVersion = version.(*ApplicationVersion)
+func (app Application) GetPrimaryKeyGormValue() []interface{} {
+	return []interface{}{app.ID}
 }
 
-func (app *Application) SetLatestAdjustment(adjustment IReviewableAdjustment) {
-	app.LatestAdjustment = adjustment.(*ApplicationAdjustment)
+func (app *Application) AssociateWithVersion(version IReviewableVersion) {
+	app.Version = version.(*ApplicationVersion)
 }
 
-func (major ApplicationVersion) GetID() interface{} {
-	return major.ID
+func (version ApplicationVersion) GetID() interface{} {
+	return version.ID
 }
 
-func (major ApplicationVersion) GetReviewablePrimaryKey() interface{} {
-	return major.ApplicationID
+func (version ApplicationVersion) GetReviewablePrimaryKey() interface{} {
+	return version.ApplicationID
 }
 
-func (major *ApplicationVersion) AssociateWithReviewable(reviewable IReviewable) {
+func (version ApplicationVersion) GetReviewablePrimaryKeyGormValue() []interface{} {
+	return []interface{}{version.ApplicationID}
+}
+
+func (version *ApplicationVersion) AssociateWithReviewable(reviewable IReviewable) {
 	application := reviewable.(*Application)
-	major.ApplicationID = application.ID
-	major.Application = *application
+	version.ApplicationID = application.ID
+	version.Application = *application
+}
+
+func (version *ApplicationVersion) AssociateWithAdjustment(adjustment IReviewableAdjustment) {
+	version.Adjustment = adjustment.(*ApplicationAdjustment)
 }
 
 func (adjustment ApplicationAdjustment) GetVersionID() interface{} {

@@ -20,10 +20,10 @@ type ApplicationApprovalRulesetBinding struct {
 	BaseModel
 	ApplicationApprovalRulesetBindingPrimaryKey
 	ReviewableBase
-	Application      Application                                  `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	ApprovalRuleset  ApprovalRuleset                              `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	LatestVersion    *ApplicationApprovalRulesetBindingVersion    `gorm:"-"`
-	LatestAdjustment *ApplicationApprovalRulesetBindingAdjustment `gorm:"-"`
+	Application     Application     `gorm:"foreignKey:OrganizationID,ApplicationID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ApprovalRuleset ApprovalRuleset `gorm:"foreignKey:OrganizationID,ApprovalRulesetID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+
+	Version *ApplicationApprovalRulesetBindingVersion `gorm:"-"`
 }
 
 type ApplicationApprovalRulesetBindingVersion struct {
@@ -32,7 +32,8 @@ type ApplicationApprovalRulesetBindingVersion struct {
 	ApprovalRulesetID string `gorm:"type:citext; not null"`
 	ReviewableVersionBase
 
-	ApplicationApprovalRulesetBinding ApplicationApprovalRulesetBinding `gorm:"foreignKey:OrganizationID,ApplicationID,ApprovalRulesetID; references:OrganizationID,ApplicationID,ApprovalRulesetID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	ApplicationApprovalRulesetBinding ApplicationApprovalRulesetBinding            `gorm:"foreignKey:OrganizationID,ApplicationID,ApprovalRulesetID; references:OrganizationID,ApplicationID,ApprovalRulesetID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Adjustment                        *ApplicationApprovalRulesetBindingAdjustment `gorm:"-"`
 }
 
 type ApplicationApprovalRulesetBindingAdjustment struct {
@@ -67,6 +68,15 @@ func FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, o
 	return result, tx.Error
 }
 
+func LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, bindings []*ApplicationApprovalRulesetBinding) error {
+	err := LoadApplicationApprovalRulesetBindingsLatestVersions(db, organizationID, bindings)
+	if err != nil {
+		return err
+	}
+
+	return LoadApplicationApprovalRulesetBindingVersionsLatestAdjustments(db, organizationID, CollectApplicationApprovalRulesetBindingVersions(bindings))
+}
+
 func LoadApplicationApprovalRulesetBindingsLatestVersions(db *gorm.DB, organizationID string, bindings []*ApplicationApprovalRulesetBinding) error {
 	reviewables := make([]IReviewable, 0, len(bindings))
 	for _, binding := range bindings {
@@ -75,15 +85,25 @@ func LoadApplicationApprovalRulesetBindingsLatestVersions(db *gorm.DB, organizat
 
 	return LoadReviewablesLatestVersions(
 		db,
-		reflect.TypeOf(ApplicationApprovalRulesetBinding{}.ApplicationApprovalRulesetBindingPrimaryKey),
-		[]string{"application_id", "approval_ruleset_id"},
-		reflect.TypeOf([]interface{}{}),
-		reflect.TypeOf(ApplicationApprovalRulesetBindingVersion{}),
-		reflect.TypeOf(ApplicationApprovalRulesetBindingVersion{}.ID),
-		"application_approval_ruleset_binding_version_id",
-		reflect.TypeOf(ApplicationApprovalRulesetBindingAdjustment{}),
 		organizationID,
 		reviewables,
+		reflect.TypeOf(ApplicationApprovalRulesetBindingVersion{}),
+		[]string{"application_id", "approval_ruleset_id"},
+	)
+}
+
+func LoadApplicationApprovalRulesetBindingVersionsLatestAdjustments(db *gorm.DB, organizationID string, versions []*ApplicationApprovalRulesetBindingVersion) error {
+	iversions := make([]IReviewableVersion, 0, len(versions))
+	for _, version := range versions {
+		iversions = append(iversions, version)
+	}
+
+	return LoadReviewableVersionsLatestAdjustments(
+		db,
+		organizationID,
+		iversions,
+		reflect.TypeOf(ApplicationApprovalRulesetBindingAdjustment{}),
+		"application_approval_ruleset_binding_version_id",
 	)
 }
 
@@ -95,6 +115,18 @@ func MakeApplicationApprovalRulesetBindingsPointerArray(bindings []ApplicationAp
 	result := make([]*ApplicationApprovalRulesetBinding, 0, len(bindings))
 	for i := range bindings {
 		result = append(result, &bindings[i])
+	}
+	return result
+}
+
+// CollectApplicationApprovalRulesetBindingVersions turns a `[]*ApplicationApprovalRulesetBinding`
+// into a list of their associated ApplicationApprovalRulesetBindingVersions. It does not include nils.
+func CollectApplicationApprovalRulesetBindingVersions(bindings []*ApplicationApprovalRulesetBinding) []*ApplicationApprovalRulesetBindingVersion {
+	result := make([]*ApplicationApprovalRulesetBindingVersion, 0, len(bindings))
+	for _, elem := range bindings {
+		if elem.Version != nil {
+			result = append(result, elem.Version)
+		}
 	}
 	return result
 }

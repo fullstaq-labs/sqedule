@@ -1,37 +1,37 @@
 package dbmodels
 
-func (primaryKey ApplicationApprovalRulesetBindingPrimaryKey) GormValue() interface{} {
-	return []interface{}{primaryKey.ApplicationID, primaryKey.ApprovalRulesetID}
-}
-
 func (binding ApplicationApprovalRulesetBinding) GetPrimaryKey() interface{} {
 	return binding.ApplicationApprovalRulesetBindingPrimaryKey
 }
 
-func (binding *ApplicationApprovalRulesetBinding) SetLatestVersion(version IReviewableVersion) {
-	binding.LatestVersion = version.(*ApplicationApprovalRulesetBindingVersion)
+func (binding ApplicationApprovalRulesetBinding) GetPrimaryKeyGormValue() []interface{} {
+	return []interface{}{binding.ApplicationID, binding.ApprovalRulesetID}
 }
 
-func (binding *ApplicationApprovalRulesetBinding) SetLatestAdjustment(adjustment IReviewableAdjustment) {
-	binding.LatestAdjustment = adjustment.(*ApplicationApprovalRulesetBindingAdjustment)
+func (binding *ApplicationApprovalRulesetBinding) AssociateWithVersion(version IReviewableVersion) {
+	binding.Version = version.(*ApplicationApprovalRulesetBindingVersion)
 }
 
-func (major ApplicationApprovalRulesetBindingVersion) GetID() interface{} {
-	return major.ID
+func (version ApplicationApprovalRulesetBindingVersion) GetID() interface{} {
+	return version.ID
 }
 
-func (major ApplicationApprovalRulesetBindingVersion) GetReviewablePrimaryKey() interface{} {
+func (version ApplicationApprovalRulesetBindingVersion) GetReviewablePrimaryKey() interface{} {
 	return ApplicationApprovalRulesetBindingPrimaryKey{
-		ApplicationID:     major.ApplicationID,
-		ApprovalRulesetID: major.ApprovalRulesetID,
+		ApplicationID:     version.ApplicationID,
+		ApprovalRulesetID: version.ApprovalRulesetID,
 	}
 }
 
-func (major *ApplicationApprovalRulesetBindingVersion) AssociateWithReviewable(reviewable IReviewable) {
+func (version *ApplicationApprovalRulesetBindingVersion) AssociateWithReviewable(reviewable IReviewable) {
 	ruleset := reviewable.(*ApplicationApprovalRulesetBinding)
-	major.ApplicationID = ruleset.ApplicationID
-	major.ApprovalRulesetID = ruleset.ApprovalRulesetID
-	major.ApplicationApprovalRulesetBinding = *ruleset
+	version.ApplicationID = ruleset.ApplicationID
+	version.ApprovalRulesetID = ruleset.ApprovalRulesetID
+	version.ApplicationApprovalRulesetBinding = *ruleset
+}
+
+func (version *ApplicationApprovalRulesetBindingVersion) AssociateWithAdjustment(adjustment IReviewableAdjustment) {
+	version.Adjustment = adjustment.(*ApplicationApprovalRulesetBindingAdjustment)
 }
 
 func (adjustment ApplicationApprovalRulesetBindingAdjustment) GetVersionID() interface{} {

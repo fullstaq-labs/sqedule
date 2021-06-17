@@ -61,7 +61,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			mctx.binding, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mctx.release2,
-				ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+				ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			return nil
@@ -304,7 +304,7 @@ var _ = Describe("approval-ruleset API", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release,
-					ruleset, *ruleset.LatestVersion, *ruleset.LatestAdjustment, nil)
+					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil

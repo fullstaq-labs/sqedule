@@ -40,7 +40,7 @@ func (ctx Context) GetApplications(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, dbmodels.MakeApplicationsPointerArray(apps))
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, dbmodels.MakeApplicationsPointerArray(apps))
 	if err != nil {
 		respondWithDbQueryError("application versions", err, ginctx)
 		return
@@ -50,7 +50,7 @@ func (ctx Context) GetApplications(ginctx *gin.Context) {
 
 	outputList := make([]json.Application, 0, len(apps))
 	for _, app := range apps {
-		outputList = append(outputList, json.CreateFromDbApplication(app, *app.LatestVersion, *app.LatestAdjustment, nil))
+		outputList = append(outputList, json.CreateFromDbApplication(app, *app.Version, *app.Version.Adjustment, nil))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -68,7 +68,7 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApplicationsLatestVersions(ctx.Db, orgID, []*dbmodels.Application{&app})
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&app})
 	if err != nil {
 		respondWithDbQueryError("application", err, ginctx)
 		return
@@ -92,14 +92,14 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(bindings))
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding versions", err, ginctx)
 		return
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings))
 	if err != nil {
 		respondWithDbQueryError("approval ruleset versions", err, ginctx)
@@ -108,6 +108,6 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 
 	// Generate response
 
-	output := json.CreateFromDbApplication(app, *app.LatestVersion, *app.LatestAdjustment, &bindings)
+	output := json.CreateFromDbApplication(app, *app.Version, *app.Version.Adjustment, &bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

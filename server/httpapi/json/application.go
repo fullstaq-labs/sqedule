@@ -51,7 +51,7 @@ func CreateFromDbApplication(application dbmodels.Application, version dbmodels.
 		for _, rulesetBinding := range *rulesetBindings {
 			rulesetBindingsJSON = append(rulesetBindingsJSON,
 				CreateFromDbApplicationApprovalRulesetBindingWithRulesetAssociation(rulesetBinding,
-					*rulesetBinding.LatestVersion, *rulesetBinding.LatestAdjustment))
+					*rulesetBinding.Version, *rulesetBinding.Version.Adjustment))
 		}
 		result.ApprovalRulesetBindings = &rulesetBindingsJSON
 	}

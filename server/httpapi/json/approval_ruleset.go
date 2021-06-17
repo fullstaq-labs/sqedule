@@ -46,19 +46,19 @@ func (base *ApprovalRulesetBase) PopulateFromDbmodelsApplicationApprovalRulesetB
 	bindingsJSON := make([]ApplicationApprovalRulesetBindingWithApplicationAssociation, 0, len(bindings))
 
 	for _, binding := range bindings {
-		if binding.LatestVersion == nil {
-			panic("Application approval rule binding must have an associated latest version")
+		if binding.Version == nil {
+			panic("Application approval rule binding must have an associated version")
 		}
-		if binding.LatestVersion.VersionNumber == nil {
-			panic("Application approval rule binding's latest version must be finalized")
+		if binding.Version.VersionNumber == nil {
+			panic("Application approval rule binding's version must be finalized")
 		}
-		if binding.LatestAdjustment == nil {
-			panic("Application approval rule binding must have an associated latest adjustment")
+		if binding.Version.Adjustment == nil {
+			panic("Application approval rule binding must have an associated adjustment")
 		}
 
 		bindingsJSON = append(bindingsJSON,
 			CreateFromDbApplicationApprovalRulesetBindingWithApplicationAssociation(binding,
-				*binding.LatestVersion, *binding.LatestAdjustment))
+				*binding.Version, *binding.Version.Adjustment))
 	}
 
 	base.ApplicationApprovalRulesetBindings = &bindingsJSON

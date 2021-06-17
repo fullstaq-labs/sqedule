@@ -47,14 +47,14 @@ func (ctx Context) GetApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(bindings))
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding latest versions", err, ginctx)
 		return
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID,
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings))
 	if err != nil {
 		respondWithDbQueryError("approval rulesets", err, ginctx)
@@ -66,7 +66,7 @@ func (ctx Context) GetApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	outputList := make([]json.ApplicationApprovalRulesetBinding, 0, len(bindings))
 	for _, binding := range bindings {
 		outputList = append(outputList, json.CreateFromDbApplicationApprovalRulesetBinding(binding,
-			*binding.LatestVersion, *binding.LatestAdjustment))
+			*binding.Version, *binding.Version.Adjustment))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }

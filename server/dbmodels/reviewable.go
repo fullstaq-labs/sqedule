@@ -17,8 +17,8 @@ import (
 
 type IReviewable interface {
 	GetPrimaryKey() interface{}
-	SetLatestVersion(version IReviewableVersion)
-	SetLatestAdjustment(adjustment IReviewableAdjustment)
+	GetPrimaryKeyGormValue() []interface{}
+	AssociateWithVersion(version IReviewableVersion)
 }
 
 type IReviewableVersion interface {
@@ -26,16 +26,13 @@ type IReviewableVersion interface {
 	GetReviewablePrimaryKey() interface{}
 	GetVersionNumber() *uint32
 	AssociateWithReviewable(reviewable IReviewable)
+	AssociateWithAdjustment(adjustment IReviewableAdjustment)
 }
 
 type IReviewableAdjustment interface {
 	GetReviewState() reviewstate.State
 	GetVersionID() interface{}
 	AssociateWithVersion(version IReviewableVersion)
-}
-
-type IReviewableCompositeKey interface {
-	GormValue() interface{}
 }
 
 type ReviewableBase struct {
@@ -77,161 +74,160 @@ func (adjustment ReviewableAdjustmentBase) GetReviewState() reviewstate.State {
 // ******** Find/load functions ********
 //
 
-// LoadReviewablesLatestVersions loads the latest Version and Adjustment records associated
-// with the given IReviewable records.
-//
-// For each found Version and Adjustment record, this function calls `SetLatestVersion()`
-// and `SetLatestAdjustment()` on the appropriate IReviewable records.
+// LoadReviewablesLatestVersions loads all Versions associated with the given Reviewables.
+// For each found Version, it calls `reviewable.AssociateWithVersion(version)` on an
+// appropriate Reviewable object.
 //
 // Parameters:
 //
-//  - `primaryKeyType` is the type of the IReviewable's (possibly composite) primary key (excluding OrganizationID).
-//    When the primary key is singular, this is the type of the `ID` field.
-//    When the primary key is composite, then this should be a struct that contains the two keys. Furthermore, this struct must implement `IReviewableCompositeKey`.
+//  - `versionType` is the concrete IReviewableVersion type.
 //  - `primaryKeyColumnNamesInVersionTable` are the (possibly composite) foreign key columns, in the Version's table, that refer to the IReviewable's primary key (excluding OrganizationID).
-//  - `primaryKeyGormValueType` is the type of the IReviewable's (possibly composite) primary key when passed as a value to a GORM `Where()` clause.
-//    When the primary key is singular, this should be the same as `primaryKeyType`.
-//    When the primary key is composite, this should be the type that's returned by primaryKeyType's `IReviewableCompositeKey.GormValue()` method.
-//  - `versionType` is the type of the Version struct. It must implement IReviewableVersion.
-//  - `versionIDColumnType` is the type of the Version's `ID` field.
-//  - `versionIDColumnNameInAdjustmentTable` is the foreign key column, in the Adjustment's table, that refers to the Version's `ID` field.
-//  - `adjustmentType` is the type of the Adjustment struct. It must implement IReviewableAdjustment.
-//  - `organizationID` is the organization in which you want to query the records.
-//  - `reviewables` is the list of IReviewables for which you want to load their latest version and adjustment records.
 func LoadReviewablesLatestVersions(db *gorm.DB,
-	primaryKeyType reflect.Type,
-	primaryKeyColumnNamesInVersionTable []string,
-	primaryKeyGormValueType reflect.Type,
-	versionType reflect.Type,
-	versionIDColumnType reflect.Type,
-	versionIDColumnNameInAdjustmentTable string,
-	adjustmentType reflect.Type,
 	organizationID string,
-	reviewables []IReviewable) error {
-
-	var nversions int
+	reviewables []IReviewable,
+	versionType reflect.Type,
+	primaryKeyColumnNamesInVersionTable []string) error {
 
 	if len(reviewables) == 0 {
 		return nil
 	}
 
-	// reviewableIndex type: map[actualPrimaryKeyType][]*Application
-	// reviewableIds type  : []actualPrimaryKeyGormValueType
-	// reviewableIds length: len(applications)
-	reviewableIndex, reviewableIds := buildReviewablesIndexAndIDList(primaryKeyType, primaryKeyGormValueType,
-		len(primaryKeyColumnNamesInVersionTable) > 1, reviewables)
+	// All the Reviewable objects' primary keys as Gorm values
+	var reviewablePrimaryKeysGormValues [][]interface{} = CollectReviewablePrimaryKeys(reviewables)
+	// Indexes each Reviewable object by its primary key
+	var reviewableIndex map[interface{}][]IReviewable = indexReviewablesByPrimaryKey(reviewables)
+	// Type: *[]versionType
+	var versions = lib.ReflectMakeValPtr(reflect.MakeSlice(reflect.SliceOf(versionType), 0, 0))
+	var primaryKeyColumnNamesInVersionTableAsCommaString = strings.Join(primaryKeyColumnNamesInVersionTable, ",")
 
-	/****** Load associated versions ******/
-
-	// Type: *[]actualVersionType
-	versions := lib.ReflectMakeValPtr(reflect.MakeSlice(reflect.SliceOf(versionType), 0, 0))
-	// Type: map[actualVersionIDColumnType]*actualVersionType
-	versionIndex := reflect.MakeMap(reflect.MapOf(versionIDColumnType, reflect.PtrTo(versionType)))
-	// Type: []actualVersionIDColumnType
-	versionIds := reflect.MakeSlice(reflect.SliceOf(versionIDColumnType), 0, 0)
-	primaryKeyColumnNamesInVersionTableAsCommaString := strings.Join(primaryKeyColumnNamesInVersionTable, ",")
 	tx := db.
 		// DISTINCT ON only works on PostgreSQL. When we want to support other databases, have a look at this alternative:
 		// https://stackoverflow.com/a/3800572/20816
 		Select("DISTINCT ON (organization_id, "+primaryKeyColumnNamesInVersionTableAsCommaString+") *").
 		Where("organization_id = ? AND ("+primaryKeyColumnNamesInVersionTableAsCommaString+") IN (?) AND version_number IS NOT NULL",
-			organizationID, reviewableIds.Interface()).
+			organizationID, reviewablePrimaryKeysGormValues).
 		Order("organization_id, " + primaryKeyColumnNamesInVersionTableAsCommaString + ", version_number DESC").
 		Find(versions.Interface())
 	if tx.Error != nil {
 		return tx.Error
 	}
-	nversions = versions.Elem().Len()
+
+	nversions := versions.Elem().Len()
 	for i := 0; i < nversions; i++ {
 		version := lib.ReflectMakeValPtr(versions.Elem().Index(i)).Interface().(IReviewableVersion)
-		versionID := reflect.ValueOf(version.GetID())
-		reviewableID := version.GetReviewablePrimaryKey()
-		// Example type: []*Application
-		reviewables := reviewableIndex.MapIndex(reflect.ValueOf(reviewableID))
+		reviewablePrimaryKey := version.GetReviewablePrimaryKey()
+		matchingReviewables := reviewableIndex[reviewablePrimaryKey]
 
-		for i := 0; i < reviewables.Len(); i++ {
-			reviewable := reviewables.Index(i).Interface().(IReviewable)
-			reviewable.SetLatestVersion(version)
-		}
-
-		firstMatch := reviewables.Index(0).Interface().(IReviewable)
-		version.AssociateWithReviewable(firstMatch)
-
-		versionIndex.SetMapIndex(versionID, reflect.ValueOf(version))
-		versionIds = reflect.Append(versionIds, versionID)
-	}
-
-	/****** Load associated Adjustments ******/
-
-	// Type: *[]actualAdjustmentType
-	adjustments := lib.ReflectMakeValPtr(reflect.MakeSlice(reflect.SliceOf(adjustmentType), 0, 0))
-	tx = db.
-		Select("DISTINCT ON (organization_id, "+versionIDColumnNameInAdjustmentTable+") *").
-		Where("organization_id = ? AND "+versionIDColumnNameInAdjustmentTable+" IN ?",
-			organizationID, versionIds.Interface()).
-		Order("organization_id, " + versionIDColumnNameInAdjustmentTable + ", adjustment_number DESC").
-		Find(adjustments.Interface())
-	if tx.Error != nil {
-		return tx.Error
-	}
-	nversions = adjustments.Elem().Len()
-	for i := 0; i < nversions; i++ {
-		// Type: actualAdjustmentType
-		adjustment := lib.ReflectMakeValPtr(adjustments.Elem().Index(i)).Interface().(IReviewableAdjustment)
-
-		versionID := reflect.ValueOf(adjustment.GetVersionID())
-		// Type: actualVersionType
-		version := versionIndex.MapIndex(versionID).Interface().(IReviewableVersion)
-		adjustment.AssociateWithVersion(version)
-
-		reviewablePrimaryKey := reflect.ValueOf(version.GetReviewablePrimaryKey())
-		// Example type: []*Application
-		reviewables := reviewableIndex.MapIndex(reviewablePrimaryKey)
-		for i := 0; i < reviewables.Len(); i++ {
-			reviewable := reviewables.Index(i).Interface().(IReviewable)
-			reviewable.SetLatestAdjustment(adjustment)
+		version.AssociateWithReviewable(matchingReviewables[0])
+		for _, reviewable := range matchingReviewables {
+			reviewable.AssociateWithVersion(version)
 		}
 	}
 
 	return nil
 }
 
-// buildReviewablesIndexAndIdList returns two things:
-// 1. An index, that maps each IReviewable primary key, to a list of matching IReviewables.
-// 2. A list of all unique IReviewable primary keys.
-//
-// For example, given a list of `dbmodels.Application`s, it returns something like
-// `(map[string][]*dbmodels.Application, []string)`
-func buildReviewablesIndexAndIDList(primaryKeyType reflect.Type, primaryKeyGormValueType reflect.Type, primaryKeyIsComposite bool, reviewables []IReviewable) (reflect.Value, reflect.Value) {
-	index := reflect.MakeMap(reflect.MapOf(primaryKeyType, reflect.TypeOf([]IReviewable{})))
-	ids := reflect.MakeSlice(reflect.SliceOf(primaryKeyGormValueType), 0, len(reviewables))
-
+func indexReviewablesByPrimaryKey(reviewables []IReviewable) map[interface{}][]IReviewable {
+	result := make(map[interface{}][]IReviewable)
 	for _, reviewable := range reviewables {
-		id := reflect.ValueOf(reviewable.GetPrimaryKey())
-
-		// Type: []IReviewable
-		indexElem := index.MapIndex(id)
-		if !indexElem.IsValid() {
-			indexElem = reflect.ValueOf(make([]IReviewable, 0))
-			index.SetMapIndex(id, indexElem)
-			if primaryKeyIsComposite {
-				compositeKey := id.Interface().(IReviewableCompositeKey)
-				ids = reflect.Append(ids, reflect.ValueOf(compositeKey.GormValue()))
-			} else {
-				ids = reflect.Append(ids, id)
-			}
+		primaryKey := reviewable.GetPrimaryKey()
+		list, ok := result[primaryKey]
+		if !ok {
+			list = make([]IReviewable, 0, 1)
 		}
+		result[primaryKey] = append(list, reviewable)
+	}
+	return result
+}
 
-		indexElem = reflect.Append(indexElem, reflect.ValueOf(reviewable))
-		index.SetMapIndex(id, indexElem)
+// LoadReviewableVersionsLatestAdjustments loads all Adjustments associated with the given Versions.
+// For each found Adjustment, it calls `version.AssociateWithAdjustment(adjustment)` on an
+// appropriate Version object.
+//
+// Parameters:
+//
+//  - `adjustmentType` is the concrete IReviewableAdjustment type.
+//  - `versionIDColumnNameInAdjustmentTable` is the foreign key column, in the Adjustment's table, that refers to the Version's `ID` field.
+func LoadReviewableVersionsLatestAdjustments(db *gorm.DB,
+	organizationID string,
+	versions []IReviewableVersion,
+	adjustmentType reflect.Type,
+	versionIDColumnNameInAdjustmentTable string) error {
+
+	if len(versions) == 0 {
+		return nil
 	}
 
-	return index, ids
+	// All the Version objects' IDs
+	var versionIDs []interface{} = CollectReviewableVersionIDs(versions)
+	// Indexes each Version object by its ID
+	var versionIndex map[interface{}][]IReviewableVersion = indexReviewableVersionsByID(versions)
+
+	// Type: *[]actualAdjustmentType
+	adjustments := lib.ReflectMakeValPtr(reflect.MakeSlice(reflect.SliceOf(adjustmentType), 0, 0))
+	tx := db.
+		// DISTINCT ON only works on PostgreSQL. When we want to support other databases, have a look at this alternative:
+		// https://stackoverflow.com/a/3800572/20816
+		Select("DISTINCT ON (organization_id, "+versionIDColumnNameInAdjustmentTable+") *").
+		Where("organization_id = ? AND "+versionIDColumnNameInAdjustmentTable+" IN ?",
+			organizationID, versionIDs).
+		Order("organization_id, " + versionIDColumnNameInAdjustmentTable + ", adjustment_number DESC").
+		Find(adjustments.Interface())
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	nadjustments := adjustments.Elem().Len()
+	for i := 0; i < nadjustments; i++ {
+		adjustment := lib.ReflectMakeValPtr(adjustments.Elem().Index(i)).Interface().(IReviewableAdjustment)
+		versionID := adjustment.GetVersionID()
+		matchingVersions := versionIndex[versionID]
+		adjustment.AssociateWithVersion(matchingVersions[0])
+		for _, version := range matchingVersions {
+			version.AssociateWithAdjustment(adjustment)
+		}
+	}
+
+	return nil
+}
+
+func indexReviewableVersionsByID(versions []IReviewableVersion) map[interface{}][]IReviewableVersion {
+	result := make(map[interface{}][]IReviewableVersion)
+	for _, version := range versions {
+		id := version.GetID()
+		list, ok := result[id]
+		if !ok {
+			list = make([]IReviewableVersion, 0, 1)
+		}
+		result[id] = append(list, version)
+	}
+	return result
 }
 
 //
 // ******** Other functions ********
 //
+
+// CollectReviewablePrimaryKeys turns a `[]IReviewable` into a list of their primary keys.
+// This is done by calling `reviewable.GetPrimaryKey()` for each element.
+func CollectReviewablePrimaryKeys(reviewables []IReviewable) [][]interface{} {
+	result := make([][]interface{}, 0, len(reviewables))
+	for _, reviewable := range reviewables {
+		primaryKey := reviewable.GetPrimaryKeyGormValue()
+		result = append(result, primaryKey)
+	}
+	return result
+}
+
+// CollectReviewableVersionIDs turns a `[]IReviewableVersion` into a list of their IDs.
+// This is done by calling `version.GetID()` for each element.
+func CollectReviewableVersionIDs(versions []IReviewableVersion) []interface{} {
+	result := make([]interface{}, 0, len(versions))
+	for _, version := range versions {
+		result = append(result, version.GetID())
+	}
+	return result
+}
 
 // FinalizeReviewableProposal transitions a Reviewable's proposal to either in the 'reviewing' state or the 'approved' state,
 // depending on whether a review of this proposal is required.
