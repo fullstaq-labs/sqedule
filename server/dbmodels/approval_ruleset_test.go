@@ -24,21 +24,21 @@ var _ = Describe("ApprovalRuleset finders", func() {
 			db, err := dbutils.SetupTestDatabase()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(func() {
-				FindApprovalRulesBoundToRelease(db, "org", "app", 0)
+				_, err = FindApprovalRulesBoundToRelease(db, "org", "app", 0)
 			}).ToNot(Panic())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 
-	Describe("FindApprovalRulesInRulesetVersion", func() {
+	Describe("LoadApprovalRulesetAdjustmentsApprovalRules", func() {
 		It("supports all ruleset types", func() {
 			db, err := dbutils.SetupTestDatabase()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(func() {
-				FindApprovalRulesInRulesetVersion(db, "org", ApprovalRulesetVersionAndAdjustmentKey{
-					VersionID:        1,
-					AdjustmentNumber: 1,
-				})
+				adjustment := ApprovalRulesetAdjustment{}
+				err = LoadApprovalRulesetAdjustmentsApprovalRules(db, "org", []*ApprovalRulesetAdjustment{&adjustment})
 			}).ToNot(Panic())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

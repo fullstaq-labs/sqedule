@@ -47,7 +47,7 @@ func PatchApprovalRuleset(ruleset *dbmodels.ApprovalRuleset, input ApprovalRules
 	}
 }
 
-func PatchApprovalRulesetAdjustment(organizationID string, adjustment *dbmodels.ApprovalRulesetAdjustment, rules *dbmodels.ApprovalRulesetContents, input ApprovalRulesetVersionInput) {
+func PatchApprovalRulesetAdjustment(organizationID string, adjustment *dbmodels.ApprovalRulesetAdjustment, input ApprovalRulesetVersionInput) {
 	if input.DisplayName != nil {
 		adjustment.DisplayName = *input.DisplayName
 	}
@@ -58,9 +58,9 @@ func PatchApprovalRulesetAdjustment(organizationID string, adjustment *dbmodels.
 		adjustment.Enabled = *input.Enabled
 	}
 	if input.ApprovalRules != nil {
-		*rules = input.ToDbmodelsApprovalRulesetContents(organizationID)
+		adjustment.Rules = input.ToDbmodelsApprovalRulesetContents(organizationID)
 	}
-	rules.ForEach(func(rule dbmodels.IApprovalRule) error {
+	adjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 		rule.AssociateWithApprovalRulesetAdjustment(*adjustment)
 		return nil
 	})

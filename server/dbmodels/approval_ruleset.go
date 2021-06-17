@@ -40,6 +40,8 @@ type ApprovalRulesetAdjustment struct {
 	GloballyApplicable bool `gorm:"not null; default:false"`
 
 	ApprovalRulesetVersion ApprovalRulesetVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	Rules ApprovalRulesetContents `gorm:"-"`
 }
 
 // ApprovalRulesetVersionAndAdjustmentKey uniquely identifies a specific Version+Adjustment
@@ -130,10 +132,20 @@ func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplicatio
 }
 
 //
+// ******** ApprovalRulesetAdjustment methods ********
+//
+
+func (adjustment ApprovalRulesetAdjustment) ApprovalRulesetVersionAndAdjustmentKey() ApprovalRulesetVersionAndAdjustmentKey {
+	return ApprovalRulesetVersionAndAdjustmentKey{
+		VersionID:        adjustment.ApprovalRulesetVersionID,
+		AdjustmentNumber: adjustment.AdjustmentNumber,
+	}
+}
+
+//
 // ******** Find/load functions ********
 //
 
-// FindAllApprovalRulesetsWithStats ...
 func FindAllApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetWithStats, error) {
 	var result []ApprovalRulesetWithStats
 	tx := db.
@@ -234,6 +246,87 @@ func LoadApprovalRulesetVersionsLatestAdjustments(db *gorm.DB, organizationID st
 	)
 }
 
+func LoadApprovalRulesetAdjustmentsApprovalRules(db *gorm.DB, organizationID string, adjustments []*ApprovalRulesetAdjustment) error {
+	var adjustmentIndex map[ApprovalRulesetVersionAndAdjustmentKey][]*ApprovalRulesetAdjustment = indexAdjustmentsByKey(adjustments)
+	var query, tx *gorm.DB
+	var ruleTypesProcessed uint = 0
+	var httpAPIApprovalRules []HTTPApiApprovalRule
+	var scheduleApprovalRules []ScheduleApprovalRule
+	var manualApprovalRules []ManualApprovalRule
+
+	query = db.Where("organization_id = ? AND (approval_ruleset_version_id, approval_ruleset_adjustment_number) IN ?",
+		organizationID, collectApprovalRulesetAdjustmentsQueryValues(adjustments))
+
+	ruleTypesProcessed++
+	tx = db.Where(query).Find(&httpAPIApprovalRules)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	for _, rule := range httpAPIApprovalRules {
+		key := rule.ApprovalRulesetVersionAndAdjustmentKey()
+		matchingAdjustments := adjustmentIndex[key]
+		for _, adjustment := range matchingAdjustments {
+			adjustment.Rules.HTTPApiApprovalRules = append(adjustment.Rules.HTTPApiApprovalRules, rule)
+		}
+	}
+
+	ruleTypesProcessed++
+	tx = db.Where(query).Find(&scheduleApprovalRules)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	for _, rule := range scheduleApprovalRules {
+		key := rule.ApprovalRulesetVersionAndAdjustmentKey()
+		matchingAdjustments := adjustmentIndex[key]
+		for _, adjustment := range matchingAdjustments {
+			adjustment.Rules.ScheduleApprovalRules = append(adjustment.Rules.ScheduleApprovalRules, rule)
+		}
+	}
+
+	ruleTypesProcessed++
+	tx = db.Where(query).Find(&manualApprovalRules)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	for _, rule := range manualApprovalRules {
+		key := rule.ApprovalRulesetVersionAndAdjustmentKey()
+		matchingAdjustments := adjustmentIndex[key]
+		for _, adjustment := range matchingAdjustments {
+			adjustment.Rules.ManualApprovalRules = append(adjustment.Rules.ManualApprovalRules, rule)
+		}
+	}
+
+	if ruleTypesProcessed != NumApprovalRuleTypes {
+		panic("Bug: code does not cover all approval rule types")
+	}
+
+	return nil
+}
+
+func indexAdjustmentsByKey(adjustments []*ApprovalRulesetAdjustment) map[ApprovalRulesetVersionAndAdjustmentKey][]*ApprovalRulesetAdjustment {
+	result := make(map[ApprovalRulesetVersionAndAdjustmentKey][]*ApprovalRulesetAdjustment, len(adjustments))
+	for _, adjustment := range adjustments {
+		key := adjustment.ApprovalRulesetVersionAndAdjustmentKey()
+		list, ok := result[key]
+		if !ok {
+			list = make([]*ApprovalRulesetAdjustment, 0, 1)
+		}
+		result[key] = append(list, adjustment)
+	}
+	return result
+}
+
+func collectApprovalRulesetAdjustmentsQueryValues(adjustments []*ApprovalRulesetAdjustment) [][]uint64 {
+	result := make([][]uint64, 0, len(adjustments))
+	for _, adjustment := range adjustments {
+		elem := make([]uint64, 0, 2)
+		elem = append(elem, adjustment.ApprovalRulesetVersionID)
+		elem = append(elem, uint64(adjustment.AdjustmentNumber))
+		result = append(result, elem)
+	}
+	return result
+}
+
 //
 // ******** Other functions ********
 //
@@ -248,7 +341,7 @@ func MakeApprovalRulesetVersionsPointerArray(versions []ApprovalRulesetVersion) 
 }
 
 func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []*ApprovalRuleset {
-	result := make([]*ApprovalRuleset, 0)
+	result := make([]*ApprovalRuleset, 0, len(rulesets))
 	for i := range rulesets {
 		ruleset := &rulesets[i]
 		result = append(result, &ruleset.ApprovalRuleset)
@@ -257,7 +350,7 @@ func CollectApprovalRulesetsWithoutStats(rulesets []ApprovalRulesetWithStats) []
 }
 
 func CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings []ApplicationApprovalRulesetBinding) []*ApprovalRuleset {
-	result := make([]*ApprovalRuleset, 0)
+	result := make([]*ApprovalRuleset, 0, len(bindings))
 	for i := range bindings {
 		binding := &bindings[i]
 		result = append(result, &binding.ApprovalRuleset)
@@ -272,6 +365,18 @@ func CollectApprovalRulesetVersions(rulesets []*ApprovalRuleset) []*ApprovalRule
 	for _, elem := range rulesets {
 		if elem.Version != nil {
 			result = append(result, elem.Version)
+		}
+	}
+	return result
+}
+
+// CollectApprovalRulesetAdjustmentsFromVersions turns a `[]*ApprovalRulesetVersion` into a list of their associated ApprovalRulesetAdjustments.
+// It does not include nils.
+func CollectApprovalRulesetAdjustmentsFromVersions(versions []*ApprovalRulesetVersion) []*ApprovalRulesetAdjustment {
+	result := make([]*ApprovalRulesetAdjustment, 0, len(versions))
+	for _, elem := range versions {
+		if elem.Adjustment != nil {
+			result = append(result, elem.Adjustment)
 		}
 	}
 	return result

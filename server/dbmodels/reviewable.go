@@ -128,7 +128,7 @@ func LoadReviewablesLatestVersions(db *gorm.DB,
 }
 
 func indexReviewablesByPrimaryKey(reviewables []IReviewable) map[interface{}][]IReviewable {
-	result := make(map[interface{}][]IReviewable)
+	result := make(map[interface{}][]IReviewable, len(reviewables))
 	for _, reviewable := range reviewables {
 		primaryKey := reviewable.GetPrimaryKey()
 		list, ok := result[primaryKey]
@@ -192,7 +192,7 @@ func LoadReviewableVersionsLatestAdjustments(db *gorm.DB,
 }
 
 func indexReviewableVersionsByID(versions []IReviewableVersion) map[interface{}][]IReviewableVersion {
-	result := make(map[interface{}][]IReviewableVersion)
+	result := make(map[interface{}][]IReviewableVersion, len(versions))
 	for _, version := range versions {
 		id := version.GetID()
 		list, ok := result[id]

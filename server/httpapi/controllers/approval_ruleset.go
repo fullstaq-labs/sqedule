@@ -49,12 +49,12 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 
 	// Modify database
 
-	rulesetContents := input.Version.ToDbmodelsApprovalRulesetContents(orgID)
 	ruleset := dbmodels.ApprovalRuleset{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
 	version, adjustment := ruleset.NewDraftVersion()
+	adjustment.Rules = input.Version.ToDbmodelsApprovalRulesetContents(orgID)
 
 	json.PatchApprovalRuleset(&ruleset, input)
-	json.PatchApprovalRulesetAdjustment(orgID, adjustment, &rulesetContents, *input.Version)
+	json.PatchApprovalRulesetAdjustment(orgID, adjustment, *input.Version)
 	if input.Version.ProposalState == proposalstate.Final {
 		dbmodels.FinalizeReviewableProposal(&version.ReviewableVersionBase,
 			&adjustment.ReviewableAdjustmentBase, 0, false)
@@ -78,7 +78,7 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 			return err
 		}
 
-		err = rulesetContents.ForEach(func(rule dbmodels.IApprovalRule) error {
+		err = adjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 			rule.AssociateWithApprovalRulesetAdjustment(*adjustment)
 			return tx.Create(rule).Error
 		})
@@ -97,7 +97,7 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 
 	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, *version,
 		*adjustment, []dbmodels.ApplicationApprovalRulesetBinding{}, []dbmodels.ReleaseApprovalRulesetBinding{},
-		rulesetContents)
+		adjustment.Rules)
 	ginctx.JSON(http.StatusCreated, output)
 }
 
@@ -176,10 +176,8 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionAndAdjustmentKey{
-		VersionID:        ruleset.Version.ID,
-		AdjustmentNumber: ruleset.Version.Adjustment.AdjustmentNumber,
-	})
+	err = dbmodels.LoadApprovalRulesetAdjustmentsApprovalRules(ctx.Db, orgID,
+		[]*dbmodels.ApprovalRulesetAdjustment{ruleset.Version.Adjustment})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
 		return
@@ -220,7 +218,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 	// Generate response
 
 	output := json.CreateApprovalRulesetWithLatestApprovedVersionAndBindingsAndRules(ruleset, *ruleset.Version,
-		*ruleset.Version.Adjustment, appBindings, releaseBindings, rules)
+		*ruleset.Version.Adjustment, appBindings, releaseBindings, ruleset.Version.Adjustment.Rules)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -259,10 +257,8 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 		return
 	}
 
-	rules, err := dbmodels.FindApprovalRulesInRulesetVersion(ctx.Db, orgID, dbmodels.ApprovalRulesetVersionAndAdjustmentKey{
-		VersionID:        ruleset.Version.ID,
-		AdjustmentNumber: ruleset.Version.Adjustment.AdjustmentNumber,
-	})
+	err = dbmodels.LoadApprovalRulesetAdjustmentsApprovalRules(ctx.Db, orgID,
+		[]*dbmodels.ApprovalRulesetAdjustment{ruleset.Version.Adjustment})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
 		return
@@ -324,12 +320,12 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 			}
 
 			adjustment.ApprovalRulesetVersionID = version.ID
-			json.PatchApprovalRulesetAdjustment(orgID, adjustment, &rules, *input.Version)
+			json.PatchApprovalRulesetAdjustment(orgID, adjustment, *input.Version)
 			if err = tx.Omit(clause.Associations).Create(adjustment).Error; err != nil {
 				return err
 			}
 
-			err = rules.ForEach(func(rule dbmodels.IApprovalRule) error {
+			err = adjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 				return tx.Omit(clause.Associations).Create(rule).Error
 			})
 			if err != nil {
@@ -350,6 +346,6 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 	// Generate response
 
 	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, *ruleset.Version,
-		*ruleset.Version.Adjustment, appBindings, releaseBindings, rules)
+		*ruleset.Version.Adjustment, appBindings, releaseBindings, ruleset.Version.Adjustment.Rules)
 	ginctx.JSON(http.StatusOK, output)
 }

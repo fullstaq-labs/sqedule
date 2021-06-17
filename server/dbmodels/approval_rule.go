@@ -73,6 +73,13 @@ type ManualApprovalRule struct {
 // ******** ApprovalRule methods ********
 //
 
+func (r ApprovalRule) ApprovalRulesetVersionAndAdjustmentKey() ApprovalRulesetVersionAndAdjustmentKey {
+	return ApprovalRulesetVersionAndAdjustmentKey{
+		VersionID:        r.ApprovalRulesetVersionID,
+		AdjustmentNumber: r.ApprovalRulesetAdjustmentNumber,
+	}
+}
+
 func (r *ApprovalRule) AssociateWithApprovalRulesetAdjustment(adjustment ApprovalRulesetAdjustment) {
 	r.ApprovalRulesetVersionID = adjustment.ApprovalRulesetVersionID
 	r.ApprovalRulesetAdjustmentNumber = adjustment.AdjustmentNumber
@@ -140,39 +147,6 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 		Table("manual_approval_rules approval_rules").
 		Select(selector).
 		Find(&result.ManualApprovalRules)
-	if tx.Error != nil {
-		return ApprovalRulesetContents{}, tx.Error
-	}
-
-	if ruleTypesProcessed != NumApprovalRuleTypes {
-		panic("Bug: code does not cover all approval rule types")
-	}
-
-	return result, nil
-}
-
-func FindApprovalRulesInRulesetVersion(db *gorm.DB, organizationID string, key ApprovalRulesetVersionAndAdjustmentKey) (ApprovalRulesetContents, error) {
-	var result ApprovalRulesetContents
-	var query, tx *gorm.DB
-	var ruleTypesProcessed uint = 0
-
-	query = db.Where("organization_id = ? AND approval_ruleset_version_id = ? AND approval_ruleset_adjustment_number = ?",
-		organizationID, key.VersionID, key.AdjustmentNumber)
-
-	ruleTypesProcessed++
-	tx = db.Where(query).Find(&result.HTTPApiApprovalRules)
-	if tx.Error != nil {
-		return ApprovalRulesetContents{}, tx.Error
-	}
-
-	ruleTypesProcessed++
-	tx = db.Where(query).Find(&result.ScheduleApprovalRules)
-	if tx.Error != nil {
-		return ApprovalRulesetContents{}, tx.Error
-	}
-
-	ruleTypesProcessed++
-	tx = db.Where(query).Find(&result.ManualApprovalRules)
 	if tx.Error != nil {
 		return ApprovalRulesetContents{}, tx.Error
 	}
