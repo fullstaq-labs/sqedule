@@ -117,6 +117,12 @@ func CreateApprovalRulesetVersion(version dbmodels.ApprovalRulesetVersion, lates
 	}
 }
 
+func CreateApprovalRulesetVersionWithStats(version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetVersion {
+	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
+	versionJSON.NumBoundReleases = &latestAdjustment.NumBoundReleases
+	return versionJSON
+}
+
 func CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment,
 	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithVersion {
 

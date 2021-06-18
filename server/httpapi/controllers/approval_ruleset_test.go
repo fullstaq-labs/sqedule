@@ -406,4 +406,48 @@ var _ = Describe("approval-ruleset API", func() {
 			})
 		})
 	})
+
+	Describe("GET /approval-rulesets/:id/versions", func() {
+		Setup := func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				app, err := dbmodels.CreateMockApplication(ctx.Db, ctx.Org, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
+				release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1,
+					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2,
+					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReadAllVersionsTest(ReviewableReadAllVersionsTestOptions{
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/approval-rulesets/ruleset1/versions",
+			Setup:       Setup,
+		})
+
+		It("outputs the number of bound releases", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body["items"]).To(HaveLen(1))
+
+			items := body["items"].([]interface{})
+			version := items[0].(map[string]interface{})
+			Expect(version["num_bound_releases"]).To(BeNumerically("==", 2))
+		})
+	})
 })

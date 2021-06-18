@@ -194,29 +194,21 @@ Deletes a resource. Only exists/allowed if the resource is deletable.
 
 ### GET /resources/:id/versions
 
-Retrieves all versions of a resource, and their associated latest adjustments.
+Retrieves all approved versions of a resource, and their associated latest adjustments.
 
 ~~~javascript
 {
     "items": [
-        // A ResourceWithVersion object
+        // A ResourceVersion object
         {
-            // ...non-versioned resource-specific fields here....
-
+            "id": 123456,
+            "version_state": "approved",
+            "version_number": 1234,
             "created_at": "2021-05-25T18:00:00+02:00",
             "updated_at": "2021-05-25T18:00:00+02:00",
+            "approved_at": "2021-05-25T18:00:00+02:00",
 
-            // A ResourceVersion object
-            "version": {
-                "id": 123456,
-                "version_state": "approved",
-                "version_number": 1234,
-                "created_at": "2021-05-25T18:00:00+02:00",
-                "updated_at": "2021-05-25T18:00:00+02:00",
-                "approved_at": "2021-05-25T18:00:00+02:00",
-
-                // ...versioned resource-specific fields here...
-            }
+            // ...versioned resource-specific fields here...
         }
     ]
 }
@@ -224,7 +216,7 @@ Retrieves all versions of a resource, and their associated latest adjustments.
 
 ### GET /resources/:id/versions/:number
 
-Retrieves a specific version (and its associated latest adjustment) of a resource.
+Retrieves a specific approved version (and its associated latest adjustment) of a resource.
 
 The response is a `ResourceWithVersion`:
 

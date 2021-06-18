@@ -349,3 +349,73 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 		*ruleset.Version.Adjustment, appBindings, releaseBindings, ruleset.Version.Adjustment.Rules)
 	ginctx.JSON(http.StatusOK, output)
 }
+
+//
+// ******** Operations on approved versions ********
+//
+
+func (ctx Context) GetApprovalRulesetVersions(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("id")
+
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApprovalRulesetAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	pagination, err := dbutils.ParsePaginationOptions(ginctx)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	versions, err := dbmodels.FindApprovalRulesetApprovedVersions(ctx.Db, orgID, id, pagination)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset versions", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetVersionsLatestAdjustments(ctx.Db, orgID, dbmodels.MakeApprovalRulesetVersionsPointerArray(versions))
+	if err != nil {
+		respondWithDbQueryError("approval ruleset adjustments", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetAdjustmentsApprovalRules(ctx.Db, orgID,
+		dbmodels.CollectApprovalRulesetAdjustmentsFromVersions(
+			dbmodels.MakeApprovalRulesetVersionsPointerArray(versions)))
+	if err != nil {
+		respondWithDbQueryError("approval rules", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetAdjustmentsStats(ctx.Db, orgID,
+		dbmodels.CollectApprovalRulesetAdjustmentsFromVersions(
+			dbmodels.MakeApprovalRulesetVersionsPointerArray(versions)))
+	if err != nil {
+		respondWithDbQueryError("approval ruleset adjustment statistics", err, ginctx)
+		return
+	}
+
+	// Generate response
+
+	outputList := make([]json.ApprovalRulesetVersion, 0, len(versions))
+	for _, version := range versions {
+		outputList = append(outputList, json.CreateApprovalRulesetVersionWithStats(version, *version.Adjustment))
+	}
+	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
+}

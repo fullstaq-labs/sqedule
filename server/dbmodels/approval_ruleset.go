@@ -42,6 +42,8 @@ type ApprovalRulesetAdjustment struct {
 	ApprovalRulesetVersion ApprovalRulesetVersion `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	Rules ApprovalRulesetContents `gorm:"-"`
+	// Set by LoadApprovalRulesetAdjustmentsStats. Not a real table column, so don't add to migrations.
+	NumBoundReleases uint `gorm:"<-:false"`
 }
 
 // ApprovalRulesetVersionAndAdjustmentKey uniquely identifies a specific Version+Adjustment
@@ -53,8 +55,8 @@ type ApprovalRulesetVersionAndAdjustmentKey struct {
 
 type ApprovalRulesetWithStats struct {
 	ApprovalRuleset
-	NumBoundApplications uint
-	NumBoundReleases     uint
+	NumBoundApplications uint `gorm:"<-:false"`
+	NumBoundReleases     uint `gorm:"<-:false"`
 }
 
 // ApprovalRulesetContents is a collection of ApprovalRules.
@@ -199,10 +201,11 @@ func FindApprovalRuleset(db *gorm.DB, organizationID string, id string) (Approva
 
 // FindApprovalRulesetApprovedVersions finds, for a given ApprovalRuleset, all its approved Versions
 // and returns them ordered by version number (descending).
-func FindApprovalRulesetApprovedVersions(db *gorm.DB, organizationID string, rulesetID string) ([]ApprovalRulesetVersion, error) {
+func FindApprovalRulesetApprovedVersions(db *gorm.DB, organizationID string, rulesetID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetVersion, error) {
 	var result []ApprovalRulesetVersion
 
 	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND version_number IS NOT NULL", organizationID, rulesetID).Order("version_number DESC")
+	tx = dbutils.ApplyDbQueryPaginationOptions(tx, pagination)
 	tx.Find(&result)
 	return result, tx.Error
 }
@@ -325,6 +328,49 @@ func collectApprovalRulesetAdjustmentsQueryValues(adjustments []*ApprovalRuleset
 		result = append(result, elem)
 	}
 	return result
+}
+
+func LoadApprovalRulesetAdjustmentsStats(db *gorm.DB, organizationID string, adjustments []*ApprovalRulesetAdjustment) error {
+	var adjustmentIndex map[ApprovalRulesetVersionAndAdjustmentKey][]*ApprovalRulesetAdjustment = indexAdjustmentsByKey(adjustments)
+	var result = make([]struct {
+		ApprovalRulesetVersionID uint64
+		AdjustmentNumber         uint32
+		NumBoundReleases         uint
+	}, 0, len(adjustments))
+
+	tx := db.
+		Model(&ApprovalRulesetAdjustment{}).
+		Select("approval_ruleset_adjustments.approval_ruleset_version_id, "+
+			"approval_ruleset_adjustments.adjustment_number, "+
+			"COUNT(release_approval_ruleset_bindings.*) AS num_bound_releases").
+		Where("approval_ruleset_adjustments.organization_id = ? "+
+			"AND (approval_ruleset_adjustments.approval_ruleset_version_id, approval_ruleset_adjustments.adjustment_number) IN ?",
+			organizationID, collectApprovalRulesetAdjustmentsQueryValues(adjustments)).
+		Joins("LEFT JOIN release_approval_ruleset_bindings "+
+			"ON release_approval_ruleset_bindings.organization_id = ? "+
+			"AND release_approval_ruleset_bindings.approval_ruleset_version_id = approval_ruleset_adjustments.approval_ruleset_version_id "+
+			"AND release_approval_ruleset_bindings.approval_ruleset_adjustment_number = approval_ruleset_adjustments.adjustment_number",
+			organizationID).
+		Group("approval_ruleset_adjustments.organization_id, " +
+			"approval_ruleset_adjustments.approval_ruleset_version_id, " +
+			"approval_ruleset_adjustments.adjustment_number")
+	tx = tx.Find(&result)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	for _, elem := range result {
+		key := ApprovalRulesetVersionAndAdjustmentKey{
+			VersionID:        elem.ApprovalRulesetVersionID,
+			AdjustmentNumber: elem.AdjustmentNumber,
+		}
+		matchingAdjustments := adjustmentIndex[key]
+		for _, adjustment := range matchingAdjustments {
+			adjustment.NumBoundReleases = elem.NumBoundReleases
+		}
+	}
+
+	return nil
 }
 
 //
