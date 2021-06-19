@@ -419,7 +419,7 @@ func (ctx Context) getApprovalRulesetVersionsOrProposals(ginctx *gin.Context, ap
 
 	outputList := make([]json.ApprovalRulesetVersion, 0, len(versions))
 	for _, version := range versions {
-		outputList = append(outputList, json.CreateApprovalRulesetVersionWithStats(version, *version.Adjustment))
+		outputList = append(outputList, json.CreateApprovalRulesetVersionWithStatsAndRules(version, *version.Adjustment))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }

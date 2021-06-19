@@ -410,6 +410,8 @@ var _ = Describe("approval-ruleset API", func() {
 	})
 
 	Describe("GET /approval-rulesets/:id/versions", func() {
+		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
+
 		Setup := func(approved bool) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
@@ -452,6 +454,10 @@ var _ = Describe("approval-ruleset API", func() {
 					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release2,
 						ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
+
+					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+						ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
 				} else {
 					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
@@ -483,9 +489,25 @@ var _ = Describe("approval-ruleset API", func() {
 			version := items[0].(map[string]interface{})
 			Expect(version["num_bound_releases"]).To(BeNumerically("==", 2))
 		})
+
+		It("outputs approval rules", func() {
+			Setup(true)
+			body := includedTestCtx.MakeRequest()
+
+			items := body["items"].([]interface{})
+			version := items[0].(map[string]interface{})
+
+			Expect(version["approval_rules"]).To(HaveLen(1))
+			rules := version["approval_rules"].([]interface{})
+			rule := rules[0].(map[string]interface{})
+			Expect(rule["id"]).To(BeNumerically("==", mockScheduleApprovalRule.ID))
+			Expect(rule["begin_time"]).To(Equal(mockScheduleApprovalRule.BeginTime.String))
+		})
 	})
 
 	Describe("GET /approval-rulesets/:id/proposals", func() {
+		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
+
 		Setup := func(approved bool) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
@@ -499,10 +521,14 @@ var _ = Describe("approval-ruleset API", func() {
 				} else {
 					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, proposal, 1,
+					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, proposal, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
+					Expect(err).ToNot(HaveOccurred())
+
+					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+						proposal.ID, adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 				}
 
@@ -511,10 +537,25 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}
 
-		IncludeReviewableReadAllProposalsTest(ReviewableReadAllProposalsTestOptions{
+		includedTestCtx := IncludeReviewableReadAllProposalsTest(ReviewableReadAllProposalsTestOptions{
 			HTTPTestCtx: &ctx,
 			Path:        "/v1/approval-rulesets/ruleset1/proposals",
 			Setup:       Setup,
+		})
+
+		It("outputs approval rules", func() {
+			Setup(false)
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body["items"]).To(HaveLen(1))
+			items := body["items"].([]interface{})
+			version := items[0].(map[string]interface{})
+
+			Expect(version["approval_rules"]).To(HaveLen(1))
+			rules := version["approval_rules"].([]interface{})
+			rule := rules[0].(map[string]interface{})
+			Expect(rule["id"]).To(BeNumerically("==", mockScheduleApprovalRule.ID))
+			Expect(rule["begin_time"]).To(Equal(mockScheduleApprovalRule.BeginTime.String))
 		})
 	})
 })
