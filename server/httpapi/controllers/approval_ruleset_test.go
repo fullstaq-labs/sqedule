@@ -6,7 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/gomega"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -65,7 +67,7 @@ var _ = Describe("approval-ruleset API", func() {
 	Describe("GET /approval-rulesets", func() {
 		Setup := func() (ruleset dbmodels.ApprovalRuleset) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err = dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				return nil
 			})
@@ -106,13 +108,13 @@ var _ = Describe("approval-ruleset API", func() {
 				release3, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release1, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release2, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release3, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release3, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -151,7 +153,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
@@ -163,7 +165,7 @@ var _ = Describe("approval-ruleset API", func() {
 				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mockRelease, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -239,7 +241,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 		BeforeEach(func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
@@ -251,7 +253,7 @@ var _ = Describe("approval-ruleset API", func() {
 				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mockRelease, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mockRelease, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -314,7 +316,7 @@ var _ = Describe("approval-ruleset API", func() {
 	Describe("PATCH /approval-rulesets/:id", func() {
 		Describe("upon patching an approval ruleset's unversioned data", func() {
 			Setup := func() {
-				_, err = dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				_, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 			}
 
@@ -337,7 +339,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 			Setup := func() {
 				err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-					mockRuleset, err = dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+					mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
@@ -408,25 +410,57 @@ var _ = Describe("approval-ruleset API", func() {
 	})
 
 	Describe("GET /approval-rulesets/:id/versions", func() {
-		Setup := func() {
+		Setup := func(approved bool) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				app, err := dbmodels.CreateMockApplication(ctx.Db, ctx.Org, nil)
-				Expect(err).ToNot(HaveOccurred())
+				if approved {
+					// Create a ruleset with 3 versions
+					rulesetVersion1, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, rulesetVersion1, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
 
-				release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
-				Expect(err).ToNot(HaveOccurred())
-				release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
-				Expect(err).ToNot(HaveOccurred())
+					// We deliberately create version 3 out of order so that we test
+					// whether the versions are outputted in order.
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release1,
-					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
-				Expect(err).ToNot(HaveOccurred())
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release2,
-					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
-				Expect(err).ToNot(HaveOccurred())
+					rulesetVersion3, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(3), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, rulesetVersion3, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					rulesetVersion2, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(2), nil)
+					Expect(err).ToNot(HaveOccurred())
+					rulesetVersion2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, rulesetVersion2, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					ruleset.Version = &rulesetVersion3
+					ruleset.Version.Adjustment = &rulesetVersion2Adjustment
+
+					app, err := dbmodels.CreateMockApplication(ctx.Db, ctx.Org, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+					Expect(err).ToNot(HaveOccurred())
+					release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release1,
+						ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release2,
+						ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, proposal, 1,
+						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
 
 				return nil
 			})
@@ -440,14 +474,47 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs the number of bound releases", func() {
-			Setup()
+			Setup(true)
 			body := includedTestCtx.MakeRequest()
 
-			Expect(body["items"]).To(HaveLen(1))
+			Expect(body["items"]).To(HaveLen(3))
 
 			items := body["items"].([]interface{})
 			version := items[0].(map[string]interface{})
 			Expect(version["num_bound_releases"]).To(BeNumerically("==", 2))
+		})
+	})
+
+	Describe("GET /approval-rulesets/:id/proposals", func() {
+		Setup := func(approved bool) {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				if approved {
+					version, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, version, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, proposal, 1,
+						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableReadAllProposalsTest(ReviewableReadAllProposalsTestOptions{
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/approval-rulesets/ruleset1/proposals",
+			Setup:       Setup,
 		})
 	})
 })

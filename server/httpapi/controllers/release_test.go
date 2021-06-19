@@ -57,10 +57,10 @@ var _ = Describe("approval-ruleset API", func() {
 				})
 			Expect(err).ToNot(HaveOccurred())
 
-			ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+			ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			mctx.binding, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, mctx.release2,
+			mctx.binding, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mctx.release2,
 				ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -300,10 +300,10 @@ var _ = Describe("approval-ruleset API", func() {
 				release, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, release,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release,
 					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 

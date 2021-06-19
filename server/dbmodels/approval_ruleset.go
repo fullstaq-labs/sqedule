@@ -199,12 +199,19 @@ func FindApprovalRuleset(db *gorm.DB, organizationID string, id string) (Approva
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
-// FindApprovalRulesetApprovedVersions finds, for a given ApprovalRuleset, all its approved Versions
+// FindApprovalRulesetVersions finds, for a given ApprovalRuleset, all its Versions
 // and returns them ordered by version number (descending).
-func FindApprovalRulesetApprovedVersions(db *gorm.DB, organizationID string, rulesetID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetVersion, error) {
+//
+// The `approved` parameter determines whether it finds approved or proposed versions.
+func FindApprovalRulesetVersions(db *gorm.DB, organizationID string, rulesetID string, approved bool, pagination dbutils.PaginationOptions) ([]ApprovalRulesetVersion, error) {
 	var result []ApprovalRulesetVersion
 
-	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND version_number IS NOT NULL", organizationID, rulesetID).Order("version_number DESC")
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID).Order("version_number DESC")
+	if approved {
+		tx = tx.Where("version_number IS NOT NULL")
+	} else {
+		tx = tx.Where("version_number IS NULL")
+	}
 	tx = dbutils.ApplyDbQueryPaginationOptions(tx, pagination)
 	tx.Find(&result)
 	return result, tx.Error

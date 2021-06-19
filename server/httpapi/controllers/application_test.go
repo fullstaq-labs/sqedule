@@ -42,7 +42,7 @@ var _ = Describe("approval-ruleset API", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1,
@@ -108,7 +108,7 @@ var _ = Describe("approval-ruleset API", func() {
 				app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				ruleset, err := dbmodels.CreateMockRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app,

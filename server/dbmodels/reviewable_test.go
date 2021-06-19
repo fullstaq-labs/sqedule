@@ -29,9 +29,9 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			Expect(err).ToNot(HaveOccurred())
 			app, err = CreateMockApplicationWith1Version(tx, org, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
-			ruleset1, err = CreateMockRulesetWith1Version(tx, org, "ruleset1", nil)
+			ruleset1, err = CreateMockApprovalRulesetWith1Version(tx, org, "ruleset1", nil)
 			Expect(err).ToNot(HaveOccurred())
-			ruleset2, err = CreateMockRulesetWith1Version(tx, org, "ruleset2", nil)
+			ruleset2, err = CreateMockApprovalRulesetWith1Version(tx, org, "ruleset2", nil)
 			Expect(err).ToNot(HaveOccurred())
 			return nil
 		})
@@ -246,7 +246,7 @@ var _ = Describe("LoadReviewablesLatestVersions", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			ruleset, err := CreateMockRulesetWith1Version(tx, org, "ruleset", nil)
+			ruleset, err := CreateMockApprovalRulesetWith1Version(tx, org, "ruleset", nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Create two application ruleset bindings:

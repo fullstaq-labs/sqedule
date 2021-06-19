@@ -250,24 +250,16 @@ Retrieves all proposals for a given resource.
 ~~~javascript
 {
     "items": [
-        // A ResourceWithVersion object
+        // A ResourceVersion object
         {
-            // ...non-versioned resource-specific fields here....
-
+            "id": 123456,
+            "version_state": "proposal",
+            "version_number": null,
             "created_at": "2021-05-25T18:00:00+02:00",
             "updated_at": "2021-05-25T18:00:00+02:00",
+            "approved_at": null,
 
-            // A ResourceVersion object
-            "version": {
-                "id": 123456,
-                "version_state": "proposal",
-                "version_number": null,
-                "created_at": "2021-05-25T18:00:00+02:00",
-                "updated_at": "2021-05-25T18:00:00+02:00",
-                "approved_at": null,
-
-                // ...versioned resource-specific fields here...
-            }
+            // ...versioned resource-specific fields here...
         }
     }
 }

@@ -355,6 +355,10 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 //
 
 func (ctx Context) GetApprovalRulesetVersions(ginctx *gin.Context) {
+	ctx.getApprovalRulesetVersionsOrProposals(ginctx, true)
+}
+
+func (ctx Context) getApprovalRulesetVersionsOrProposals(ginctx *gin.Context, approved bool) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
@@ -383,7 +387,7 @@ func (ctx Context) GetApprovalRulesetVersions(ginctx *gin.Context) {
 		return
 	}
 
-	versions, err := dbmodels.FindApprovalRulesetApprovedVersions(ctx.Db, orgID, id, pagination)
+	versions, err := dbmodels.FindApprovalRulesetVersions(ctx.Db, orgID, id, approved, pagination)
 	if err != nil {
 		respondWithDbQueryError("approval ruleset versions", err, ginctx)
 		return
@@ -418,4 +422,12 @@ func (ctx Context) GetApprovalRulesetVersions(ginctx *gin.Context) {
 		outputList = append(outputList, json.CreateApprovalRulesetVersionWithStats(version, *version.Adjustment))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
+}
+
+//
+// ******** Operations on proposals ********
+//
+
+func (ctx Context) GetApprovalRulesetProposals(ginctx *gin.Context) {
+	ctx.getApprovalRulesetVersionsOrProposals(ginctx, false)
 }
