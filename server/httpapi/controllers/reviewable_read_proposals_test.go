@@ -5,18 +5,18 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type ReviewableReadAllProposalsTestOptions struct {
+type ReviewableReadProposalsTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	Path        string
 	Setup       func(approved bool)
 }
 
-type ReviewableReadAllProposalsTestContext struct {
+type ReviewableReadProposalsTestContext struct {
 	MakeRequest func() gin.H
 }
 
-func IncludeReviewableReadAllProposalsTest(options ReviewableReadAllProposalsTestOptions) *ReviewableReadAllProposalsTestContext {
-	var rctx ReviewableReadAllProposalsTestContext
+func IncludeReviewableReadProposalsTest(options ReviewableReadProposalsTestOptions) *ReviewableReadProposalsTestContext {
+	var rctx ReviewableReadProposalsTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {
@@ -36,20 +36,20 @@ func IncludeReviewableReadAllProposalsTest(options ReviewableReadAllProposalsTes
 		options.Setup(false)
 		body := rctx.MakeRequest()
 
-		Expect(body["items"]).To(HaveLen(1))
+		Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
 
 		items := body["items"].([]interface{})
 		version := items[0].(map[string]interface{})
-		Expect(version["id"]).ToNot(BeNil())
-		Expect(version["version_state"]).To(Equal("proposal"))
-		Expect(version["version_number"]).To(BeNil())
-		Expect(version["approved_at"]).To(BeNil())
+		Expect(version).To(HaveKeyWithValue("id", Not(BeNil())))
+		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
+		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 	})
 
 	It("does not output approved versions", func() {
 		options.Setup(true)
 		body := rctx.MakeRequest()
-		Expect(body["items"]).To(HaveLen(0))
+		Expect(body).To(HaveKeyWithValue("items", HaveLen(0)))
 	})
 
 	return &rctx

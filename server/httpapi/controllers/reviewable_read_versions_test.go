@@ -5,18 +5,18 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type ReviewableReadAllVersionsTestOptions struct {
+type ReviewableReadVersionsTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	Path        string
 	Setup       func(approved bool)
 }
 
-type ReviewableReadAllVersionsTestContext struct {
+type ReviewableReadVersionsTestContext struct {
 	MakeRequest func() gin.H
 }
 
-func IncludeReviewableReadAllVersionsTest(options ReviewableReadAllVersionsTestOptions) *ReviewableReadAllVersionsTestContext {
-	var rctx ReviewableReadAllVersionsTestContext
+func IncludeReviewableReadVersionsTest(options ReviewableReadVersionsTestOptions) *ReviewableReadVersionsTestContext {
+	var rctx ReviewableReadVersionsTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {
@@ -36,37 +36,37 @@ func IncludeReviewableReadAllVersionsTest(options ReviewableReadAllVersionsTestO
 		options.Setup(true)
 		body := rctx.MakeRequest()
 
-		Expect(body["items"]).To(HaveLen(3))
+		Expect(body).To(HaveKeyWithValue("items", HaveLen(3)))
 
 		items := body["items"].([]interface{})
 		version := items[0].(map[string]interface{})
-		Expect(version["id"]).ToNot(BeNil())
-		Expect(version["version_state"]).To(Equal("approved"))
-		Expect(version["version_number"]).ToNot(BeNil())
-		Expect(version["approved_at"]).ToNot(BeNil())
+		Expect(version).To(HaveKeyWithValue("id", Not(BeNil())))
+		Expect(version).To(HaveKeyWithValue("version_state", "approved"))
+		Expect(version).To(HaveKeyWithValue("version_number", Not(BeNil())))
+		Expect(version).To(HaveKeyWithValue("approved_at", Not(BeNil())))
 	})
 
 	It("outputs versions in descending order", func() {
 		options.Setup(true)
 		body := rctx.MakeRequest()
 
-		Expect(body["items"]).To(HaveLen(3))
+		Expect(body).To(HaveKeyWithValue("items", HaveLen(3)))
 
 		items := body["items"].([]interface{})
 
 		version3 := items[0].(map[string]interface{})
-		Expect(version3["version_number"]).To(BeNumerically("==", 3))
+		Expect(version3).To(HaveKeyWithValue("version_number", BeNumerically("==", 3)))
 		version2 := items[1].(map[string]interface{})
-		Expect(version2["version_number"]).To(BeNumerically("==", 2))
+		Expect(version2).To(HaveKeyWithValue("version_number", BeNumerically("==", 2)))
 		version1 := items[2].(map[string]interface{})
-		Expect(version1["version_number"]).To(BeNumerically("==", 1))
+		Expect(version1).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
 	})
 
 	It("does not output proposed versions", func() {
 		options.Setup(false)
 		body := rctx.MakeRequest()
 
-		Expect(body["items"]).To(HaveLen(0))
+		Expect(body).To(HaveKeyWithValue("items", HaveLen(0)))
 	})
 
 	return &rctx

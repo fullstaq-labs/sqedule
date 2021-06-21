@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type ReviewableReadTestOptions struct {
+type ReviewableReadVersionTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	Path        string
 	Setup       func()
@@ -14,12 +14,12 @@ type ReviewableReadTestOptions struct {
 	PrimaryKeyInitialValue  interface{}
 }
 
-type ReviewableReadTestContext struct {
+type ReviewableReadVersionTestContext struct {
 	MakeRequest func() gin.H
 }
 
-func IncludeReviewableReadTest(options ReviewableReadTestOptions) *ReviewableReadTestContext {
-	var rctx ReviewableReadTestContext
+func IncludeReviewableReadVersionTest(options ReviewableReadVersionTestOptions) *ReviewableReadVersionTestContext {
+	var rctx ReviewableReadVersionTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {
@@ -34,16 +34,19 @@ func IncludeReviewableReadTest(options ReviewableReadTestOptions) *ReviewableRea
 		return body
 	}
 
-	It("outputs the latest approved version", func() {
+	It("outputs the requested version", func() {
 		options.Setup()
 		body := rctx.MakeRequest()
 
 		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
-		Expect(body).To(HaveKey("latest_approved_version"))
-		Expect(body["latest_approved_version"]).ToNot(BeNil())
 
-		version := body["latest_approved_version"].(map[string]interface{})
-		Expect(version["version_number"]).To(BeNumerically("==", 1))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		version := body["version"]
+
+		Expect(version).To(HaveKeyWithValue("id", Not(BeNil())))
+		Expect(version).To(HaveKeyWithValue("version_state", "approved"))
+		Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+		Expect(version).To(HaveKeyWithValue("approved_at", Not(BeNil())))
 	})
 
 	return &rctx
