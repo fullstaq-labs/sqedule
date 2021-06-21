@@ -8,7 +8,7 @@ import (
 type ReviewableReadProposalTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	GetPath     func() string
-	Setup       func()
+	Setup       func(approved bool)
 
 	PrimaryKeyJSONFieldName string
 	PrimaryKeyInitialValue  interface{}
@@ -34,11 +34,16 @@ func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions
 		return body
 	}
 
-	It("outputs the requested proposal", func() {
-		options.Setup()
+	It("outputs non-versioned fields", func() {
+		options.Setup(false)
 		body := rctx.MakeRequest()
 
 		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
+	})
+
+	It("outputs the requested proposal", func() {
+		options.Setup(false)
+		body := rctx.MakeRequest()
 
 		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"]
@@ -47,6 +52,14 @@ func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
 		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
+	})
+
+	It("does not find approved versions", func() {
+		options.Setup(true)
+		req, err := hctx.NewRequestWithAuth("GET", options.GetPath(), nil)
+		Expect(err).ToNot(HaveOccurred())
+		hctx.ServeHTTP(req)
+		Expect(hctx.HttpRecorder.Code).To(Equal(404))
 	})
 
 	return &rctx

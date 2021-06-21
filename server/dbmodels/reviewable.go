@@ -8,6 +8,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
 	"gorm.io/gorm"
 )
 
@@ -230,7 +231,7 @@ func CollectReviewableVersionIDs(versions []IReviewableVersion) []interface{} {
 }
 
 // FinalizeReviewableProposal transitions a Reviewable's proposal to either in the 'reviewing' state or the 'approved' state,
-// depending on whether a review of this proposal is required.
+// depending on whether a review of this proposal is required. It is to be used inside PATCH API routes.
 func FinalizeReviewableProposal(version *ReviewableVersionBase, adjustment *ReviewableAdjustmentBase, latestVersionNumber uint32, requiresReview bool) {
 	// TODO: add support for comments
 	if requiresReview {
@@ -248,4 +249,21 @@ func markProposalAsApproved(version *ReviewableVersionBase, versionNumber uint32
 	adjustment.ReviewState = reviewstate.Approved
 	version.VersionNumber = &versionNumber
 	version.ApprovedAt = sql.NullTime{Time: time.Now(), Valid: true}
+}
+
+// SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState sets an Adjustment's ReviewState to an appropriate value,
+// based on a ProposalState given by a client. It is to be used inside PATCH API routes.
+//
+// Precondition: `state` is not `Final`.
+func SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(adjustment *ReviewableAdjustmentBase, state proposalstate.State) {
+	switch state {
+	case proposalstate.Unset, proposalstate.Draft:
+		adjustment.ReviewState = reviewstate.Draft
+	case proposalstate.Final:
+		panic("Not allowed to call this function on a proposalstate of 'Final'")
+	case proposalstate.Abandon:
+		adjustment.ReviewState = reviewstate.Abandoned
+	default:
+		panic("Unsupported proposal state '" + string(state) + "'")
+	}
 }

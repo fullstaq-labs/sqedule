@@ -34,11 +34,16 @@ func IncludeReviewableReadVersionTest(options ReviewableReadVersionTestOptions) 
 		return body
 	}
 
-	It("outputs the requested version", func() {
+	It("outputs non-versioned fields", func() {
 		options.Setup()
 		body := rctx.MakeRequest()
 
 		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
+	})
+
+	It("outputs the requested version", func() {
+		options.Setup()
+		body := rctx.MakeRequest()
 
 		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"]

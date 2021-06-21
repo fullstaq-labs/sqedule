@@ -17,17 +17,18 @@ type ReviewableBase struct {
 }
 
 type ReviewableVersionBase struct {
-	ID            uint64     `json:"id"`
-	VersionState  string     `json:"version_state"`
-	VersionNumber *uint32    `json:"version_number"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
-	ApprovedAt    *time.Time `json:"approved_at"`
+	ID              uint64     `json:"id"`
+	VersionState    string     `json:"version_state"`
+	VersionNumber   *uint32    `json:"version_number"`
+	AdjustmentState string     `json:"adjustment_state"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+	ApprovedAt      *time.Time `json:"approved_at"`
 }
 
 type ReviewableVersionInputBase struct {
-	ProposalState proposalstate.ProposalState `json:"proposal_state"`
-	Comments      *string                     `json:"comments"`
+	ProposalState proposalstate.State `json:"proposal_state"`
+	Comments      *string             `json:"comments"`
 }
 
 //
@@ -42,18 +43,19 @@ func createReviewableBase(base dbmodels.ReviewableBase) ReviewableBase {
 }
 
 func createReviewableVersionBase(versionBase dbmodels.ReviewableVersionBase, latestAdjustmentBase dbmodels.ReviewableAdjustmentBase) ReviewableVersionBase {
-	var state string
+	var versionState string
 	if versionBase.VersionNumber == nil {
-		state = "proposal"
+		versionState = "proposal"
 	} else {
-		state = "approved"
+		versionState = "approved"
 	}
 	return ReviewableVersionBase{
-		ID:            versionBase.ID,
-		VersionState:  state,
-		VersionNumber: versionBase.VersionNumber,
-		CreatedAt:     versionBase.CreatedAt,
-		UpdatedAt:     latestAdjustmentBase.CreatedAt,
-		ApprovedAt:    getSqlTimeContentsOrNil(versionBase.ApprovedAt),
+		ID:              versionBase.ID,
+		VersionState:    versionState,
+		VersionNumber:   versionBase.VersionNumber,
+		AdjustmentState: string(latestAdjustmentBase.ReviewState),
+		CreatedAt:       versionBase.CreatedAt,
+		UpdatedAt:       latestAdjustmentBase.CreatedAt,
+		ApprovedAt:      getSqlTimeContentsOrNil(versionBase.ApprovedAt),
 	}
 }

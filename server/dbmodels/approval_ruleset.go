@@ -3,6 +3,7 @@ package dbmodels
 import (
 	"reflect"
 
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -127,6 +128,32 @@ func (c *ApprovalRulesetContents) ForEach(callback func(rule IApprovalRule) erro
 // ******** ApprovalRuleset methods ********
 //
 
+// NewDraftVersion returns an unsaved ApprovalRulesetVersion and ApprovalRulesetAdjustment
+// in draft proposal state. Their contents are identical to the currently loaded Version and Adjustment.
+func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *ApprovalRulesetAdjustment) {
+	var adjustment ApprovalRulesetAdjustment
+	var version *ApprovalRulesetVersion = &adjustment.ApprovalRulesetVersion
+
+	if ruleset.Version != nil && ruleset.Version.Adjustment != nil {
+		adjustment = *ruleset.Version.Adjustment
+	}
+
+	version.BaseModel = ruleset.BaseModel
+	version.ReviewableVersionBase = ReviewableVersionBase{}
+	version.ApprovalRuleset = ruleset
+	version.ApprovalRulesetID = ruleset.ID
+	version.Adjustment = &adjustment
+
+	adjustment.BaseModel = ruleset.BaseModel
+	adjustment.ApprovalRulesetVersionID = 0
+	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: 1,
+		ReviewState:      reviewstate.Draft,
+	}
+
+	return version, &adjustment
+}
+
 func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
 	return false
 	// TODO: comment out after we've implemented the review steps in the version creation process
@@ -142,6 +169,18 @@ func (adjustment ApprovalRulesetAdjustment) ApprovalRulesetVersionAndAdjustmentK
 		VersionID:        adjustment.ApprovalRulesetVersionID,
 		AdjustmentNumber: adjustment.AdjustmentNumber,
 	}
+}
+
+// NewAdjustment returns an unsaved ApprovalRulesetAdjustment in draft state. Its contents
+// are identical to the previous Adjustment; except for Rules, which becomes empty.
+func (adjustment ApprovalRulesetAdjustment) NewAdjustment() ApprovalRulesetAdjustment {
+	result := adjustment
+	result.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
+		ReviewState:      reviewstate.Draft,
+	}
+	result.Rules = ApprovalRulesetContents{}
+	return result
 }
 
 //
@@ -213,6 +252,10 @@ func FindApprovalRulesetVersionByID(db *gorm.DB, organizationID string, rulesetI
 	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND id = ?", organizationID, rulesetID, versionID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApprovalRulesetProposalByID(db *gorm.DB, organizationID string, rulesetID string, versionID uint64) (ApprovalRulesetVersion, error) {
+	return FindApprovalRulesetVersionByID(db.Where("version_number IS NULL"), organizationID, rulesetID, versionID)
 }
 
 // FindApprovalRulesetVersions finds, for a given ApprovalRuleset, all its Versions

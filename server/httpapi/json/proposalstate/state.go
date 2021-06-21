@@ -6,23 +6,23 @@ import (
 	"errors"
 )
 
-type ProposalState string
+type State string
 
 const (
-	Unset   ProposalState = ""
-	Draft   ProposalState = "draft"
-	Final   ProposalState = "final"
-	Abandon ProposalState = "abandon"
+	Unset   State = ""
+	Draft   State = "draft"
+	Final   State = "final"
+	Abandon State = "abandon"
 )
 
-func (s ProposalState) MarshalJSON() ([]byte, error) {
+func (s State) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(string(s))
 	buffer.WriteString(`"`)
 	return buffer.Bytes(), nil
 }
 
-func (s *ProposalState) UnmarshalJSON(b []byte) error {
+func (s *State) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -46,6 +46,6 @@ func (s *ProposalState) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (s ProposalState) IsEffectivelyDraft() bool {
+func (s State) IsEffectivelyDraft() bool {
 	return s == Unset || s == Draft
 }

@@ -110,7 +110,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("", 200)
 
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldUpdatedValue))
 	})
@@ -119,11 +119,12 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("", 200)
 
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
-		Expect(version["version_number"]).To(BeNil())
-		Expect(version["approved_at"]).To(BeNil())
+		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx := hctx.Db.Where("review_state = 'draft'").Take(adjustment.Interface())
@@ -134,14 +135,31 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("draft", 200)
 
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
-		Expect(version["version_number"]).To(BeNil())
-		Expect(version["approved_at"]).To(BeNil())
+		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx := hctx.Db.Where("review_state = 'draft'").Take(adjustment.Interface())
+		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
+	})
+
+	It("creates an abandoned proposal if proposal_state is abandon", func() {
+		options.Setup()
+		body := rctx.MakeRequest("abandon", 200)
+
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		version := body["version"].(map[string]interface{})
+		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
+		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+		Expect(version).To(HaveKeyWithValue("adjustment_state", "abandoned"))
+		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
+
+		adjustment := reflect.New(options.AdjustmentType)
+		tx := hctx.Db.Where("review_state = 'abandoned'").Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 	})
 
@@ -149,22 +167,29 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("final", 200)
 
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		versionJSON := body["version"].(map[string]interface{})
 		Expect(versionJSON).To(SatisfyAny(
-			HaveKeyWithValue("version_state", "reviewing"),
+			HaveKeyWithValue("version_state", "proposal"),
 			HaveKeyWithValue("version_state", "approved"),
 		))
-		if versionJSON["version_state"] == "reviewing" {
-			Expect(versionJSON["version_number"]).To(BeNil())
-			Expect(versionJSON["approved_at"]).To(BeNil())
+		if versionJSON["version_state"] == "proposal" {
+			Expect(versionJSON).To(HaveKeyWithValue("version_number", BeNil()))
+			Expect(versionJSON).To(HaveKeyWithValue("adjustment_state", Or(
+				Equal("draft"),
+				Equal("reviewing"),
+				Equal("rejected"),
+				Equal("abandoned"),
+			)))
+			Expect(versionJSON).To(HaveKeyWithValue("approved_at", BeNil()))
 
 			adjustment := reflect.New(options.AdjustmentType)
-			tx := hctx.Db.Where("review_state = 'reviewing'").Take(adjustment.Interface())
+			tx := hctx.Db.Where("review_state != 'approved'").Take(adjustment.Interface())
 			Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 		} else {
-			Expect(versionJSON["version_number"]).To(BeNumerically("==", 2))
-			Expect(versionJSON["approved_at"]).ToNot(BeNil())
+			Expect(versionJSON).To(HaveKeyWithValue("version_number", BeNumerically("==", 2)))
+			Expect(versionJSON).To(HaveKeyWithValue("adjustment_state", "approved"))
+			Expect(versionJSON).To(HaveKeyWithValue("approved_at", Not(BeNil())))
 
 			version, adjustment := options.GetLatestResourceVersionAndAdjustment()
 			Expect(version).ToNot(BeNil())

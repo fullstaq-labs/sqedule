@@ -1,7 +1,5 @@
 package dbmodels
 
-import "github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
-
 func (ruleset ApprovalRuleset) GetPrimaryKey() interface{} {
 	return ruleset.ID
 }
@@ -12,32 +10,6 @@ func (ruleset ApprovalRuleset) GetPrimaryKeyGormValue() []interface{} {
 
 func (ruleset *ApprovalRuleset) AssociateWithVersion(version IReviewableVersion) {
 	ruleset.Version = version.(*ApprovalRulesetVersion)
-}
-
-// NewDraftVersion returns an unsaved ApprovalRulesetVersion and ApprovalRulesetAdjustment
-// in draft proposal state.
-func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *ApprovalRulesetAdjustment) {
-	var adjustment ApprovalRulesetAdjustment
-	var version *ApprovalRulesetVersion = &adjustment.ApprovalRulesetVersion
-
-	if ruleset.Version != nil && ruleset.Version.Adjustment != nil {
-		adjustment = *ruleset.Version.Adjustment
-	}
-
-	version.BaseModel = ruleset.BaseModel
-	version.ReviewableVersionBase = ReviewableVersionBase{}
-	version.ApprovalRuleset = ruleset
-	version.ApprovalRulesetID = ruleset.ID
-	version.Adjustment = &adjustment
-
-	adjustment.BaseModel = ruleset.BaseModel
-	adjustment.ApprovalRulesetVersionID = 0
-	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
-		AdjustmentNumber: 1,
-		ReviewState:      reviewstate.Draft,
-	}
-
-	return version, &adjustment
 }
 
 func (version ApprovalRulesetVersion) GetID() interface{} {

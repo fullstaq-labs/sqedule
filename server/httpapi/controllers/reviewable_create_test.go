@@ -66,7 +66,7 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		body := rctx.MakeRequest("", 201)
 
 		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldInitialValue))
@@ -92,8 +92,9 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		Expect(body["version"]).ToNot(BeNil())
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
-		Expect(version["version_number"]).To(BeNil())
-		Expect(version["approved_at"]).To(BeNil())
+		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx := hctx.Db.Take(adjustment.Interface())
@@ -104,11 +105,12 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 	It("creates a draft proposal if proposal_state is draft", func() {
 		body := rctx.MakeRequest("draft", 201)
 
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
-		Expect(version["version_number"]).To(BeNil())
-		Expect(version["approved_at"]).To(BeNil())
+		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx := hctx.Db.Take(adjustment.Interface())
@@ -119,22 +121,29 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 	It("submits the version for approval if proposal_state is final", func() {
 		body := rctx.MakeRequest("final", 201)
 
-		Expect(body["version"]).ToNot(BeNil())
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(SatisfyAny(
-			HaveKeyWithValue("version_state", "reviewing"),
+			HaveKeyWithValue("version_state", "proposal"),
 			HaveKeyWithValue("version_state", "approved"),
 		))
-		if version["version_state"] == "reviewing" {
-			Expect(version["version_number"]).To(BeNil())
-			Expect(version["approved_at"]).To(BeNil())
+		if version["version_state"] == "proposal" {
+			Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
+			Expect(version).To(HaveKeyWithValue("adjustment_state", Or(
+				Equal("draft"),
+				Equal("reviewing"),
+				Equal("rejected"),
+				Equal("abandoned"),
+			)))
+			Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 			adjustment := reflect.New(options.AdjustmentType)
-			tx := hctx.Db.Where("review_state = 'reviewing'").Take(adjustment.Interface())
+			tx := hctx.Db.Where("review_state != 'approved'").Take(adjustment.Interface())
 			Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 		} else {
-			Expect(version["version_number"]).To(BeNumerically("==", 1))
-			Expect(version["approved_at"]).ToNot(BeNil())
+			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+			Expect(version).To(HaveKeyWithValue("adjustment_state", "approved"))
+			Expect(version).To(HaveKeyWithValue("approved_at", Not(BeNil())))
 
 			adjustment := reflect.New(options.AdjustmentType)
 			tx := hctx.Db.Take(adjustment.Interface())
