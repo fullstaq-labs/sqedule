@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -193,9 +194,10 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding["mode"]).To(Equal("enforcing"))
+			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
-			Expect(app["id"]).To(Equal("app1"))
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
 		})
 
 		It("outputs release bindings", func() {
@@ -205,18 +207,18 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
 			version := body["latest_approved_version"].(map[string]interface{})
 
-			Expect(version["release_approval_ruleset_bindings"]).To(HaveLen(1))
+			Expect(version).To(HaveKeyWithValue("release_approval_ruleset_bindings", HaveLen(1)))
 			releaseBindings := version["release_approval_ruleset_bindings"].([]interface{})
 			releaseBinding := releaseBindings[0].(map[string]interface{})
-			Expect(releaseBinding["mode"]).To(Equal("enforcing"))
-			Expect(releaseBinding["release"]).ToNot(BeNil())
+			Expect(releaseBinding).To(HaveKeyWithValue("mode", "enforcing"))
+			Expect(releaseBinding).To(HaveKeyWithValue("release", Not(BeEmpty())))
 
 			release := releaseBinding["release"].(map[string]interface{})
-			Expect(release["id"]).To(BeNumerically("==", mockRelease.ID))
-			Expect(release["application"]).ToNot(BeNil())
+			Expect(release).To(HaveKeyWithValue("id", BeNumerically("==", mockRelease.ID)))
+			Expect(release).To(HaveKeyWithValue("application", Not(BeEmpty())))
 
 			app := release["application"].(map[string]interface{})
-			Expect(app["id"]).To(Equal("app1"))
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
 		})
 
 		It("outputs approval rules", func() {
@@ -496,14 +498,15 @@ var _ = Describe("approval-ruleset API", func() {
 			Setup(true)
 			body := includedTestCtx.MakeRequest()
 
+			Expect(body).To(HaveKeyWithValue("items", Not(BeEmpty())))
 			items := body["items"].([]interface{})
 			version := items[0].(map[string]interface{})
 
-			Expect(version["approval_rules"]).To(HaveLen(1))
+			Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
 			rules := version["approval_rules"].([]interface{})
 			rule := rules[0].(map[string]interface{})
-			Expect(rule["id"]).To(BeNumerically("==", mockScheduleApprovalRule.ID))
-			Expect(rule["begin_time"]).To(Equal(mockScheduleApprovalRule.BeginTime.String))
+			Expect(rule).To(HaveKeyWithValue("id", BeNumerically("==", mockScheduleApprovalRule.ID)))
+			Expect(rule).To(HaveKeyWithValue("begin_time", mockScheduleApprovalRule.BeginTime.String))
 		})
 	})
 
@@ -554,44 +557,45 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding["mode"]).To(Equal("enforcing"))
+			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
-			Expect(app["id"]).To(Equal("app1"))
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
 		})
 
 		It("outputs release bindings", func() {
 			Setup()
 			body := includedTestCtx.MakeRequest()
 
-			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
+			Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 			version := body["version"].(map[string]interface{})
 
 			Expect(version["release_approval_ruleset_bindings"]).To(HaveLen(1))
 			releaseBindings := version["release_approval_ruleset_bindings"].([]interface{})
 			releaseBinding := releaseBindings[0].(map[string]interface{})
-			Expect(releaseBinding["mode"]).To(Equal("enforcing"))
-			Expect(releaseBinding["release"]).ToNot(BeNil())
+			Expect(releaseBinding).To(HaveKeyWithValue("mode", "enforcing"))
+			Expect(releaseBinding).To(HaveKeyWithValue("release", Not(BeEmpty())))
 
 			release := releaseBinding["release"].(map[string]interface{})
-			Expect(release["id"]).To(BeNumerically("==", mockRelease.ID))
-			Expect(release["application"]).ToNot(BeNil())
+			Expect(release).To(HaveKeyWithValue("id", BeNumerically("==", mockRelease.ID)))
+			Expect(release).To(HaveKeyWithValue("application", Not(BeEmpty())))
 
 			app := release["application"].(map[string]interface{})
-			Expect(app["id"]).To(Equal("app1"))
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
 		})
 
 		It("outputs approval rules", func() {
 			Setup()
 			body := includedTestCtx.MakeRequest()
 
-			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
+			Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 			version := body["version"].(map[string]interface{})
 
-			Expect(version["approval_rules"]).To(HaveLen(1))
+			Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
 			rules := version["approval_rules"].([]interface{})
 			rule := rules[0].(map[string]interface{})
-			Expect(rule["id"]).To(BeNumerically("==", mockScheduleApprovalRule.ID))
-			Expect(rule["begin_time"]).To(Equal(mockScheduleApprovalRule.BeginTime.String))
+			Expect(rule).To(HaveKeyWithValue("id", BeNumerically("==", mockScheduleApprovalRule.ID)))
+			Expect(rule).To(HaveKeyWithValue("begin_time", mockScheduleApprovalRule.BeginTime.String))
 		})
 	})
 
@@ -637,15 +641,88 @@ var _ = Describe("approval-ruleset API", func() {
 			Setup(false)
 			body := includedTestCtx.MakeRequest()
 
-			Expect(body["items"]).To(HaveLen(1))
+			Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
 			items := body["items"].([]interface{})
 			version := items[0].(map[string]interface{})
 
-			Expect(version["approval_rules"]).To(HaveLen(1))
+			Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
 			rules := version["approval_rules"].([]interface{})
 			rule := rules[0].(map[string]interface{})
-			Expect(rule["id"]).To(BeNumerically("==", mockScheduleApprovalRule.ID))
-			Expect(rule["begin_time"]).To(Equal(mockScheduleApprovalRule.BeginTime.String))
+			Expect(rule).To(HaveKeyWithValue("id", BeNumerically("==", mockScheduleApprovalRule.ID)))
+			Expect(rule).To(HaveKeyWithValue("begin_time", mockScheduleApprovalRule.BeginTime.String))
+		})
+	})
+
+	Describe("GET /approval-rulesets/:id/proposals/:version_id", func() {
+		var mockVersion dbmodels.ApprovalRulesetVersion
+		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
+
+		Setup := func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				mockVersion, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockVersion, 1,
+					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset.Version = &mockVersion
+				ruleset.Version.Adjustment = &adjustment
+
+				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReadProposalTest(ReviewableReadProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetPath:     func() string { return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockVersion.ID) },
+			Setup:       Setup,
+
+			PrimaryKeyJSONFieldName: "id",
+			PrimaryKeyInitialValue:  "ruleset1",
+		})
+
+		It("outputs application bindings", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
+			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
+			appBinding := appBindings[0].(map[string]interface{})
+			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
+			app := appBinding["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+		})
+
+		It("outputs approval rules", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+			version := body["version"].(map[string]interface{})
+
+			Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
+			rules := version["approval_rules"].([]interface{})
+			rule := rules[0].(map[string]interface{})
+			Expect(rule).To(HaveKeyWithValue("id", BeNumerically("==", mockScheduleApprovalRule.ID)))
+			Expect(rule).To(HaveKeyWithValue("begin_time", mockScheduleApprovalRule.BeginTime.String))
 		})
 	})
 })

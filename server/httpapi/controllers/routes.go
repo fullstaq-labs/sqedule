@@ -31,4 +31,5 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 	rg.GET("approval-rulesets/:id/versions", ctx.GetApprovalRulesetVersions)
 	rg.GET("approval-rulesets/:id/versions/:version_number", ctx.GetApprovalRulesetVersion)
 	rg.GET("approval-rulesets/:id/proposals", ctx.GetApprovalRulesetProposals)
+	rg.GET("approval-rulesets/:id/proposals/:version_id", ctx.GetApprovalRulesetProposal)
 }

@@ -207,6 +207,14 @@ func FindApprovalRulesetVersionByNumber(db *gorm.DB, organizationID string, rule
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
+func FindApprovalRulesetVersionByID(db *gorm.DB, organizationID string, rulesetID string, versionID uint64) (ApprovalRulesetVersion, error) {
+	var result ApprovalRulesetVersion
+
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND id = ?", organizationID, rulesetID, versionID)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
+}
+
 // FindApprovalRulesetVersions finds, for a given ApprovalRuleset, all its Versions
 // and returns them ordered by version number (descending).
 //
