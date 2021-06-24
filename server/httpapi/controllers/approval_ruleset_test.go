@@ -124,7 +124,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}
 
-		includedTestCtx := IncludeReviewableReadResourcesTest(ReviewableReadResourcesTestOptions{
+		includedTestCtx := IncludeReviewableListResourcesTest(ReviewableListResourcesTestOptions{
 			HTTPTestCtx:             &ctx,
 			Path:                    "/v1/approval-rulesets",
 			Setup:                   func() { Setup() },
@@ -477,7 +477,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}
 
-		includedTestCtx := IncludeReviewableReadVersionsTest(ReviewableReadVersionsTestOptions{
+		includedTestCtx := IncludeReviewableListVersionsTest(ReviewableListVersionsTestOptions{
 			HTTPTestCtx: &ctx,
 			Path:        "/v1/approval-rulesets/ruleset1/versions",
 			Setup:       Setup,
@@ -631,7 +631,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}
 
-		includedTestCtx := IncludeReviewableReadProposalsTest(ReviewableReadProposalsTestOptions{
+		includedTestCtx := IncludeReviewableListProposalsTest(ReviewableListProposalsTestOptions{
 			HTTPTestCtx: &ctx,
 			Path:        "/v1/approval-rulesets/ruleset1/proposals",
 			Setup:       Setup,
@@ -703,13 +703,15 @@ var _ = Describe("approval-ruleset API", func() {
 			GetPath:     func() string { return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockVersion.ID) },
 			Setup:       Setup,
 
+			ResourceTypeNameInResponse: "approval ruleset proposal",
+
 			PrimaryKeyJSONFieldName: "id",
 			PrimaryKeyInitialValue:  "ruleset1",
 		})
 
 		It("outputs application bindings", func() {
 			Setup(false)
-			body := includedTestCtx.MakeRequest()
+			body := includedTestCtx.MakeRequest(200)
 
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
@@ -722,7 +724,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 		It("outputs approval rules", func() {
 			Setup(false)
-			body := includedTestCtx.MakeRequest()
+			body := includedTestCtx.MakeRequest(200)
 
 			Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 			version := body["version"].(map[string]interface{})
@@ -777,15 +779,10 @@ var _ = Describe("approval-ruleset API", func() {
 		}
 
 		includedTestCtx := IncludeReviewableUpdateProposalTest(ReviewableUpdateProposalTestOptions{
-			HTTPTestCtx: &ctx,
-			GetPath: func(approved bool) string {
-				if approved {
-					return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockVersion.ID)
-				} else {
-					return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockProposal.ID)
-				}
-			},
-			Setup: Setup,
+			HTTPTestCtx:            &ctx,
+			GetProposalPath:        func() string { return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockProposal.ID) },
+			GetApprovedVersionPath: func() string { return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockVersion.ID) },
+			Setup:                  Setup,
 			Input: gin.H{
 				"display_name": "Ruleset 2",
 				"approval_rules": []gin.H{
@@ -796,7 +793,8 @@ var _ = Describe("approval-ruleset API", func() {
 					},
 				},
 			},
-			AdjustmentType: reflect.TypeOf(dbmodels.ApprovalRulesetAdjustment{}),
+			AdjustmentType:             reflect.TypeOf(dbmodels.ApprovalRulesetAdjustment{}),
+			ResourceTypeNameInResponse: "approval ruleset proposal",
 			GetPrimaryKey: func(resource interface{}) interface{} {
 				return resource.(*dbmodels.ApprovalRuleset).ID
 			},
@@ -836,6 +834,59 @@ var _ = Describe("approval-ruleset API", func() {
 			err = ctx.Db.Model(dbmodels.ScheduleApprovalRule{}).Count(&count).Error
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(BeNumerically("==", 3))
+		})
+	})
+
+	Describe("DELETE /approval-rulesets/:id/proposals/:version_id", func() {
+		var mockVersion dbmodels.ApprovalRulesetVersion
+		var mockProposal dbmodels.ApprovalRulesetVersion
+
+		Setup := func() {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				mockVersion = *ruleset.Version
+
+				mockProposal, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal, 1,
+					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				adjustment2, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal, 2,
+					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+				mockProposal.Adjustment = &adjustment2
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableDeleteProposalTest(ReviewableDeleteProposalTestOptions{
+			HTTPTestCtx:                &ctx,
+			GetProposalPath:            func() string { return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockProposal.ID) },
+			GetApprovedVersionPath:     func() string { return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d", mockVersion.ID) },
+			Setup:                      Setup,
+			ResourceTypeNameInResponse: "approval ruleset proposal",
+			CountProposals: func() uint {
+				var count int64
+				err = ctx.Db.Model(dbmodels.ApprovalRulesetVersion{}).Where("version_number IS NULL").Count(&count).Error
+				Expect(err).ToNot(HaveOccurred())
+				return uint(count)
+			},
+			CountProposalAdjustments: func() uint {
+				var count int64
+				err = ctx.Db.Model(dbmodels.ApprovalRulesetAdjustment{}).Where("approval_ruleset_version_id = ?", mockProposal.ID).Count(&count).Error
+				Expect(err).ToNot(HaveOccurred())
+				return uint(count)
+			},
 		})
 	})
 })

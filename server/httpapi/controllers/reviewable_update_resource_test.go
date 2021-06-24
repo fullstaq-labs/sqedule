@@ -25,14 +25,14 @@ type ReviewableUpdateUnversionedDataTestOptions struct {
 }
 
 type ReviewableUpdateUnversionedDataTestContext struct {
-	MakeRequest func(expectedCode int) gin.H
+	MakeRequest func(expectedCode uint) gin.H
 }
 
 func IncludeReviewableUpdateUnversionedDataTest(options ReviewableUpdateUnversionedDataTestOptions) *ReviewableUpdateUnversionedDataTestContext {
 	var rctx ReviewableUpdateUnversionedDataTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
-	rctx.MakeRequest = func(expectedCode int) gin.H {
+	rctx.MakeRequest = func(expectedCode uint) gin.H {
 		input := gin.H{}
 		for k, v := range options.UnversionedInput {
 			input[k] = v
@@ -42,7 +42,7 @@ func IncludeReviewableUpdateUnversionedDataTest(options ReviewableUpdateUnversio
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 
-		Expect(hctx.HttpRecorder.Code).To(Equal(expectedCode))
+		Expect(hctx.HttpRecorder.Code).To(BeNumerically("==", expectedCode))
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())
 
@@ -79,14 +79,14 @@ type ReviewableUpdateVersionedDataTestOptions struct {
 }
 
 type ReviewableUpdateVersionedDataTestContext struct {
-	MakeRequest func(proposalState string, expectedCode int) gin.H
+	MakeRequest func(proposalState string, expectedCode uint) gin.H
 }
 
 func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedDataTestOptions) *ReviewableUpdateVersionedDataTestContext {
 	var rctx ReviewableUpdateVersionedDataTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
-	rctx.MakeRequest = func(proposalState string, expectedCode int) gin.H {
+	rctx.MakeRequest = func(proposalState string, expectedCode uint) gin.H {
 		versionInput := gin.H{}
 		for k, v := range options.VersionedInput {
 			versionInput[k] = v
@@ -99,7 +99,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 
-		Expect(hctx.HttpRecorder.Code).To(Equal(expectedCode))
+		Expect(hctx.HttpRecorder.Code).To(BeNumerically("==", expectedCode))
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())
 

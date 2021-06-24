@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type ReviewableReadResourcesTestOptions struct {
+type ReviewableListResourcesTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	Path        string
 	Setup       func()
@@ -14,12 +14,12 @@ type ReviewableReadResourcesTestOptions struct {
 	PrimaryKeyInitialValue  interface{}
 }
 
-type ReviewableReadResourcesTestContext struct {
+type ReviewableListResourcesTestContext struct {
 	MakeRequest func() gin.H
 }
 
-func IncludeReviewableReadResourcesTest(options ReviewableReadResourcesTestOptions) *ReviewableReadResourcesTestContext {
-	var rctx ReviewableReadResourcesTestContext
+func IncludeReviewableListResourcesTest(options ReviewableListResourcesTestOptions) *ReviewableListResourcesTestContext {
+	var rctx ReviewableListResourcesTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {

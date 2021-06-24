@@ -10,23 +10,25 @@ type ReviewableReadProposalTestOptions struct {
 	GetPath     func() string
 	Setup       func(approved bool)
 
+	ResourceTypeNameInResponse string
+
 	PrimaryKeyJSONFieldName string
 	PrimaryKeyInitialValue  interface{}
 }
 
 type ReviewableReadProposalTestContext struct {
-	MakeRequest func() gin.H
+	MakeRequest func(expectedCode uint) gin.H
 }
 
 func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions) *ReviewableReadProposalTestContext {
 	var rctx ReviewableReadProposalTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
-	rctx.MakeRequest = func() gin.H {
+	rctx.MakeRequest = func(expectedCode uint) gin.H {
 		req, err := hctx.NewRequestWithAuth("GET", options.GetPath(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
-		Expect(hctx.HttpRecorder.Code).To(Equal(200))
+		Expect(hctx.HttpRecorder.Code).To(BeNumerically("==", expectedCode))
 
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())
@@ -36,14 +38,14 @@ func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions
 
 	It("outputs non-versioned fields", func() {
 		options.Setup(false)
-		body := rctx.MakeRequest()
+		body := rctx.MakeRequest(200)
 
 		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
 	})
 
 	It("outputs the requested proposal", func() {
 		options.Setup(false)
-		body := rctx.MakeRequest()
+		body := rctx.MakeRequest(200)
 
 		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
 		version := body["version"]
@@ -56,10 +58,8 @@ func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions
 
 	It("does not find approved versions", func() {
 		options.Setup(true)
-		req, err := hctx.NewRequestWithAuth("GET", options.GetPath(), nil)
-		Expect(err).ToNot(HaveOccurred())
-		hctx.ServeHTTP(req)
-		Expect(hctx.HttpRecorder.Code).To(Equal(404))
+		body := rctx.MakeRequest(404)
+		Expect(body).To(HaveKeyWithValue("error", options.ResourceTypeNameInResponse+" not found"))
 	})
 
 	return &rctx

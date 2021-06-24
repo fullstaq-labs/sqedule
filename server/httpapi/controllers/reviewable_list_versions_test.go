@@ -5,18 +5,18 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type ReviewableReadVersionsTestOptions struct {
+type ReviewableListVersionsTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	Path        string
 	Setup       func(approved bool)
 }
 
-type ReviewableReadVersionsTestContext struct {
+type ReviewableListVersionsTestContext struct {
 	MakeRequest func() gin.H
 }
 
-func IncludeReviewableReadVersionsTest(options ReviewableReadVersionsTestOptions) *ReviewableReadVersionsTestContext {
-	var rctx ReviewableReadVersionsTestContext
+func IncludeReviewableListVersionsTest(options ReviewableListVersionsTestOptions) *ReviewableListVersionsTestContext {
+	var rctx ReviewableListVersionsTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {

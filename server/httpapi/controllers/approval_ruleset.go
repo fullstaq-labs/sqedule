@@ -478,12 +478,16 @@ func (ctx Context) getApprovalRulesetVersionOrProposal(ginctx *gin.Context, appr
 	var version dbmodels.ApprovalRulesetVersion
 	if approved {
 		version, err = dbmodels.FindApprovalRulesetVersionByNumber(ctx.Db, orgID, ruleset.ID, uint32(versionNumberOrID))
+		if err != nil {
+			respondWithDbQueryError("approval ruleset version", err, ginctx)
+			return
+		}
 	} else {
 		version, err = dbmodels.FindApprovalRulesetProposalByID(ctx.Db, orgID, ruleset.ID, versionNumberOrID)
-	}
-	if err != nil {
-		respondWithDbQueryError("approval ruleset version", err, ginctx)
-		return
+		if err != nil {
+			respondWithDbQueryError("approval ruleset proposal", err, ginctx)
+			return
+		}
 	}
 	ruleset.Version = &version
 
@@ -598,7 +602,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 
 	version, err := dbmodels.FindApprovalRulesetProposalByID(ctx.Db, orgID, ruleset.ID, versionID)
 	if err != nil {
-		respondWithDbQueryError("approval ruleset version", err, ginctx)
+		respondWithDbQueryError("approval ruleset proposal", err, ginctx)
 		return
 	}
 	ruleset.Version = &version
@@ -685,4 +689,73 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, *ruleset.Version,
 		*ruleset.Version.Adjustment, appBindings, []dbmodels.ReleaseApprovalRulesetBinding{}, ruleset.Version.Adjustment.Rules)
 	ginctx.JSON(http.StatusOK, output)
+}
+
+func (ctx Context) DeleteApprovalRulesetProposal(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("id")
+	versionID, err := strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApprovalRulesetAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateApprovalRuleset, ruleset) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	version, err := dbmodels.FindApprovalRulesetProposalByID(ctx.Db, orgID, ruleset.ID, versionID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset proposal", err, ginctx)
+		return
+	}
+	ruleset.Version = &version
+
+	adjustments, err := dbmodels.FindApprovalRulesetAdjustments(ctx.Db, orgID, version.ID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset adjustments", err, ginctx)
+		return
+	}
+
+	// Modify database
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		for i := range adjustments {
+			err = ctx.Db.Delete(&adjustments[i]).Error
+			if err != nil {
+				return err
+			}
+		}
+
+		err = ctx.Db.Delete(&version).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	ginctx.JSON(http.StatusOK, gin.H{})
 }

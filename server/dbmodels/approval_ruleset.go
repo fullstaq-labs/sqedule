@@ -276,6 +276,14 @@ func FindApprovalRulesetVersions(db *gorm.DB, organizationID string, rulesetID s
 	return result, tx.Error
 }
 
+func FindApprovalRulesetAdjustments(db *gorm.DB, organizationID string, versionID uint64) ([]ApprovalRulesetAdjustment, error) {
+	var result []ApprovalRulesetAdjustment
+
+	tx := db.Where("organization_id = ? AND approval_ruleset_version_id = ?", organizationID, versionID)
+	tx.Find(&result)
+	return result, tx.Error
+}
+
 func LoadApprovalRulesetsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, rulesets []*ApprovalRuleset) error {
 	err := LoadApprovalRulesetsLatestVersions(db, organizationID, rulesets)
 	if err != nil {

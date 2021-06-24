@@ -11,13 +11,15 @@ import (
 )
 
 type ReviewableUpdateProposalTestOptions struct {
-	HTTPTestCtx *HTTPTestContext
-	GetPath     func(approved bool) string
-	Setup       func(reviewState reviewstate.State)
+	HTTPTestCtx            *HTTPTestContext
+	GetProposalPath        func() string
+	GetApprovedVersionPath func() string
+	Setup                  func(reviewState reviewstate.State)
 
 	Input gin.H
 
-	AdjustmentType reflect.Type
+	AdjustmentType             reflect.Type
+	ResourceTypeNameInResponse string
 
 	GetPrimaryKey           func(resource interface{}) interface{}
 	PrimaryKeyJSONFieldName string
@@ -29,14 +31,21 @@ type ReviewableUpdateProposalTestOptions struct {
 }
 
 type ReviewableUpdateProposalTestContext struct {
-	MakeRequest func(approved bool, proposalState string, expectedCode int) gin.H
+	MakeRequest func(approved bool, proposalState string, expectedCode uint) gin.H
 }
 
 func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOptions) *ReviewableUpdateProposalTestContext {
 	var rctx ReviewableUpdateProposalTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
-	rctx.MakeRequest = func(approved bool, proposalState string, expectedCode int) gin.H {
+	rctx.MakeRequest = func(approved bool, proposalState string, expectedCode uint) gin.H {
+		var path string
+		if approved {
+			path = options.GetApprovedVersionPath()
+		} else {
+			path = options.GetProposalPath()
+		}
+
 		input := gin.H{}
 		for k, v := range options.Input {
 			input[k] = v
@@ -45,11 +54,11 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 			input["proposal_state"] = proposalState
 		}
 
-		req, err := hctx.NewRequestWithAuth("PATCH", options.GetPath(approved), input)
+		req, err := hctx.NewRequestWithAuth("PATCH", path, input)
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 
-		Expect(hctx.HttpRecorder.Code).To(Equal(expectedCode))
+		Expect(hctx.HttpRecorder.Code).To(BeNumerically("==", expectedCode))
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())
 
@@ -74,7 +83,8 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 
 	It("does not allow patching approved versions", func() {
 		options.Setup(reviewstate.Draft)
-		rctx.MakeRequest(true, "", 404)
+		body := rctx.MakeRequest(true, "", 404)
+		Expect(body).To(HaveKeyWithValue("error", options.ResourceTypeNameInResponse+" not found"))
 	})
 
 	It("keeps the proposal as a draft by default", func() {

@@ -29,14 +29,14 @@ type ReviewableCreateTestOptions struct {
 }
 
 type ReviewableCreateTestContext struct {
-	MakeRequest func(proposalState string, expectedCode int) gin.H
+	MakeRequest func(proposalState string, expectedCode uint) gin.H
 }
 
 func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *ReviewableCreateTestContext {
 	var rctx ReviewableCreateTestContext
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
-	rctx.MakeRequest = func(proposalState string, expectedCode int) gin.H {
+	rctx.MakeRequest = func(proposalState string, expectedCode uint) gin.H {
 		input := gin.H{}
 		for k, v := range options.UnversionedInput {
 			input[k] = v
@@ -55,7 +55,7 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 
-		Expect(hctx.HttpRecorder.Code).To(Equal(expectedCode))
+		Expect(hctx.HttpRecorder.Code).To(BeNumerically("==", expectedCode))
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())
 
