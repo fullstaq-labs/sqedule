@@ -28,6 +28,8 @@ type ReviewableUpdateProposalTestOptions struct {
 	GetResourceVersionAndLatestAdjustment func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment)
 	VersionedFieldJSONFieldName           string
 	VersionedFieldUpdatedValue            interface{}
+
+	GetSecondProposalAndAdjustment func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment)
 }
 
 type ReviewableUpdateProposalTestContext struct {
@@ -175,6 +177,23 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		options.Setup(reviewstate.Reviewing)
 		body := rctx.MakeRequest(false, "final", 422)
 		Expect(body).To(HaveKeyWithValue("error", ContainSubstring("Cannot finalize a proposal which is already being reviewed")))
+	})
+
+	Specify("if the proposal is approved, then it puts all other proposals that are in the reviewing state, into the draft state", func() {
+		options.Setup(reviewstate.Draft)
+
+		version, adjustment := options.GetSecondProposalAndAdjustment()
+		Expect(version.GetVersionNumber()).To(BeNil())
+		Expect(adjustment.GetReviewState()).To(Equal(reviewstate.Reviewing))
+
+		body := rctx.MakeRequest(false, "final", 200)
+		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		versionJSON := body["version"].(map[string]interface{})
+		Expect(versionJSON).To(HaveKeyWithValue("version_state", "approved"))
+
+		version, adjustment = options.GetSecondProposalAndAdjustment()
+		Expect(version.GetVersionNumber()).To(BeNil())
+		Expect(adjustment.GetReviewState()).To(Equal(reviewstate.Draft))
 	})
 
 	return &rctx

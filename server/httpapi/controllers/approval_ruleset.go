@@ -605,14 +605,23 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 	}
 	latestApprovedVersion = ruleset.Version
 
-	proposal, err := dbmodels.FindApprovalRulesetProposalByID(ctx.Db, orgID, ruleset.ID, versionID)
+	proposals, err := dbmodels.FindApprovalRulesetProposals(ctx.Db, orgID, ruleset.ID)
 	if err != nil {
-		respondWithDbQueryError("approval ruleset proposal", err, ginctx)
+		respondWithDbQueryError("approval ruleset proposals", err, ginctx)
 		return
 	}
-	ruleset.Version = &proposal
 
-	err = dbmodels.LoadApprovalRulesetVersionsLatestAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRulesetVersion{&proposal})
+	proposal := dbmodels.CollectApprovalRulesetVersionIDEquals(proposals, versionID)
+	if proposal == nil {
+		ginctx.JSON(http.StatusNotFound, gin.H{"error": "approval ruleset proposal not found"})
+		return
+	}
+	ruleset.Version = proposal
+
+	otherProposals := dbmodels.CollectApprovalRulesetVersionIDNotEquals(proposals, versionID)
+
+	err = dbmodels.LoadApprovalRulesetVersionsLatestAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApprovalRulesetVersionsPointerArray(proposals))
 	if err != nil {
 		respondWithDbQueryError("approval ruleset adjustment", err, ginctx)
 		return
@@ -652,6 +661,8 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 	// Modify database
 
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		// Create new Adjustment with patched state
+
 		newAdjustment := proposal.Adjustment.NewAdjustment()
 
 		if input.ProposalState == proposalstate.Final {
@@ -681,6 +692,22 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 		}
 
 		proposal.Adjustment = &newAdjustment
+
+		if newAdjustment.ReviewState == reviewstate.Approved {
+			// Ensure no other proposals are in the Reviewing state
+
+			for _, proposal := range otherProposals {
+				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+					continue
+				}
+
+				newAdjustment := proposal.Adjustment.NewAdjustment()
+				newAdjustment.ReviewState = reviewstate.Draft
+				if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
+					return err
+				}
+			}
+		}
 
 		return nil
 	})
@@ -827,17 +854,19 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 
 		proposal.Adjustment = &newAdjustment
 
-		// Ensure no other proposals are in the Reviewing state
+		if input.State == reviewstateinput.Approved {
+			// Ensure no other proposals are in the Reviewing state
 
-		for _, proposal := range otherProposals {
-			if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
-				continue
-			}
+			for _, proposal := range otherProposals {
+				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+					continue
+				}
 
-			newAdjustment := proposal.Adjustment.NewAdjustment()
-			newAdjustment.ReviewState = reviewstate.Draft
-			if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
-				return err
+				newAdjustment := proposal.Adjustment.NewAdjustment()
+				newAdjustment.ReviewState = reviewstate.Draft
+				if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
+					return err
+				}
 			}
 		}
 
