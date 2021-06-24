@@ -5,6 +5,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstate"
 )
 
 //
@@ -29,6 +30,10 @@ type ReviewableVersionBase struct {
 type ReviewableVersionInputBase struct {
 	ProposalState proposalstate.State `json:"proposal_state"`
 	Comments      *string             `json:"comments"`
+}
+
+type ReviewableReviewStateInput struct {
+	State reviewstate.Input `json:"state"`
 }
 
 //

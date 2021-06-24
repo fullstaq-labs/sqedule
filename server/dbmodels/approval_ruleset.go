@@ -89,6 +89,15 @@ func (c ApprovalRulesetContents) NumRules() uint {
 		uint(len(c.ManualApprovalRules))
 }
 
+func (c ApprovalRulesetContents) CopyWithoutSavingAndAssociateWithAdjustment(adjustment ApprovalRulesetAdjustment) ApprovalRulesetContents {
+	c.ForEach(func(rule IApprovalRule) error {
+		rule.ClearPrimaryKey()
+		rule.AssociateWithApprovalRulesetAdjustment(adjustment)
+		return nil
+	})
+	return c
+}
+
 func (c *ApprovalRulesetContents) ForEach(callback func(rule IApprovalRule) error) error {
 	var ruleTypesProcessed uint = 0
 	var err error
@@ -155,9 +164,7 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 }
 
 func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
-	return false
-	// TODO: comment out after we've implemented the review steps in the version creation process
-	//return !hasBoundApplications
+	return !hasBoundApplications
 }
 
 //
@@ -252,6 +259,14 @@ func FindApprovalRulesetVersionByID(db *gorm.DB, organizationID string, rulesetI
 	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND id = ?", organizationID, rulesetID, versionID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApprovalRulesetProposals(db *gorm.DB, organizationID string, rulesetID string) ([]ApprovalRulesetVersion, error) {
+	var result []ApprovalRulesetVersion
+
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND version_number IS NULL", organizationID, rulesetID)
+	tx.Find(&result)
+	return result, tx.Error
 }
 
 func FindApprovalRulesetProposalByID(db *gorm.DB, organizationID string, rulesetID string, versionID uint64) (ApprovalRulesetVersion, error) {
@@ -485,6 +500,34 @@ func CollectApprovalRulesetVersions(rulesets []*ApprovalRuleset) []*ApprovalRule
 	for _, elem := range rulesets {
 		if elem.Version != nil {
 			result = append(result, elem.Version)
+		}
+	}
+	return result
+}
+
+// CollectApprovalRulesetVersionIDEquals returns the first ApprovalRulesetVersion
+// whose ID equals `versionID`.
+func CollectApprovalRulesetVersionIDEquals(versions []ApprovalRulesetVersion, versionID uint64) *ApprovalRulesetVersion {
+	for i := range versions {
+		if versions[i].ID == versionID {
+			return &versions[i]
+		}
+	}
+	return nil
+}
+
+// CollectApprovalRulesetVersionIDNotEquals returns those ApprovalRulesetVersion
+// whose IDs don't equal `versionID`.
+func CollectApprovalRulesetVersionIDNotEquals(versions []ApprovalRulesetVersion, versionID uint64) []*ApprovalRulesetVersion {
+	l := len(versions)
+	if l > 0 {
+		l -= 1
+	}
+
+	result := make([]*ApprovalRulesetVersion, 0, l)
+	for i := range versions {
+		if versions[i].ID != versionID {
+			result = append(result, &versions[i])
 		}
 	}
 	return result

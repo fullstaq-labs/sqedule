@@ -10,6 +10,7 @@ const (
 
 	ActionReadApprovalRuleset   SingularAction = "approval_ruleset/read"
 	ActionUpdateApprovalRuleset SingularAction = "approval_ruleset/update"
+	ActionReviewApprovalRuleset SingularAction = "approval_ruleset/review"
 	ActionDeleteApprovalRuleset SingularAction = "approval_ruleset/delete"
 )
 
@@ -39,6 +40,7 @@ func (ApprovalRulesetAuthorizer) SingularAuthorizations(orgMember dbmodels.IOrga
 
 	result[ActionReadApprovalRuleset] = struct{}{}
 	result[ActionUpdateApprovalRuleset] = struct{}{}
+	result[ActionReviewApprovalRuleset] = struct{}{}
 	result[ActionDeleteApprovalRuleset] = struct{}{}
 
 	return result

@@ -125,4 +125,5 @@ var It = ginkgo.It
 var PIt = ginkgo.PIt
 var FIt = ginkgo.FIt
 var Specify = ginkgo.Specify
+var PSpecify = ginkgo.PSpecify
 var FSpecify = ginkgo.FSpecify

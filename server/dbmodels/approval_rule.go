@@ -26,6 +26,7 @@ const (
 
 type IApprovalRule interface {
 	Type() ApprovalRuleType
+	ClearPrimaryKey()
 	AssociateWithApprovalRulesetAdjustment(adjustment ApprovalRulesetAdjustment)
 }
 
@@ -78,6 +79,10 @@ func (r ApprovalRule) ApprovalRulesetVersionAndAdjustmentKey() ApprovalRulesetVe
 		VersionID:        r.ApprovalRulesetVersionID,
 		AdjustmentNumber: r.ApprovalRulesetAdjustmentNumber,
 	}
+}
+
+func (r *ApprovalRule) ClearPrimaryKey() {
+	r.ID = 0
 }
 
 func (r *ApprovalRule) AssociateWithApprovalRulesetAdjustment(adjustment ApprovalRulesetAdjustment) {
