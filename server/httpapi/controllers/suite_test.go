@@ -62,7 +62,6 @@ func (ctx HTTPTestContext) BodyJSON() (gin.H, error) {
 	return body, err
 }
 
-// SetupHTTPTestContext ...
 func SetupHTTPTestContext() (HTTPTestContext, error) {
 	var ctx HTTPTestContext
 	var err error
@@ -72,8 +71,8 @@ func SetupHTTPTestContext() (HTTPTestContext, error) {
 		return HTTPTestContext{}, err
 	}
 
+	gin.SetMode(gin.TestMode)
 	ctx.Engine = gin.Default()
-	gin.SetMode(gin.DebugMode)
 
 	orgMemberLookupMiddleware := auth.NewOrgMemberLookupMiddleware(ctx.Db, true)
 	routingGroup := ctx.Engine.Group("/v1")
