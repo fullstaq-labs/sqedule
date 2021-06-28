@@ -146,6 +146,23 @@ var _ = Describe("approval-ruleset API", func() {
 			version := rulesetJSON["latest_approved_version"].(map[string]interface{})
 			Expect(version).To(HaveKeyWithValue("num_bound_releases", BeNumerically("==", 3)))
 		})
+
+		It("does not output rules", func() {
+			ruleset := Setup()
+			_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org, ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
+
+			body := includedTestCtx.MakeRequest()
+			Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
+
+			items := body["items"].([]interface{})
+			rulesetJSON := items[0].(map[string]interface{})
+			Expect(rulesetJSON).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
+
+			version := rulesetJSON["latest_approved_version"].(map[string]interface{})
+			Expect(version).ToNot(HaveKey("approval_rules"))
+		})
 	})
 
 	Describe("GET /approval-rulesets/:id", func() {

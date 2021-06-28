@@ -28,11 +28,11 @@ type ApprovalRulesetWithLatestApprovedVersion struct {
 
 type ApprovalRulesetVersion struct {
 	ReviewableVersionBase
-	DisplayName        string         `json:"display_name"`
-	Description        string         `json:"description"`
-	GloballyApplicable bool           `json:"globally_applicable"`
-	Enabled            bool           `json:"enabled"`
-	ApprovalRules      []ApprovalRule `json:"approval_rules"`
+	DisplayName        string          `json:"display_name"`
+	Description        string          `json:"description"`
+	GloballyApplicable bool            `json:"globally_applicable"`
+	Enabled            bool            `json:"enabled"`
+	ApprovalRules      *[]ApprovalRule `json:"approval_rules,omitempty"`
 
 	NumBoundReleases               *uint                                                  `json:"num_bound_releases,omitempty"`
 	ReleaseApprovalRulesetBindings *[]ReleaseApprovalRulesetBindingWithReleaseAssociation `json:"release_approval_ruleset_bindings,omitempty"`
@@ -80,22 +80,24 @@ func (version *ApprovalRulesetVersion) PopulateFromDbmodelsReleaseApprovalRulese
 func (version *ApprovalRulesetVersion) PopulateFromDbmodelsApprovalRulesetContents(contents dbmodels.ApprovalRulesetContents) {
 	var ruleTypesProcessed uint = 0
 
+	version.ApprovalRules = &[]ApprovalRule{}
+
 	ruleTypesProcessed++
 	for _, rule := range contents.HTTPApiApprovalRules {
 		ruleJSON := ApprovalRule{Type: dbmodels.HTTPApiApprovalRuleType, HTTPApiApprovalRule: rule}
-		version.ApprovalRules = append(version.ApprovalRules, ruleJSON)
+		*version.ApprovalRules = append(*version.ApprovalRules, ruleJSON)
 	}
 
 	ruleTypesProcessed++
 	for _, rule := range contents.ScheduleApprovalRules {
 		ruleJSON := ApprovalRule{Type: dbmodels.ScheduleApprovalRuleType, ScheduleApprovalRule: rule}
-		version.ApprovalRules = append(version.ApprovalRules, ruleJSON)
+		*version.ApprovalRules = append(*version.ApprovalRules, ruleJSON)
 	}
 
 	ruleTypesProcessed++
 	for _, rule := range contents.ManualApprovalRules {
 		ruleJSON := ApprovalRule{Type: dbmodels.ManualApprovalRuleType, ManualApprovalRule: rule}
-		version.ApprovalRules = append(version.ApprovalRules, ruleJSON)
+		*version.ApprovalRules = append(*version.ApprovalRules, ruleJSON)
 	}
 
 	if ruleTypesProcessed != dbmodels.NumApprovalRuleTypes {
