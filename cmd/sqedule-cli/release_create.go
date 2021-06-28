@@ -63,10 +63,10 @@ func releaseCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing 
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
-	printer.Println(string(output))
+	printer.PrintOutputln(string(output))
 
 	if viper.GetBool("wait") && !release.ApprovalStatusIsFinal() {
-		printer.Println("Waiting for the release's approval state to become final...")
+		printer.PrintMessageln("Waiting for the release's approval state to become final...")
 		viper.Set("release-id", release.ID)
 		if testing {
 			return nil

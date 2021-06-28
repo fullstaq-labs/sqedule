@@ -79,7 +79,7 @@ func releaseWaitCmd_run(viper *viper.Viper, printer mocking.IPrinter, clock mock
 			return releasestate.InProgress, fmt.Errorf("Error querying release: %s", cli.GetApiErrorMessage(resp))
 		}
 
-		printer.Printf("Current state: %v\n", release.State)
+		printer.PrintMessagef("Current state: %v\n", release.State)
 		if release.ApprovalStatusIsFinal() {
 			return releasestate.State(release.State), nil
 		} else if (deadline != time.Time{}) && time.Now().After(deadline) {

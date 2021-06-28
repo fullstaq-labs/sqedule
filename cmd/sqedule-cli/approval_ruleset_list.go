@@ -47,7 +47,7 @@ func approvalRulesetListCmd_run(viper *viper.Viper, printer mocking.IPrinter, te
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
-	printer.Println(string(output))
+	printer.PrintOutputln(string(output))
 
 	return nil
 }

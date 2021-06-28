@@ -54,7 +54,7 @@ func approvalRulesetDescribeCmd_run(viper *viper.Viper, printer mocking.IPrinter
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
-	printer.Println(string(output))
+	printer.PrintOutputln(string(output))
 
 	return nil
 }
@@ -72,5 +72,5 @@ func init() {
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("id", "", "")
+	flags.String("id", "", "Approval ruleset ID (required)")
 }

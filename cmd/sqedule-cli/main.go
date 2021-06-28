@@ -33,7 +33,7 @@ to quickly create a Cobra application.`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
@@ -41,7 +41,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "config file (default ~/.config/sqedule-cli/config.yml)")
+	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "Config file (default ~/.config/sqedule-cli/config.yml)")
 
 	rootCmd.PersistentFlags().Bool("debug", false, "Show API requests/responses")
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
@@ -56,7 +56,7 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
@@ -71,7 +71,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
 }
 
