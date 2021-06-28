@@ -59,7 +59,7 @@ func releaseCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing 
 		return fmt.Errorf("Error creating release: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(release, "", "  ")
+	output, err := encjson.MarshalIndent(release, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
