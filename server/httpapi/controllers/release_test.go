@@ -27,10 +27,10 @@ var _ = Describe("approval-ruleset API", func() {
 		var err error
 
 		err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-			mctx.app1, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+			mctx.app1, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			mctx.app2, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+			mctx.app2, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org,
 				func(app *dbmodels.Application) {
 					app.ID = "app2"
 				},
@@ -39,28 +39,28 @@ var _ = Describe("approval-ruleset API", func() {
 				})
 			Expect(err).ToNot(HaveOccurred())
 
-			mctx.release1, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, mctx.app1,
+			mctx.release1, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, mctx.app1,
 				func(release *dbmodels.Release) {
 					release.CreatedAt = time.Now().Add(-1 * time.Second)
 				})
 			Expect(err).ToNot(HaveOccurred())
 
-			mctx.release2, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, mctx.app2,
+			mctx.release2, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, mctx.app2,
 				func(release *dbmodels.Release) {
 					release.CreatedAt = time.Now().Add(-2 * time.Second)
 				})
 			Expect(err).ToNot(HaveOccurred())
 
-			mctx.release3, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, mctx.app2,
+			mctx.release3, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, mctx.app2,
 				func(release *dbmodels.Release) {
 					release.CreatedAt = time.Now().Add(-3 * time.Second)
 				})
 			Expect(err).ToNot(HaveOccurred())
 
-			ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+			ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			mctx.binding, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mctx.release2,
+			mctx.binding, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, mctx.release2,
 				ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -84,10 +84,10 @@ var _ = Describe("approval-ruleset API", func() {
 			ctx.HttpCtx.AutoProcessReleaseInBackground = autoProcessReleaseInBackground
 
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, _, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(ctx.Db, ctx.Org, app)
+				_, _, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.Org, app)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil
@@ -294,16 +294,16 @@ var _ = Describe("approval-ruleset API", func() {
 
 		BeforeEach(func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				release, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				release, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, release,
 					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 

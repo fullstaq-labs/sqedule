@@ -84,12 +84,12 @@ func SetupHTTPTestContext() (HTTPTestContext, error) {
 	ctx.HttpRecorder = httptest.NewRecorder()
 
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		ctx.Org, err = dbmodels.CreateMockOrganization(ctx.Db, nil)
+		ctx.Org, err = dbmodels.CreateMockOrganization(tx, nil)
 		if err != nil {
 			return err
 		}
 
-		ctx.ServiceAccount, err = dbmodels.CreateMockServiceAccountWithAdminRole(ctx.Db, ctx.Org, nil)
+		ctx.ServiceAccount, err = dbmodels.CreateMockServiceAccountWithAdminRole(tx, ctx.Org, nil)
 		if err != nil {
 			return err
 		}

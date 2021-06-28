@@ -25,14 +25,14 @@ var _ = Describe("approval-ruleset API", func() {
 
 		BeforeEach(func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				app1, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+				app1, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org,
 					func(app *dbmodels.Application) {
 						app.CreatedAt = time.Date(2021, 3, 8, 12, 0, 0, 0, time.Local)
 					},
 					nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				app2, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+				app2, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org,
 					func(app *dbmodels.Application) {
 						app.ID = "app2"
 						app.CreatedAt = time.Date(2021, 3, 8, 11, 0, 0, 0, time.Local)
@@ -42,10 +42,10 @@ var _ = Describe("approval-ruleset API", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1,
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app1,
 					ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -105,13 +105,13 @@ var _ = Describe("approval-ruleset API", func() {
 
 		BeforeEach(func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				app, err = dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app,
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app,
 					ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 

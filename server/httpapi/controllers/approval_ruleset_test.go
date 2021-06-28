@@ -68,8 +68,9 @@ var _ = Describe("approval-ruleset API", func() {
 	Describe("GET /approval-rulesets", func() {
 		Setup := func() (ruleset dbmodels.ApprovalRuleset) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
+
 				return nil
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -78,7 +79,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 		SetupAssociations := func(ruleset dbmodels.ApprovalRuleset) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				app1, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+				app1, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org,
 					func(app *dbmodels.Application) {
 						app.ID = "app1"
 					},
@@ -87,7 +88,7 @@ var _ = Describe("approval-ruleset API", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				app2, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org,
+				app2, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org,
 					func(app *dbmodels.Application) {
 						app.ID = "app2"
 					},
@@ -96,26 +97,26 @@ var _ = Describe("approval-ruleset API", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app1, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app1, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app2, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app2, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app1, nil)
+				release1, err := dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app1, nil)
 				Expect(err).ToNot(HaveOccurred())
-				release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
+				release2, err := dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app2, nil)
 				Expect(err).ToNot(HaveOccurred())
-				release3, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app2, nil)
+				release3, err := dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app2, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release1, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, release1, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release2, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, release2, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release3, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, release3, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -171,23 +172,23 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mockRelease, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, mockRelease, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -260,23 +261,23 @@ var _ = Describe("approval-ruleset API", func() {
 
 		BeforeEach(func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mockRelease, ruleset,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, mockRelease, ruleset,
 					*ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -359,20 +360,20 @@ var _ = Describe("approval-ruleset API", func() {
 
 			Setup := func() {
 				err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-					mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+					mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+					app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, mockRuleset, nil)
+					_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, mockRuleset, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 						mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 						mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 
@@ -435,54 +436,54 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func(approved bool) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				if approved {
 					// Create a ruleset with 3 versions
-					rulesetVersion1, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(1), nil)
+					rulesetVersion1, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, rulesetVersion1, 1, nil)
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, rulesetVersion1, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					// We deliberately create version 3 out of order so that we test
 					// whether the versions are outputted in order.
 
-					rulesetVersion3, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(3), nil)
+					rulesetVersion3, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, lib.NewUint32Ptr(3), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, rulesetVersion3, 1, nil)
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, rulesetVersion3, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					rulesetVersion2, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(2), nil)
+					rulesetVersion2, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, lib.NewUint32Ptr(2), nil)
 					Expect(err).ToNot(HaveOccurred())
-					rulesetVersion2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, rulesetVersion2, 1, nil)
+					rulesetVersion2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, rulesetVersion2, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					ruleset.Version = &rulesetVersion3
 					ruleset.Version.Adjustment = &rulesetVersion2Adjustment
 
-					app, err := dbmodels.CreateMockApplication(ctx.Db, ctx.Org, nil)
+					app, err := dbmodels.CreateMockApplication(tx, ctx.Org, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					release1, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+					release1, err := dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
 					Expect(err).ToNot(HaveOccurred())
-					release2, err := dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+					release2, err := dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release1,
+					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, release1,
 						ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, release2,
+					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, release2,
 						ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 						ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 				} else {
-					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, proposal, 1,
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, proposal, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
@@ -533,23 +534,23 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(ctx.Db, ctx.Org, app, nil)
+				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(ctx.Db, ctx.Org, mockRelease,
+				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, mockRelease,
 					ruleset, *ruleset.Version, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -621,24 +622,24 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func(approved bool) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				if approved {
-					version, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, lib.NewUint32Ptr(1), nil)
+					version, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, version, 1, nil)
+					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, version, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 				} else {
-					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+					proposal, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
-					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, proposal, 1,
+					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, proposal, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
 					Expect(err).ToNot(HaveOccurred())
 
-					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 						proposal.ID, adjustment, nil)
 					Expect(err).ToNot(HaveOccurred())
 				}
@@ -679,18 +680,18 @@ var _ = Describe("approval-ruleset API", func() {
 				var ruleset dbmodels.ApprovalRuleset
 
 				if approved {
-					ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+					ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					mockVersion = *ruleset.Version
 				} else {
-					ruleset, err = dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
+					ruleset, err = dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					mockVersion, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+					mockVersion, err = dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockVersion, 1,
+					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockVersion, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
@@ -700,13 +701,13 @@ var _ = Describe("approval-ruleset API", func() {
 					ruleset.Version.Adjustment = &adjustment
 				}
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -761,41 +762,41 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func(reviewState reviewstate.State) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				mockVersion = *mockRuleset.Version
 
-				mockProposal1, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, mockRuleset, nil, nil)
+				mockProposal1, err = dbmodels.CreateMockApprovalRulesetVersion(tx, mockRuleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal1, 1,
+				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal1, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewState
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal1.Adjustment = &proposal1Adjustment
 
-				mockProposal2, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, mockRuleset, nil, nil)
+				mockProposal2, err = dbmodels.CreateMockApprovalRulesetVersion(tx, mockRuleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal2, 1,
+				proposal2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal2, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewstate.Reviewing
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal2.Adjustment = &proposal2Adjustment
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, mockRuleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, mockRuleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -892,38 +893,38 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func(reviewState reviewstate.State) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				mockVersion = *ruleset.Version
 
-				mockProposal1, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+				mockProposal1, err = dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal1, 1,
+				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal1, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewState
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal1.Adjustment = &proposal1Adjustment
 
-				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					mockProposal1.ID, proposal1Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				mockProposal2, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+				mockProposal2, err = dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal2, 1,
+				proposal2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal2, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewState
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal2.Adjustment = &proposal2Adjustment
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(ctx.Db, ctx.Org, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(ctx.Db, ctx.Org, app, ruleset, nil)
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil
@@ -1008,21 +1009,21 @@ var _ = Describe("approval-ruleset API", func() {
 
 		Setup := func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				mockVersion = *ruleset.Version
 
-				mockProposal, err = dbmodels.CreateMockApprovalRulesetVersion(ctx.Db, ruleset, nil, nil)
+				mockProposal, err = dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal, 1,
+				_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewstate.Draft
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				adjustment2, err := dbmodels.CreateMockApprovalRulesetAdjustment(ctx.Db, mockProposal, 2,
+				adjustment2, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 2,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewstate.Draft
 					})
