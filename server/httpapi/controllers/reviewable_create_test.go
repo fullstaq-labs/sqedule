@@ -175,5 +175,19 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		Expect(body).To(HaveKeyWithValue("error", ContainSubstring("version.proposal_state must be either draft or final ('abandon' given)")))
 	})
 
+	It("creates a CreationAuditRecord", func() {
+		var count int64
+
+		tx := hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
+		Expect(tx.Error).ToNot(HaveOccurred())
+		Expect(count).To(BeNumerically("==", 0))
+
+		rctx.MakeRequest("", 201)
+
+		tx = hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
+		Expect(tx.Error).ToNot(HaveOccurred())
+		Expect(count).To(BeNumerically("==", 1))
+	})
+
 	return &rctx
 }

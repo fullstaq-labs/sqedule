@@ -199,5 +199,20 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		}
 	})
 
+	It("creates a CreationAuditRecord", func() {
+		var count int64
+
+		tx := hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
+		Expect(tx.Error).ToNot(HaveOccurred())
+		Expect(count).To(BeNumerically("==", 0))
+
+		options.Setup()
+		rctx.MakeRequest("", 200)
+
+		tx = hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
+		Expect(tx.Error).ToNot(HaveOccurred())
+		Expect(count).To(BeNumerically("==", 1))
+	})
+
 	return &rctx
 }

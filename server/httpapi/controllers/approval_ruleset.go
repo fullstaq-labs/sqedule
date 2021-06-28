@@ -84,6 +84,14 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 			return err
 		}
 
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ApprovalRulesetVersionID = &version.ID
+		creationRecord.ApprovalRulesetAdjustmentNumber = &adjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+		if err != nil {
+			return err
+		}
+
 		err = adjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 			rule.AssociateWithApprovalRulesetAdjustment(*adjustment)
 			return tx.Create(rule).Error
@@ -305,9 +313,9 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 	// Modify database
 
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		var ruleset2 dbmodels.ApprovalRuleset = ruleset
-		json.PatchApprovalRuleset(&ruleset2, input)
-		savetx := tx.Omit(clause.Associations).Model(&ruleset).Updates(ruleset2)
+		var rulesetUpdate dbmodels.ApprovalRuleset = ruleset
+		json.PatchApprovalRuleset(&rulesetUpdate, input)
+		savetx := tx.Omit(clause.Associations).Model(&ruleset).Updates(rulesetUpdate)
 		if savetx.Error != nil {
 			return savetx.Error
 		}
@@ -337,6 +345,14 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 			err = newAdjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 				return tx.Omit(clause.Associations).Create(rule).Error
 			})
+			if err != nil {
+				return err
+			}
+
+			creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+			creationRecord.ApprovalRulesetVersionID = &newVersion.ID
+			creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
+			err = tx.Omit(clause.Associations).Create(&creationRecord).Error
 			if err != nil {
 				return err
 			}
@@ -691,6 +707,14 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 			return err
 		}
 
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ApprovalRulesetVersionID = &proposal.ID
+		creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+		if err != nil {
+			return err
+		}
+
 		proposal.Adjustment = &newAdjustment
 
 		if newAdjustment.ReviewState == reviewstate.Approved {
@@ -848,6 +872,14 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 		err = newAdjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 			return tx.Omit(clause.Associations).Create(rule).Error
 		})
+		if err != nil {
+			return err
+		}
+
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ApprovalRulesetVersionID = &proposal.ID
+		creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
 		if err != nil {
 			return err
 		}

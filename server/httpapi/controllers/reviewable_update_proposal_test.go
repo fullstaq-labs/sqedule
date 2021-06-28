@@ -179,6 +179,21 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		Expect(body).To(HaveKeyWithValue("error", ContainSubstring("Cannot finalize a proposal which is already being reviewed")))
 	})
 
+	It("creates a CreationAuditRecord", func() {
+		var count int64
+
+		tx := hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
+		Expect(tx.Error).ToNot(HaveOccurred())
+		Expect(count).To(BeNumerically("==", 0))
+
+		options.Setup(reviewstate.Draft)
+		rctx.MakeRequest(false, "", 200)
+
+		tx = hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
+		Expect(tx.Error).ToNot(HaveOccurred())
+		Expect(count).To(BeNumerically("==", 1))
+	})
+
 	Specify("if the proposal is approved, then it puts all other proposals that are in the reviewing state, into the draft state", func() {
 		options.Setup(reviewstate.Draft)
 
