@@ -17,7 +17,7 @@ import (
 var approvalRulesetCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an approval ruleset",
-	Long:  "Creates an approval ruleset without any rules inside it. To add rules, use `sqedule approval-ruleset rule create`",
+	Long:  "Creates an approval ruleset without any rules inside it. To add rules, use `sqedule approval-ruleset proposal rule create`",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		return approvalRulesetCreateCmd_run(viper.GetViper(), mocking.RealPrinter{}, false)
@@ -67,7 +67,7 @@ func approvalRulesetCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter, 
 	} else {
 		cli.PrintTiplnf(printer, "It is still a proposal. To view it, use `sqedule approval-ruleset proposal list`")
 	}
-	cli.PrintCaveatlnf(printer, "It has no rules yet. To add rules, use `sqedule approval-ruleset rules create`")
+	cli.PrintCaveatlnf(printer, "It has no rules yet. To add rules, use `sqedule approval-ruleset proposal rule create-...`")
 
 	return nil
 }

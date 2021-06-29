@@ -7,7 +7,7 @@ import (
 // approvalRulesetProposalCmd represents the 'approval-ruleset proposal' command
 var approvalRulesetProposalCmd = &cobra.Command{
 	Use:   "proposal",
-	Short: "Manage approval rulesets proposals",
+	Short: "Manage proposals",
 }
 
 func init() {

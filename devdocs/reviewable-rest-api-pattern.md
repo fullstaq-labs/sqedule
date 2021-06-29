@@ -130,7 +130,7 @@ The response is a `ResourceWithLatestApprovedVersion`:
 
 Patches a resource. One may specify non-versioned fields to patch, or versioned fields to patch, or both.
 
-In case versioned fields are specified, this endpoint creates a new version on top of the latest approved version, applying the patch. The resulting version could either be a proposal or an approved version.
+In case versioned fields are specified, this endpoint creates a new version with the given data. If possible, it creates this version on top of the latest approved version, applying the patch. The resulting version could either be a proposal or an approved version.
 
 If you want to modify a proposal, use `PATCH /resources/:id/proposals/:version_id` instead.
 

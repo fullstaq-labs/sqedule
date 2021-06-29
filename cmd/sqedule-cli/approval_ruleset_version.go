@@ -7,7 +7,7 @@ import (
 // approvalRulesetVersionCmd represents the 'approval-ruleset version' command
 var approvalRulesetVersionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Manage approval rulesets approved versions",
+	Short: "Manage approved versions",
 }
 
 func init() {
