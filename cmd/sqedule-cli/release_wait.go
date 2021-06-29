@@ -50,11 +50,6 @@ func releaseWaitCmd_run(viper *viper.Viper, printer mocking.IPrinter, clock mock
 		return releasestate.InProgress, fmt.Errorf("Error loading state: %w", err)
 	}
 
-	req, err := cli.NewApiRequest(config, state)
-	if err != nil {
-		return releasestate.InProgress, err
-	}
-
 	var lastSleepDuration time.Duration
 	if invokedByCreate {
 		lastSleepDuration = releaseWaitCmd_sleep(viper, clock, time.Duration(0))
@@ -66,6 +61,11 @@ func releaseWaitCmd_run(viper *viper.Viper, printer mocking.IPrinter, clock mock
 	}
 
 	for {
+		req, err := cli.NewApiRequest(config, state)
+		if err != nil {
+			return releasestate.InProgress, err
+		}
+
 		var release json.ReleaseWithAssociations
 		resp, err := req.
 			SetResult(&release).
