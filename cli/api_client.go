@@ -55,15 +55,15 @@ func NewApiRequestWithoutAuth(config Config) (*resty.Request, error) {
 func GetApiErrorMessage(resp *resty.Response) string {
 	e := resp.Error()
 	if e == nil {
-		return "unknown error"
+		return fmt.Sprintf("unknown error (HTTP %s)", resp.Status())
 	}
 
 	object, ok := e.(*map[string]interface{})
 	if !ok {
 		return fmt.Sprintf("%#v", object)
 	}
-	if object == nil {
-		return "unknown error"
+	if object == nil || *object == nil {
+		return fmt.Sprintf("unknown error (HTTP %s)", resp.Status())
 	}
 
 	if result, ok := (*object)["message"]; ok {
