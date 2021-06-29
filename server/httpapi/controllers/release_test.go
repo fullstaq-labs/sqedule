@@ -337,7 +337,11 @@ var _ = Describe("approval-ruleset API", func() {
 
 			binding := bindings[0].(map[string]interface{})
 			Expect(binding["mode"]).To(Equal("enforcing"))
-			Expect(binding["approval_ruleset"]).ToNot(BeNil())
+			Expect(binding["approval_ruleset"]).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
+
+			approvalRuleset := binding["approval_ruleset"].(map[string]interface{})
+			approvalRulesetVersion := approvalRuleset["latest_approved_version"]
+			Expect(approvalRulesetVersion).To(HaveKeyWithValue("display_name", "Ruleset"))
 		})
 	})
 })
