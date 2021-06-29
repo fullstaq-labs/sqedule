@@ -73,7 +73,6 @@ func CreateFromDbApplicationApprovalRulesetBindingWithRulesetAssociation(binding
 
 	return ApplicationApprovalRulesetBindingWithRulesetAssociation{
 		ApplicationApprovalRulesetBinding: CreateFromDbApplicationApprovalRulesetBinding(binding, version, adjustment),
-		ApprovalRuleset: CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset,
-			*binding.ApprovalRuleset.Version, *binding.ApprovalRuleset.Version.Adjustment),
+		ApprovalRuleset:                   CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset, binding.ApprovalRuleset.Version),
 	}
 }

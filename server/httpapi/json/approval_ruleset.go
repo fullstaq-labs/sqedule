@@ -17,7 +17,7 @@ type ApprovalRulesetBase struct {
 type ApprovalRulesetWithVersion struct {
 	ReviewableBase
 	ApprovalRulesetBase
-	Version ApprovalRulesetVersion `json:"version"`
+	Version *ApprovalRulesetVersion `json:"version"`
 }
 
 type ApprovalRulesetWithLatestApprovedVersion struct {
@@ -109,56 +109,73 @@ func (version *ApprovalRulesetVersion) PopulateFromDbmodelsApprovalRulesetConten
 // ******** Constructor functions ********
 //
 
-func CreateApprovalRulesetVersion(version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetVersion {
+func CreateApprovalRulesetVersion(version dbmodels.ApprovalRulesetVersion) ApprovalRulesetVersion {
 	return ApprovalRulesetVersion{
-		ReviewableVersionBase: createReviewableVersionBase(version.ReviewableVersionBase, latestAdjustment.ReviewableAdjustmentBase),
-		DisplayName:           latestAdjustment.DisplayName,
-		Description:           latestAdjustment.Description,
-		GloballyApplicable:    latestAdjustment.GloballyApplicable,
-		Enabled:               latestAdjustment.Enabled,
+		ReviewableVersionBase: createReviewableVersionBase(version.ReviewableVersionBase, version.Adjustment.ReviewableAdjustmentBase),
+		DisplayName:           version.Adjustment.DisplayName,
+		Description:           version.Adjustment.Description,
+		GloballyApplicable:    version.Adjustment.GloballyApplicable,
+		Enabled:               version.Adjustment.Enabled,
 	}
 }
 
-func CreateApprovalRulesetVersionWithStatsAndRules(version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetVersion {
-	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
-	versionJSON.NumBoundReleases = &latestAdjustment.NumBoundReleases
-	versionJSON.PopulateFromDbmodelsApprovalRulesetContents(latestAdjustment.Rules)
+func CreateApprovalRulesetVersionWithStatsAndRules(version dbmodels.ApprovalRulesetVersion) ApprovalRulesetVersion {
+	versionJSON := CreateApprovalRulesetVersion(version)
+	versionJSON.NumBoundReleases = &version.Adjustment.NumBoundReleases
+	versionJSON.PopulateFromDbmodelsApprovalRulesetContents(version.Adjustment.Rules)
 	return versionJSON
 }
 
-func CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment,
+func CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version *dbmodels.ApprovalRulesetVersion,
 	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithVersion {
+
+	var versionJSON *ApprovalRulesetVersion
+
+	if version != nil {
+		versionJSONStruct := CreateApprovalRulesetVersion(*version)
+		versionJSONStruct.PopulateFromDbmodelsReleaseApprovalRulesetBindings(releaseBindings)
+		versionJSONStruct.PopulateFromDbmodelsApprovalRulesetContents(rules)
+		versionJSON = &versionJSONStruct
+	}
 
 	result := ApprovalRulesetWithVersion{
 		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
 		ApprovalRulesetBase: ApprovalRulesetBase{
 			ID: ruleset.ID,
 		},
-		Version: CreateApprovalRulesetVersion(version, latestAdjustment),
+		Version: versionJSON,
 	}
 
 	result.ApprovalRulesetBase.PopulateFromDbmodelsApplicationApprovalRulesetBinding(appBindings)
-	result.Version.PopulateFromDbmodelsReleaseApprovalRulesetBindings(releaseBindings)
-	result.Version.PopulateFromDbmodelsApprovalRulesetContents(rules)
 
 	return result
 }
 
-func CreateApprovalRulesetWithLatestApprovedVersion(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetWithLatestApprovedVersion {
-	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
+func CreateApprovalRulesetWithLatestApprovedVersion(ruleset dbmodels.ApprovalRuleset, version *dbmodels.ApprovalRulesetVersion) ApprovalRulesetWithLatestApprovedVersion {
+	var versionJSON *ApprovalRulesetVersion
+
+	if version != nil {
+		versionJSONStruct := CreateApprovalRulesetVersion(*version)
+		versionJSON = &versionJSONStruct
+	}
 
 	return ApprovalRulesetWithLatestApprovedVersion{
 		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
 		ApprovalRulesetBase: ApprovalRulesetBase{
 			ID: ruleset.ID,
 		},
-		LatestApprovedVersion: &versionJSON,
+		LatestApprovedVersion: versionJSON,
 	}
 }
 
-func CreateApprovalRulesetWithLatestApprovedVersionAndStats(ruleset dbmodels.ApprovalRulesetWithStats, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment) ApprovalRulesetWithLatestApprovedVersion {
-	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
-	versionJSON.NumBoundReleases = &ruleset.NumBoundReleases
+func CreateApprovalRulesetWithLatestApprovedVersionAndStats(ruleset dbmodels.ApprovalRulesetWithStats, version *dbmodels.ApprovalRulesetVersion) ApprovalRulesetWithLatestApprovedVersion {
+	var versionJSON *ApprovalRulesetVersion
+
+	if version != nil {
+		versionJSONStruct := CreateApprovalRulesetVersion(*version)
+		versionJSONStruct.NumBoundReleases = &ruleset.NumBoundReleases
+		versionJSON = &versionJSONStruct
+	}
 
 	return ApprovalRulesetWithLatestApprovedVersion{
 		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
@@ -166,23 +183,28 @@ func CreateApprovalRulesetWithLatestApprovedVersionAndStats(ruleset dbmodels.App
 			ID:                   ruleset.ID,
 			NumBoundApplications: &ruleset.NumBoundApplications,
 		},
-		LatestApprovedVersion: &versionJSON,
+		LatestApprovedVersion: versionJSON,
 	}
 }
 
-func CreateApprovalRulesetWithLatestApprovedVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version dbmodels.ApprovalRulesetVersion, latestAdjustment dbmodels.ApprovalRulesetAdjustment,
+func CreateApprovalRulesetWithLatestApprovedVersionAndBindingsAndRules(ruleset dbmodels.ApprovalRuleset, version *dbmodels.ApprovalRulesetVersion,
 	appBindings []dbmodels.ApplicationApprovalRulesetBinding, releaseBindings []dbmodels.ReleaseApprovalRulesetBinding, rules dbmodels.ApprovalRulesetContents) ApprovalRulesetWithLatestApprovedVersion {
 
-	versionJSON := CreateApprovalRulesetVersion(version, latestAdjustment)
-	versionJSON.PopulateFromDbmodelsReleaseApprovalRulesetBindings(releaseBindings)
-	versionJSON.PopulateFromDbmodelsApprovalRulesetContents(rules)
+	var versionJSON *ApprovalRulesetVersion
+
+	if version != nil {
+		versionJSONStruct := CreateApprovalRulesetVersion(*version)
+		versionJSONStruct.PopulateFromDbmodelsReleaseApprovalRulesetBindings(releaseBindings)
+		versionJSONStruct.PopulateFromDbmodelsApprovalRulesetContents(rules)
+		versionJSON = &versionJSONStruct
+	}
 
 	result := ApprovalRulesetWithLatestApprovedVersion{
 		ReviewableBase: createReviewableBase(ruleset.ReviewableBase),
 		ApprovalRulesetBase: ApprovalRulesetBase{
 			ID: ruleset.ID,
 		},
-		LatestApprovedVersion: &versionJSON,
+		LatestApprovedVersion: versionJSON,
 	}
 	result.ApprovalRulesetBase.PopulateFromDbmodelsApplicationApprovalRulesetBinding(appBindings)
 

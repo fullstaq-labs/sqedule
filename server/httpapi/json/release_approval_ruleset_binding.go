@@ -40,9 +40,11 @@ func CreateFromDbReleaseApprovalRulesetBindingWithReleaseAssociation(binding dbm
 }
 
 func CreateFromDbReleaseApprovalRulesetBindingWithRulesetAssociation(binding dbmodels.ReleaseApprovalRulesetBinding) ReleaseApprovalRulesetBindingWithRulesetAssociation {
+	approvalRulesetVersion := binding.ApprovalRulesetVersion
+	approvalRulesetVersion.Adjustment = &binding.ApprovalRulesetAdjustment
+
 	return ReleaseApprovalRulesetBindingWithRulesetAssociation{
 		ReleaseApprovalRulesetBinding: CreateFromDbReleaseApprovalRulesetBinding(binding),
-		ApprovalRuleset: CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset,
-			binding.ApprovalRulesetVersion, binding.ApprovalRulesetAdjustment),
+		ApprovalRuleset:               CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset, &approvalRulesetVersion),
 	}
 }

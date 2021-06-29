@@ -255,93 +255,43 @@ var _ = Describe("approval-ruleset API", func() {
 	})
 
 	Describe("PATCH /approval-rulesets/:id", func() {
-		var mockRelease dbmodels.Release
-		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
-		var body gin.H
-
-		BeforeEach(func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, mockRelease, ruleset,
-					*ruleset.Version, *ruleset.Version.Adjustment, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
-					ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				return nil
-			})
-			Expect(err).ToNot(HaveOccurred())
-
-			req, err := ctx.NewRequestWithAuth("PATCH", "/v1/approval-rulesets/ruleset1", gin.H{"id": "ruleset2"})
-			Expect(err).ToNot(HaveOccurred())
-			ctx.ServeHTTP(req)
-
-			Expect(ctx.HttpRecorder.Code).To(Equal(200))
-			body, err = ctx.BodyJSON()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("outputs application bindings", func() {
-			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
-			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
-			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
-			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
-			app := appBinding["application"].(map[string]interface{})
-			Expect(app).To(HaveKeyWithValue("id", "app1"))
-		})
-
-		It("outputs release bindings", func() {
-			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
-			version := body["version"].(map[string]interface{})
-
-			Expect(version["release_approval_ruleset_bindings"]).To(HaveLen(1))
-			releaseBindings := version["release_approval_ruleset_bindings"].([]interface{})
-			releaseBinding := releaseBindings[0].(map[string]interface{})
-			Expect(releaseBinding).To(HaveKeyWithValue("mode", "enforcing"))
-			Expect(releaseBinding).To(HaveKeyWithValue("release", Not(BeEmpty())))
-
-			release := releaseBinding["release"].(map[string]interface{})
-			Expect(release).To(HaveKeyWithValue("id", BeNumerically("==", mockRelease.ID)))
-			Expect(release).To(HaveKeyWithValue("application", Not(BeEmpty())))
-
-			app := release["application"].(map[string]interface{})
-			Expect(app).To(HaveKeyWithValue("id", "app1"))
-		})
-
-		It("outputs approval rules", func() {
-			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
-			version := body["version"].(map[string]interface{})
-
-			Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
-			rules := version["approval_rules"].([]interface{})
-			rule := rules[0].(map[string]interface{})
-			Expect(rule).To(HaveKeyWithValue("id", BeNumerically("==", mockScheduleApprovalRule.ID)))
-			Expect(rule).To(HaveKeyWithValue("begin_time", mockScheduleApprovalRule.BeginTime.String))
-		})
-	})
-
-	Describe("PATCH /approval-rulesets/:id", func() {
 		Describe("upon patching unversioned data", func() {
+			var mockRelease dbmodels.Release
+			var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
+
 			Setup := func() {
-				_, err = dbmodels.CreateMockApprovalRulesetWith1Version(ctx.Db, ctx.Org, "ruleset1", nil)
+				_, err = dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 			}
 
-			IncludeReviewableUpdateUnversionedDataTest(ReviewableUpdateUnversionedDataTestOptions{
+			SetupWithAssocations := func() {
+				err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+					ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					mockRelease, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockReleaseRulesetBindingWithEnforcingMode(tx, ctx.Org, mockRelease, ruleset,
+						*ruleset.Version, *ruleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					mockScheduleApprovalRule, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
+						ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					return nil
+				})
+				Expect(err).ToNot(HaveOccurred())
+			}
+
+			includedTestCtx := IncludeReviewableUpdateUnversionedDataTest(ReviewableUpdateUnversionedDataTestOptions{
 				HTTPTestCtx:      &ctx,
 				Path:             "/v1/approval-rulesets/ruleset1",
 				Setup:            Setup,
@@ -352,6 +302,54 @@ var _ = Describe("approval-ruleset API", func() {
 				},
 				PrimaryKeyJSONFieldName: "id",
 				PrimaryKeyUpdatedValue:  "ruleset2",
+			})
+
+			It("outputs application bindings", func() {
+				SetupWithAssocations()
+				body := includedTestCtx.MakeRequest(200)
+
+				Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
+				appBindings := body["application_approval_ruleset_bindings"].([]interface{})
+				appBinding := appBindings[0].(map[string]interface{})
+				Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+				Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
+				app := appBinding["application"].(map[string]interface{})
+				Expect(app).To(HaveKeyWithValue("id", "app1"))
+			})
+
+			It("outputs release bindings", func() {
+				SetupWithAssocations()
+				body := includedTestCtx.MakeRequest(200)
+
+				Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
+				version := body["version"].(map[string]interface{})
+
+				Expect(version["release_approval_ruleset_bindings"]).To(HaveLen(1))
+				releaseBindings := version["release_approval_ruleset_bindings"].([]interface{})
+				releaseBinding := releaseBindings[0].(map[string]interface{})
+				Expect(releaseBinding).To(HaveKeyWithValue("mode", "enforcing"))
+				Expect(releaseBinding).To(HaveKeyWithValue("release", Not(BeEmpty())))
+
+				release := releaseBinding["release"].(map[string]interface{})
+				Expect(release).To(HaveKeyWithValue("id", BeNumerically("==", mockRelease.ID)))
+				Expect(release).To(HaveKeyWithValue("application", Not(BeEmpty())))
+
+				app := release["application"].(map[string]interface{})
+				Expect(app).To(HaveKeyWithValue("id", "app1"))
+			})
+
+			It("outputs approval rules", func() {
+				SetupWithAssocations()
+				body := includedTestCtx.MakeRequest(200)
+
+				Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
+				version := body["version"].(map[string]interface{})
+
+				Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
+				rules := version["approval_rules"].([]interface{})
+				rule := rules[0].(map[string]interface{})
+				Expect(rule).To(HaveKeyWithValue("id", BeNumerically("==", mockScheduleApprovalRule.ID)))
+				Expect(rule).To(HaveKeyWithValue("begin_time", mockScheduleApprovalRule.BeginTime.String))
 			})
 		})
 

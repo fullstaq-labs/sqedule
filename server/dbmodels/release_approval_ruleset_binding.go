@@ -93,9 +93,10 @@ func FindAllReleaseApprovalRulesetBindings(db *gorm.DB, organizationID string, a
 	return result, tx.Error
 }
 
-func FindAllReleaseApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, organizationID string, rulesetID string) ([]ReleaseApprovalRulesetBinding, error) {
+func FindAllReleaseApprovalRulesetBindingsWithApprovalRulesetAdjustment(db *gorm.DB, organizationID string, rulesetID string, versionID uint64, adjustmentNumber uint32) ([]ReleaseApprovalRulesetBinding, error) {
 	var result []ReleaseApprovalRulesetBinding
-	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID)
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ? AND approval_ruleset_version_id = ? AND approval_ruleset_adjustment_number = ?",
+		organizationID, rulesetID, versionID, adjustmentNumber)
 	tx = tx.Find(&result)
 	return result, tx.Error
 }
