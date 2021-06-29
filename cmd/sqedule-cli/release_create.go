@@ -8,6 +8,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/lib/mocking"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -46,7 +47,7 @@ func releaseCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing 
 		return err
 	}
 
-	var release json.ReleaseWithAssociations
+	var release map[string]interface{}
 	resp, err := req.
 		SetBody(releaseCreateCmd_createBody(viper)).
 		SetResult(&release).
@@ -65,9 +66,9 @@ func releaseCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing 
 	}
 	printer.PrintOutputln(string(output))
 
-	if viper.GetBool("wait") && !release.ApprovalStatusIsFinal() {
+	if viper.GetBool("wait") && !releasestate.State(release["state"].(string)).IsFinal() {
 		printer.PrintMessageln("Waiting for the release's approval state to become final...")
-		viper.Set("release-id", release.ID)
+		viper.Set("release-id", release["id"])
 		if testing {
 			return nil
 		}
