@@ -24,7 +24,7 @@ The input is a `ResourceInput`:
         // create a proposal in the abandoned state.
         "proposal_state": "draft" (default) | "final" | "abandon" | null,
 
-        "comments": "..." | null,
+        "review_comments": "..." | null,
 
         // ...versioned resource-specific fields here...
     }
@@ -151,7 +151,7 @@ The input is a `ResourceInput`:
         // or "final" to submit it for approval.
         "proposal_state": "draft" (default) | "final" | null,
 
-        "comments": "..." | null,
+        "review_comments": "..." | null,
 
         // ...versioned resource-specific fields here...
     }
@@ -314,7 +314,7 @@ The input is a `ResourceVersionInput`:
     // the proposal.
     "proposal_state": "draft" (default) | "final" | "abandon" | null,
 
-    "comments": "..." | null,
+    "review_comments": "..." | null,
 
     // ...versioned resource-specific fields here...
 }
