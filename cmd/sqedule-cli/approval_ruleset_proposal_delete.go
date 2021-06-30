@@ -17,11 +17,11 @@ var approvalRulesetProposalDeleteCmd = &cobra.Command{
 	Short: "Delete an approval ruleset proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
-		return approvalRulesetProposalDeleteCmd_run(viper.GetViper(), mocking.RealPrinter{}, false)
+		return approvalRulesetProposalDeleteCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }
 
-func approvalRulesetProposalDeleteCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing bool) error {
+func approvalRulesetProposalDeleteCmd_run(viper *viper.Viper, printer mocking.IPrinter) error {
 	err := approvalRulesetProposalDeleteCmd_checkConfig(viper)
 	if err != nil {
 		return err

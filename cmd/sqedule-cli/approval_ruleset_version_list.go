@@ -17,11 +17,11 @@ var approvalRulesetVersionListCmd = &cobra.Command{
 	Short: "List approval ruleset versions",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
-		return approvalRulesetVersionListCmd_run(viper.GetViper(), mocking.RealPrinter{}, false)
+		return approvalRulesetVersionListCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }
 
-func approvalRulesetVersionListCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing bool) error {
+func approvalRulesetVersionListCmd_run(viper *viper.Viper, printer mocking.IPrinter) error {
 	err := approvalRulesetVersionListCmd_checkConfig(viper)
 	if err != nil {
 		return err

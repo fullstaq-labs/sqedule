@@ -17,11 +17,11 @@ var approvalRulesetProposalDescribeCmd = &cobra.Command{
 	Short: "Describe an approval ruleset proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
-		return approvalRulesetProposalDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{}, false)
+		return approvalRulesetProposalDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }
 
-func approvalRulesetProposalDescribeCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing bool) error {
+func approvalRulesetProposalDescribeCmd_run(viper *viper.Viper, printer mocking.IPrinter) error {
 	err := approvalRulesetProposalDescribeCmd_checkConfig(viper)
 	if err != nil {
 		return err
