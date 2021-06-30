@@ -115,7 +115,7 @@ func CreateApprovalRulesetVersion(version dbmodels.ApprovalRulesetVersion) Appro
 		DisplayName:           version.Adjustment.DisplayName,
 		Description:           version.Adjustment.Description,
 		GloballyApplicable:    version.Adjustment.GloballyApplicable,
-		Enabled:               version.Adjustment.Enabled,
+		Enabled:               version.Adjustment.IsEnabled(),
 	}
 }
 

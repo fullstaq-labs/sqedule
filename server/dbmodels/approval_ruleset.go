@@ -3,6 +3,7 @@ package dbmodels
 import (
 	"reflect"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
@@ -33,7 +34,7 @@ type ApprovalRulesetAdjustment struct {
 	BaseModel
 	ApprovalRulesetVersionID uint64 `gorm:"primaryKey; not null"`
 	ReviewableAdjustmentBase
-	Enabled bool `gorm:"not null; default:true"`
+	Enabled *bool `gorm:"not null; default:true"`
 
 	DisplayName string `gorm:"not null"`
 	Description string `gorm:"not null"`
@@ -170,6 +171,10 @@ func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplicatio
 //
 // ******** ApprovalRulesetAdjustment methods ********
 //
+
+func (adjustment ApprovalRulesetAdjustment) IsEnabled() bool {
+	return lib.DerefBoolPtrWithDefault(adjustment.Enabled, true)
+}
 
 func (adjustment ApprovalRulesetAdjustment) ApprovalRulesetVersionAndAdjustmentKey() ApprovalRulesetVersionAndAdjustmentKey {
 	return ApprovalRulesetVersionAndAdjustmentKey{

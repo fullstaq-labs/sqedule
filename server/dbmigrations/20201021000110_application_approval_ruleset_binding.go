@@ -79,7 +79,7 @@ var migration20201021000110 = gormigrate.Migration{
 			BaseModel
 			ApplicationApprovalRulesetBindingVersionID uint64 `gorm:"primaryKey; not null"`
 			ReviewableAdjustmentBase
-			Enabled bool `gorm:"not null; default:true"`
+			Enabled *bool `gorm:"not null; default:true"`
 
 			Mode string `gorm:"type:approval_ruleset_binding_mode; not null"`
 

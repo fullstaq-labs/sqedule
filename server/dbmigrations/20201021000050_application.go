@@ -60,7 +60,7 @@ var migration20201021000050 = gormigrate.Migration{
 			BaseModel
 			ApplicationVersionID uint64 `gorm:"primaryKey; not null"`
 			ReviewableAdjustmentBase
-			Enabled bool `gorm:"not null; default:true"`
+			Enabled *bool `gorm:"not null; default:true"`
 
 			DisplayName string `gorm:"not null"`
 

@@ -308,7 +308,7 @@ func CreateMockApplicationApprovalRulesetBindingAdjustment(db *gorm.DB, organiza
 			AdjustmentNumber: 1,
 			ReviewState:      reviewstate.Approved,
 		},
-		Enabled: true,
+		Enabled: lib.NewBoolPtr(true),
 		Mode:    approvalrulesetbindingmode.Enforcing,
 	}
 	if customizeFunc != nil {

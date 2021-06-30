@@ -3,6 +3,7 @@ package json
 import (
 	"time"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 )
 
@@ -40,7 +41,7 @@ func CreateFromDbApplication(application dbmodels.Application, version dbmodels.
 		VersionNumber:    version.VersionNumber,
 		AdjustmentNumber: adjustment.AdjustmentNumber,
 		DisplayName:      &adjustment.DisplayName,
-		Enabled:          &adjustment.Enabled,
+		Enabled:          lib.NewBoolPtr(adjustment.IsEnabled()),
 		ReviewState:      string(adjustment.ReviewState),
 		ReviewComments:   reviewComments,
 		CreatedAt:        application.CreatedAt,

@@ -3,6 +3,7 @@ package dbmodels
 import (
 	"reflect"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -32,11 +33,19 @@ type ApplicationAdjustment struct {
 	BaseModel
 	ApplicationVersionID uint64 `gorm:"primaryKey; not null"`
 	ReviewableAdjustmentBase
-	Enabled bool `gorm:"not null; default:true"`
+	Enabled *bool `gorm:"not null; default:true"`
 
 	DisplayName string `gorm:"not null"`
 
 	ApplicationVersion ApplicationVersion `gorm:"foreignKey:OrganizationID,ApplicationVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+//
+// ******** ApplicationAdjustment methods ********
+//
+
+func (adjustment ApplicationAdjustment) IsEnabled() bool {
+	return lib.DerefBoolPtrWithDefault(adjustment.Enabled, true)
 }
 
 //

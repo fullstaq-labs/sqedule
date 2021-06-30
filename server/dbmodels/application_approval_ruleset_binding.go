@@ -40,7 +40,7 @@ type ApplicationApprovalRulesetBindingAdjustment struct {
 	BaseModel
 	ApplicationApprovalRulesetBindingVersionID uint64 `gorm:"primaryKey; not null"`
 	ReviewableAdjustmentBase
-	Enabled bool `gorm:"not null; default:true"`
+	Enabled *bool `gorm:"not null; default:true"`
 
 	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
 

@@ -55,7 +55,7 @@ func PatchApprovalRulesetAdjustment(organizationID string, adjustment *dbmodels.
 		adjustment.Description = *input.Description
 	}
 	if input.Enabled != nil {
-		adjustment.Enabled = *input.Enabled
+		adjustment.Enabled = input.Enabled
 	}
 	if input.ApprovalRules != nil {
 		adjustment.Rules = input.ToDbmodelsApprovalRulesetContents(organizationID)

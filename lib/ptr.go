@@ -41,3 +41,25 @@ func NewUint32Ptr(val uint32) *uint32 {
 func NewStringPtr(val string) *string {
 	return &val
 }
+
+// DerefBoolPtrWithDefault dereferences the given pointer if it's non-nil, or returns the default
+// value if it is nil.
+//
+// It shortens code. Before:
+//
+//   if val == nil {
+//     doSomething(*val)
+//   } else {
+//     doSomething(true)
+//   }
+//
+// After:
+//
+//   doSomething(DerefBoolPtrWithDefault(val, true))
+func DerefBoolPtrWithDefault(ptr *bool, defaultValue bool) bool {
+	if ptr == nil {
+		return defaultValue
+	} else {
+		return *ptr
+	}
+}
