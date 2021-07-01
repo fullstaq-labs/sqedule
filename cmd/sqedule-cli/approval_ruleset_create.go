@@ -8,7 +8,6 @@ import (
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/lib/mocking"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -79,15 +78,10 @@ func approvalRulesetCreateCmd_checkConfig(viper *viper.Viper) error {
 }
 
 func approvalRulesetCreateCmd_createBody(viper *viper.Viper) json.ApprovalRulesetInput {
+	version := approvalRulesetCreateOrUpdateCmd_createVersionInput(viper)
 	return json.ApprovalRulesetInput{
-		ID: lib.NewStringPtr(viper.GetString("id")),
-		Version: &json.ApprovalRulesetVersionInput{
-			ReviewableVersionInputBase: json.ReviewableVersionInputBase{
-				ProposalState: proposalstate.State(viper.GetString("proposal-state")),
-			},
-			DisplayName: lib.NewStringPtr(viper.GetString("display-name")),
-			Enabled:     lib.NewBoolPtr(viper.GetBool("enabled")),
-		},
+		ID:      lib.NewStringPtr(viper.GetString("id")),
+		Version: &version,
 	}
 }
 
@@ -99,8 +93,5 @@ func init() {
 	cli.DefineServerFlags(flags)
 
 	flags.String("id", "", "A machine-friendly identifier (required)")
-	flags.String("display-name", "", "A human-friendly display name (required)")
-	flags.String("description", "", "")
-	flags.String("proposal-state", "draft", "'draft', 'final' or 'abandon'")
-	flags.Bool("enabled", true, "Whether to enable this ruleset")
+	defineApprovalRulesetCreateOrUpdateFlags(flags)
 }
