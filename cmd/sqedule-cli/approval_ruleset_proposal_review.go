@@ -59,6 +59,7 @@ func approvalRulesetProposalReviewCmd_run(viper *viper.Viper, printer mocking.IP
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
 	printer.PrintOutputln(string(output))
+	cli.PrintCelebrationlnf(printer, "Approval ruleset proposal reviewed!")
 
 	return nil
 }

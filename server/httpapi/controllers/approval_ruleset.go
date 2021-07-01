@@ -797,7 +797,10 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 			respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
 			return
 		}
-		latestApprovedVersionNumber = *ruleset.Version.VersionNumber
+
+		if ruleset.Version != nil {
+			latestApprovedVersionNumber = *ruleset.Version.VersionNumber
+		}
 	}
 
 	proposals, err := dbmodels.FindApprovalRulesetProposals(ctx.Db, orgID, ruleset.ID)
