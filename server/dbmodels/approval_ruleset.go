@@ -166,7 +166,7 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 }
 
 func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
-	return !hasBoundApplications
+	return hasBoundApplications
 }
 
 //
