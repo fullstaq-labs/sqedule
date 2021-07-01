@@ -57,6 +57,8 @@ func approvalRulesetProposalUpdateCmd_run(viper *viper.Viper, printer mocking.IP
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
 	printer.PrintOutputln(string(output))
+	cli.PrintSeparatorln(printer)
+	cli.PrintCelebrationlnf(printer, "Proposal updated!")
 
 	return nil
 }
@@ -76,5 +78,5 @@ func init() {
 
 	flags.String("approval-ruleset-id", "", "Approval ruleset ID (required)")
 	flags.String("id", "", "Proposal ID (required)")
-	defineApprovalRulesetCreateOrUpdateFlags(flags)
+	defineApprovalRulesetCreateOrUpdateFlags(flags, false)
 }

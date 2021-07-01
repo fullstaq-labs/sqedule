@@ -15,8 +15,13 @@ var approvalRulesetCmd = &cobra.Command{
 	Short: "Manage approval rulesets",
 }
 
-func defineApprovalRulesetCreateOrUpdateFlags(flags *pflag.FlagSet) {
-	flags.String("display-name", "", "Human-friendly display name")
+func defineApprovalRulesetCreateOrUpdateFlags(flags *pflag.FlagSet, creating bool) {
+	var requiredAtCreationIndicator string
+	if creating {
+		requiredAtCreationIndicator = " (required)"
+	}
+
+	flags.String("display-name", "", "Human-friendly display name"+requiredAtCreationIndicator)
 	flags.String("description", "", "")
 	flags.String("proposal-state", "draft", "'draft', 'final' or 'abandon'")
 	flags.Bool("enabled", true, "Whether to enable this ruleset")
