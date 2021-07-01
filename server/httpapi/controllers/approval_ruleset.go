@@ -79,8 +79,7 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 		}
 
 		adjustment.ApprovalRulesetVersionID = version.ID
-		err = tx.Omit(clause.Associations).Create(adjustment).Error
-		if err != nil {
+		if err = adjustment.Create(tx); err != nil {
 			return err
 		}
 
@@ -88,14 +87,6 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 		creationRecord.ApprovalRulesetVersionID = &version.ID
 		creationRecord.ApprovalRulesetAdjustmentNumber = &adjustment.AdjustmentNumber
 		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
-		if err != nil {
-			return err
-		}
-
-		err = adjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
-			rule.AssociateWithApprovalRulesetAdjustment(*adjustment)
-			return tx.Create(rule).Error
-		})
 		if err != nil {
 			return err
 		}
@@ -712,14 +703,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 		}
 
 		json.PatchApprovalRulesetAdjustment(orgID, &newAdjustment, input)
-		if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
-			return err
-		}
-
-		err = newAdjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
-			return tx.Omit(clause.Associations).Create(rule).Error
-		})
-		if err != nil {
+		if err = newAdjustment.Create(tx); err != nil {
 			return err
 		}
 
@@ -743,7 +727,15 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 
 				newAdjustment := proposal.Adjustment.NewAdjustment()
 				newAdjustment.ReviewState = reviewstate.Draft
-				if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
+				if err = newAdjustment.Create(tx); err != nil {
+					return err
+				}
+
+				creationRecord := dbmodels.CreationAuditRecord{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
+				creationRecord.ApprovalRulesetVersionID = &proposal.ID
+				creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
+				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+				if err != nil {
 					return err
 				}
 			}
@@ -880,15 +872,7 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 		if err = tx.Omit(clause.Associations).Model(proposal).Updates(proposalUpdate).Error; err != nil {
 			return err
 		}
-		if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
-			return err
-		}
-
-		newAdjustment.Rules = proposal.Adjustment.Rules.CopyWithoutSavingAndAssociateWithAdjustment(newAdjustment)
-		err = newAdjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
-			return tx.Omit(clause.Associations).Create(rule).Error
-		})
-		if err != nil {
+		if err = newAdjustment.Create(tx); err != nil {
 			return err
 		}
 
@@ -912,7 +896,15 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 
 				newAdjustment := proposal.Adjustment.NewAdjustment()
 				newAdjustment.ReviewState = reviewstate.Draft
-				if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
+				if err = newAdjustment.Create(tx); err != nil {
+					return err
+				}
+
+				creationRecord := dbmodels.CreationAuditRecord{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
+				creationRecord.ApprovalRulesetVersionID = &proposal.ID
+				creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
+				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+				if err != nil {
 					return err
 				}
 			}

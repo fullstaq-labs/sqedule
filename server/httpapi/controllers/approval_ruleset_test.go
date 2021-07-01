@@ -883,6 +883,30 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(BeNumerically("==", 3))
 		})
+
+		It("copies the previous adjustment's approval rules if no new approval rules are given", func() {
+			Setup(reviewstate.Draft)
+			rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
+				mockProposal1.ID, *mockProposal1.Adjustment, nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			req, err := ctx.NewRequestWithAuth("PATCH", fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d",
+				mockProposal1.ID), gin.H{})
+			Expect(err).ToNot(HaveOccurred())
+			ctx.ServeHTTP(req)
+
+			Expect(ctx.HttpRecorder.Code).To(BeNumerically("==", 200))
+			body, err := ctx.BodyJSON()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
+			version := body["version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("approval_rules", HaveLen(1)))
+			rules := version["approval_rules"].([]interface{})
+			Expect(rules[0]).To(HaveKeyWithValue("type", "schedule"))
+			Expect(rules[0]).To(HaveKeyWithValue("begin_time", rule.BeginTime.String))
+			Expect(rules[0]).To(HaveKeyWithValue("end_time", rule.EndTime.String))
+		})
 	})
 
 	Describe("PUT /approval-rulesets/:id/proposals/:version_id/review-state", func() {
@@ -990,7 +1014,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(rules[0]).To(HaveKeyWithValue("type", "schedule"))
 		})
 
-		It("creates copies ApprovalRule objects", func() {
+		It("creates copies of ApprovalRule objects", func() {
 			Setup(reviewstate.Reviewing)
 			includedTestCtx.MakeRequest(false, "approved", 200)
 

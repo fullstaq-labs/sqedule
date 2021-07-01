@@ -89,6 +89,7 @@ func (r *ApprovalRule) AssociateWithApprovalRulesetAdjustment(adjustment Approva
 	r.ApprovalRulesetVersionID = adjustment.ApprovalRulesetVersionID
 	r.ApprovalRulesetAdjustmentNumber = adjustment.AdjustmentNumber
 	r.ApprovalRulesetAdjustment = adjustment
+	r.ApprovalRulesetAdjustment.Rules = ApprovalRulesetContents{}
 }
 
 func (r HTTPApiApprovalRule) Type() ApprovalRuleType {

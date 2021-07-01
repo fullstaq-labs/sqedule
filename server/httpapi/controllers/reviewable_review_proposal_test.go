@@ -131,7 +131,7 @@ func IncludeReviewableReviewProposalTest(options ReviewableReviewProposalTestOpt
 
 		tx = hctx.Db.Model(&dbmodels.CreationAuditRecord{}).Count(&count)
 		Expect(tx.Error).ToNot(HaveOccurred())
-		Expect(count).To(BeNumerically("==", 1))
+		Expect(count).To(BeNumerically(">=", 1))
 	})
 
 	Specify("if the proposal is approved, then it puts all other proposals that are in the reviewing state, into the draft state", func() {

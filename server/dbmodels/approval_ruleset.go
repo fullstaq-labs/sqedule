@@ -7,6 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 //
@@ -90,10 +91,10 @@ func (c ApprovalRulesetContents) NumRules() uint {
 		uint(len(c.ManualApprovalRules))
 }
 
-func (c ApprovalRulesetContents) CopyWithoutSavingAndAssociateWithAdjustment(adjustment ApprovalRulesetAdjustment) ApprovalRulesetContents {
+func (c ApprovalRulesetContents) CopyAsUnsaved() ApprovalRulesetContents {
 	c.ForEach(func(rule IApprovalRule) error {
 		rule.ClearPrimaryKey()
-		rule.AssociateWithApprovalRulesetAdjustment(adjustment)
+		rule.AssociateWithApprovalRulesetAdjustment(ApprovalRulesetAdjustment{})
 		return nil
 	})
 	return c
@@ -184,15 +185,29 @@ func (adjustment ApprovalRulesetAdjustment) ApprovalRulesetVersionAndAdjustmentK
 }
 
 // NewAdjustment returns an unsaved ApprovalRulesetAdjustment in draft state. Its contents
-// are identical to the previous Adjustment; except for Rules, which becomes empty.
+// are identical to the previous Adjustment. It even copies over the previous Adjustment's Rules,
+// but the new Rules are unsaved.
 func (adjustment ApprovalRulesetAdjustment) NewAdjustment() ApprovalRulesetAdjustment {
 	result := adjustment
 	result.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
 		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
 		ReviewState:      reviewstate.Draft,
 	}
-	result.Rules = ApprovalRulesetContents{}
+	result.Rules = adjustment.Rules.CopyAsUnsaved()
 	return result
+}
+
+// Create creates a database record for this adjustment as well as for its rules.
+func (adjustment *ApprovalRulesetAdjustment) Create(db *gorm.DB) error {
+	tx := db.Omit(clause.Associations).Create(adjustment)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return adjustment.Rules.ForEach(func(rule IApprovalRule) error {
+		rule.AssociateWithApprovalRulesetAdjustment(*adjustment)
+		return db.Omit(clause.Associations).Create(rule).Error
+	})
 }
 
 //
