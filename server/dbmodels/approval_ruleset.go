@@ -483,6 +483,17 @@ func LoadApprovalRulesetAdjustmentsStats(db *gorm.DB, organizationID string, adj
 }
 
 //
+// ******** Deletion functions ********
+//
+
+func DeleteApprovalRulesetAdjustmentsForProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
+	return db.
+		Where("organization_id = ? AND approval_ruleset_version_id = ?", organizationID, proposalID).
+		Delete(ApprovalRulesetAdjustment{}).
+		Error
+}
+
+//
 // ******** Other functions ********
 //
 
@@ -491,6 +502,15 @@ func MakeApprovalRulesetVersionsPointerArray(versions []ApprovalRulesetVersion) 
 	result := make([]*ApprovalRulesetVersion, 0, len(versions))
 	for i := range versions {
 		result = append(result, &versions[i])
+	}
+	return result
+}
+
+// MakeApprovalRulesetAdjustmentsPointerArray turns a `[]ApprovalRulesetAdjustment` into a `[]*ApprovalRulesetAdjustment`.
+func MakeApprovalRulesetAdjustmentsPointerArray(adjustment []ApprovalRulesetAdjustment) []*ApprovalRulesetAdjustment {
+	result := make([]*ApprovalRulesetAdjustment, 0, len(adjustment))
+	for i := range adjustment {
+		result = append(result, &adjustment[i])
 	}
 	return result
 }

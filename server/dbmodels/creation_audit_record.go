@@ -3,6 +3,8 @@ package dbmodels
 import (
 	"database/sql"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 //
@@ -65,4 +67,15 @@ func NewCreationAuditRecord(organizationID string, creator IOrganizationMember, 
 		result.OrganizationMemberIP = sql.NullString{String: creatorIP, Valid: true}
 	}
 	return result
+}
+
+//
+// ******** Deletion functions ********
+//
+
+func DeleteAuditCreationRecordsForApprovalRulesetProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
+	return db.
+		Where("organization_id = ? AND approval_ruleset_version_id = ?", organizationID, proposalID).
+		Delete(CreationAuditRecord{}).
+		Error
 }

@@ -83,7 +83,7 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 			return err
 		}
 
-		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
 		creationRecord.ApprovalRulesetVersionID = &version.ID
 		creationRecord.ApprovalRulesetAdjustmentNumber = &adjustment.AdjustmentNumber
 		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
@@ -731,7 +731,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 					return err
 				}
 
-				creationRecord := dbmodels.CreationAuditRecord{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
+				creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
 				creationRecord.ApprovalRulesetVersionID = &proposal.ID
 				creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
 				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
@@ -900,7 +900,7 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 					return err
 				}
 
-				creationRecord := dbmodels.CreationAuditRecord{BaseModel: dbmodels.BaseModel{OrganizationID: orgID}}
+				creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
 				creationRecord.ApprovalRulesetVersionID = &proposal.ID
 				creationRecord.ApprovalRulesetAdjustmentNumber = &newAdjustment.AdjustmentNumber
 				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
@@ -960,23 +960,23 @@ func (ctx Context) DeleteApprovalRulesetProposal(ginctx *gin.Context) {
 	}
 	ruleset.Version = &version
 
-	adjustments, err := dbmodels.FindApprovalRulesetAdjustments(ctx.Db, orgID, version.ID)
-	if err != nil {
-		respondWithDbQueryError("approval ruleset adjustments", err, ginctx)
-		return
-	}
-
 	// Modify database
 
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
-		for i := range adjustments {
-			err = ctx.Db.Delete(&adjustments[i]).Error
-			if err != nil {
-				return err
-			}
+		err = dbmodels.DeleteAuditCreationRecordsForApprovalRulesetProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
+		}
+		err = dbmodels.DeleteApprovalRulesForApprovalRulesetProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
+		}
+		err = dbmodels.DeleteApprovalRulesetAdjustmentsForProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
 		}
 
-		err = ctx.Db.Delete(&version).Error
+		err = tx.Delete(&version).Error
 		if err != nil {
 			return err
 		}

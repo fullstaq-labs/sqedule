@@ -412,9 +412,8 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 
 // CreateMockScheduleApprovalRuleWholeDay ...
 func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organization, rulesetVersionID uint64,
-	rulesetAdjustment ApprovalRulesetAdjustment, customizeFunc func(*ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
+	rulesetAdjustment ApprovalRulesetAdjustment, customizeFunc func(rule *ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
 
-	enabled := true
 	result := ScheduleApprovalRule{
 		ApprovalRule: ApprovalRule{
 			BaseModel: BaseModel{
@@ -424,7 +423,7 @@ func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organizati
 			ApprovalRulesetVersionID:        rulesetVersionID,
 			ApprovalRulesetAdjustmentNumber: rulesetAdjustment.AdjustmentNumber,
 			ApprovalRulesetAdjustment:       rulesetAdjustment,
-			Enabled:                         &enabled,
+			Enabled:                         lib.NewBoolPtr(true),
 		},
 		BeginTime: sql.NullString{String: "0:00:00", Valid: true},
 		EndTime:   sql.NullString{String: "23:59:59", Valid: true},
@@ -435,6 +434,23 @@ func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organizati
 	tx := db.Omit(clause.Associations).Create(&result)
 	if tx.Error != nil {
 		return ScheduleApprovalRule{}, tx.Error
+	}
+	return result, nil
+}
+
+func CreateMockCreationAuditRecord(db *gorm.DB, organization Organization, customizeFunc func(record *CreationAuditRecord)) (CreationAuditRecord, error) {
+	result := CreationAuditRecord{
+		BaseModel: BaseModel{
+			OrganizationID: organization.ID,
+			Organization:   organization,
+		},
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	tx := db.Omit(clause.Associations).Create(&result)
+	if tx.Error != nil {
+		return CreationAuditRecord{}, tx.Error
 	}
 	return result, nil
 }

@@ -1033,17 +1033,29 @@ var _ = Describe("approval-ruleset API", func() {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
-
 				mockVersion = *ruleset.Version
+
+				// Create a proposal with 2 adjustments
 
 				mockProposal, err = dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 1,
+				// Adjustment 1
+
+				adjustment1, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
 						adjustment.ReviewState = reviewstate.Draft
 					})
 				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockCreationAuditRecord(tx, ctx.Org,
+					func(record *dbmodels.CreationAuditRecord) {
+						record.ApprovalRulesetVersionID = &mockProposal.ID
+						record.ApprovalRulesetAdjustmentNumber = &adjustment1.AdjustmentNumber
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				// Adjustment 2
 
 				adjustment2, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 2,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
@@ -1051,6 +1063,16 @@ var _ = Describe("approval-ruleset API", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal.Adjustment = &adjustment2
+
+				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org, mockProposal.ID, adjustment2, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockCreationAuditRecord(tx, ctx.Org,
+					func(record *dbmodels.CreationAuditRecord) {
+						record.ApprovalRulesetVersionID = &mockProposal.ID
+						record.ApprovalRulesetAdjustmentNumber = &adjustment2.AdjustmentNumber
+					})
+				Expect(err).ToNot(HaveOccurred())
 
 				return nil
 			})

@@ -115,12 +115,10 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 	var result ApprovalRulesetContents
 	var tx *gorm.DB
 	var ruleTypesProcessed uint = 0
-
-	bindingsCondition := db.Where("approval_rules.organization_id = ? "+
+	var bindingsCondition = db.Where("approval_rules.organization_id = ? "+
 		"AND release_approval_ruleset_bindings.application_id = ? "+
 		"AND release_approval_ruleset_bindings.release_id = ?",
 		organizationID, applicationID, releaseID)
-
 	const joinConditionString = "LEFT JOIN release_approval_ruleset_bindings " +
 		"ON approval_rules.organization_id = release_approval_ruleset_bindings.organization_id " +
 		"AND approval_rules.approval_ruleset_version_id = release_approval_ruleset_bindings.approval_ruleset_version_id " +
@@ -162,4 +160,38 @@ func FindApprovalRulesBoundToRelease(db *gorm.DB, organizationID string, applica
 	}
 
 	return result, nil
+}
+
+//
+// ******** Deletion functions ********
+//
+
+func DeleteApprovalRulesForApprovalRulesetProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
+	var ruleTypesProcessed uint = 0
+	var conditions = db.Where("organization_id = ? AND approval_ruleset_version_id = ?", organizationID, proposalID)
+	var err error
+
+	ruleTypesProcessed++
+	err = db.Where(conditions).Delete(HTTPApiApprovalRule{}).Error
+	if err != nil {
+		return err
+	}
+
+	ruleTypesProcessed++
+	err = db.Where(conditions).Delete(ScheduleApprovalRule{}).Error
+	if err != nil {
+		return err
+	}
+
+	ruleTypesProcessed++
+	err = db.Where(conditions).Delete(ManualApprovalRule{}).Error
+	if err != nil {
+		return err
+	}
+
+	if ruleTypesProcessed != NumApprovalRuleTypes {
+		panic("Bug: code does not cover all approval rule types")
+	}
+
+	return nil
 }
