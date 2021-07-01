@@ -14,7 +14,7 @@ import (
 // approvalRulesetProposalListCmd represents the 'approval-ruleset proposal list' command
 var approvalRulesetProposalListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List approval ruleset versions",
+	Short: "List approval ruleset proposals",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		return approvalRulesetProposalListCmd_run(viper.GetViper(), mocking.RealPrinter{})

@@ -12,7 +12,7 @@ import (
 // approvalRulesetProposalRuleCmd represents the 'approval-ruleset proposal rule' command
 var approvalRulesetProposalRuleCmd = &cobra.Command{
 	Use:   "rule",
-	Short: "Manage rules",
+	Short: "Manage rules in an approval ruleset proposal",
 }
 
 func approvalRulesetProposalRuleCmd_getRules(ruleset map[string]interface{}) ([]map[string]interface{}, error) {
