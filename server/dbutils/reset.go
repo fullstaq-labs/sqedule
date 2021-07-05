@@ -29,9 +29,38 @@ func listExtensions(db *gorm.DB) ([]string, error) {
 	return QueryStringList(db, "SELECT extname FROM pg_extension WHERE extname != 'plpgsql' ORDER BY extname")
 }
 
-// ClearDatabase clears all tables and sequences in the current database, using TRUNCATE.
-func ClearDatabase(context context.Context, db *gorm.DB, tableNames []string) error {
+// ClearDatabaseSlow clears all tables and sequences in the current database, using TRUNCATE.
+// This is usually slower than ClearDatabaseFast and is not concurrency-safe, but it reclaims
+// disk space and resets sequence numbers.
+func ClearDatabaseSlow(context context.Context, db *gorm.DB, tableNames []string) error {
 	return db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", strings.Join(tableNames, ", "))).Error
+}
+
+// ClearDatabaseFast clears all tables and sequences in the current database, using DELETE.
+// This is usually faster than ClearDatabaseSlow and is concurrency-safe, but does not reclaim
+// disk space and does not reset sequence numbers.
+func ClearDatabaseFast(context context.Context, db *gorm.DB, tableNames []string) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		for _, tableName := range tableNames {
+			// Disable foreign key constraints checking so that we can delete tables in any order.
+			err := tx.Exec(fmt.Sprintf("ALTER TABLE %s DISABLE TRIGGER ALL", tableName)).Error
+			if err != nil {
+				return err
+			}
+
+			err = tx.Exec(fmt.Sprintf("DELETE FROM %s", tableName)).Error
+			if err != nil {
+				return err
+			}
+
+			err = tx.Exec(fmt.Sprintf("ALTER TABLE %s ENABLE TRIGGER ALL", tableName)).Error
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // ResetDatabase drops all tables and user-defined types in the current database.

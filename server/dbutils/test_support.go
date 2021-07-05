@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -47,7 +48,12 @@ func SetupTestDatabase() (*gorm.DB, error) {
 		return nil, testDatabaseCtx.SetupError
 	}
 
-	err := ClearDatabase(context.Background(), testDatabaseCtx.Db, testDatabaseCtx.TableNames)
+	var err error
+	if atomic.CompareAndSwapUint32(&testDatabaseCtx.ClearedOnce, 0, 1) {
+		err = ClearDatabaseSlow(context.Background(), testDatabaseCtx.Db, testDatabaseCtx.TableNames)
+	} else {
+		err = ClearDatabaseFast(context.Background(), testDatabaseCtx.Db, testDatabaseCtx.TableNames)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error clearing database: %w", err)
 	}
