@@ -29,22 +29,9 @@ func listExtensions(db *gorm.DB) ([]string, error) {
 	return QueryStringList(db, "SELECT extname FROM pg_extension WHERE extname != 'plpgsql' ORDER BY extname")
 }
 
-// ClearDatabase clears all tables and sequences in the current database.
-func ClearDatabase(context context.Context, db *gorm.DB) error {
-	return db.Transaction(func(tx *gorm.DB) error {
-		tableNames, err := listTableNames(tx)
-		if err != nil {
-			return fmt.Errorf("error listing table names: %w", err)
-		}
-		db.Logger.Info(context, "List of tables: %v", tableNames)
-
-		err = tx.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", strings.Join(tableNames, ", "))).Error
-		if err != nil {
-			return fmt.Errorf("error truncating database tables: %w", err)
-		}
-
-		return nil
-	})
+// ClearDatabase clears all tables and sequences in the current database, using TRUNCATE.
+func ClearDatabase(context context.Context, db *gorm.DB, tableNames []string) error {
+	return db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", strings.Join(tableNames, ", "))).Error
 }
 
 // ResetDatabase drops all tables and user-defined types in the current database.

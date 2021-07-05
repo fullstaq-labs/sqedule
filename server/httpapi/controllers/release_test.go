@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var _ = Describe("approval-ruleset API", func() {
+var _ = Describe("release API", func() {
 	var ctx HTTPTestContext
 	var err error
 
@@ -26,7 +26,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mctx MultipleAppsAndReleasesTestContext
 		var err error
 
-		err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 			mctx.app1, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -71,24 +71,19 @@ var _ = Describe("approval-ruleset API", func() {
 		return mctx
 	}
 
-	BeforeEach(func() {
-		ctx, err = SetupHTTPTestContext()
-		Expect(err).ToNot(HaveOccurred())
-	})
-
 	Describe("POST /applications/:app_id/releases", func() {
 		var app dbmodels.Application
 		var body gin.H
 
 		Setup := func(autoProcessReleaseInBackground bool) {
-			ctx.HttpCtx.AutoProcessReleaseInBackground = autoProcessReleaseInBackground
-
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, _, err = dbmodels.CreateMockApplicationApprovalRulesetsAndBindingsWith2Modes1Version(tx, ctx.Org, app)
 				Expect(err).ToNot(HaveOccurred())
+
+				ctx.ControllerCtx.AutoProcessReleaseInBackground = autoProcessReleaseInBackground
 
 				return nil
 			})
@@ -98,7 +93,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(Equal(201))
+			Expect(ctx.Recorder.Code).To(Equal(201))
 			body, err = ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 		}
@@ -193,7 +188,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			Expect(ctx.Recorder.Code).To(Equal(200))
 			body, err = ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -254,7 +249,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			Expect(ctx.Recorder.Code).To(Equal(200))
 			body, err = ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -293,7 +288,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var body gin.H
 
 		BeforeEach(func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -315,7 +310,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			Expect(ctx.Recorder.Code).To(Equal(200))
 			body, err = ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 		})

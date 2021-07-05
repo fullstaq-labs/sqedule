@@ -14,17 +14,12 @@ var _ = Describe("approval-ruleset API", func() {
 	var ctx HTTPTestContext
 	var err error
 
-	BeforeEach(func() {
-		ctx, err = SetupHTTPTestContext()
-		Expect(err).ToNot(HaveOccurred())
-	})
-
 	Describe("GET /applications", func() {
 		var app1, app2 dbmodels.Application
 		var body gin.H
 
 		BeforeEach(func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app1, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org,
 					func(app *dbmodels.Application) {
 						app.CreatedAt = time.Date(2021, 3, 8, 12, 0, 0, 0, time.Local)
@@ -57,7 +52,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			Expect(ctx.Recorder.Code).To(Equal(200))
 			body, err = ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -104,7 +99,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var body gin.H
 
 		BeforeEach(func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -123,7 +118,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(Equal(200))
+			Expect(ctx.Recorder.Code).To(Equal(200))
 			body, err = ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 		})

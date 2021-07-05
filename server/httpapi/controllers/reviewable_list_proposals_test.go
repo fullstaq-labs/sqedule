@@ -24,7 +24,7 @@ func IncludeReviewableListProposalsTest(options ReviewableListProposalsTestOptio
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 
-		Expect(hctx.HttpRecorder.Code).To(Equal(200))
+		Expect(hctx.Recorder.Code).To(Equal(200))
 
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())

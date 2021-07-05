@@ -60,7 +60,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 
-		Expect(hctx.HttpRecorder.Code).To(BeNumerically("==", expectedCode))
+		Expect(hctx.Recorder.Code).To(BeNumerically("==", expectedCode))
 		body, err := hctx.BodyJSON()
 		Expect(err).ToNot(HaveOccurred())
 

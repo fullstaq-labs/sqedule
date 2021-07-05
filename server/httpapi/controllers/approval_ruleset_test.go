@@ -19,7 +19,7 @@ var _ = Describe("approval-ruleset API", func() {
 	var err error
 
 	BeforeEach(func() {
-		ctx, err = SetupHTTPTestContext()
+		ctx, err = SetupHTTPTestContext(nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -895,7 +895,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 
-			Expect(ctx.HttpRecorder.Code).To(BeNumerically("==", 200))
+			Expect(ctx.Recorder.Code).To(BeNumerically("==", 200))
 			body, err := ctx.BodyJSON()
 			Expect(err).ToNot(HaveOccurred())
 
