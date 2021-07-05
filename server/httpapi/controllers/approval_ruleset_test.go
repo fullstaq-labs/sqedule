@@ -784,12 +784,6 @@ var _ = Describe("approval-ruleset API", func() {
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal2.Adjustment = &proposal2Adjustment
 
-				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, mockRuleset, nil)
-				Expect(err).ToNot(HaveOccurred())
-
 				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
 					mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
 				Expect(err).ToNot(HaveOccurred())
@@ -850,6 +844,18 @@ var _ = Describe("approval-ruleset API", func() {
 
 		It("outputs application bindings", func() {
 			Setup(reviewstate.Draft)
+
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, mockRuleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+
 			body := includedTestCtx.MakeRequest(false, "", 200)
 
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
