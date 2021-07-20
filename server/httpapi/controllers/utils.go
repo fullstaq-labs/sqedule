@@ -12,7 +12,7 @@ func respondWithDbQueryError(resourceTypeName string, err error, ginctx *gin.Con
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ginctx.JSON(http.StatusNotFound, gin.H{"error": resourceTypeName + " not found"})
 	} else {
-		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying database"})
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying database for " + resourceTypeName})
 	}
 }
 

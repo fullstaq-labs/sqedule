@@ -77,7 +77,7 @@ var _ = Describe("application API", func() {
 
 		includedTestCtx := IncludeReviewableReadResourceTest(ReviewableReadResourceTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/applications/app1",
+			GetPath:     func() string { return "/v1/applications/app1" },
 			Setup:       Setup,
 			AssertBaseResourceValid: func(resource map[string]interface{}) {
 				Expect(resource).To(HaveKeyWithValue("id", app.ID))

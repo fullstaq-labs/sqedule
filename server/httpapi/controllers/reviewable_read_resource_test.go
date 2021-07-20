@@ -7,7 +7,7 @@ import (
 
 type ReviewableReadResourceTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
-	Path        string
+	GetPath     func() string
 	Setup       func()
 
 	AssertBaseResourceValid func(resource map[string]interface{})
@@ -23,7 +23,7 @@ func IncludeReviewableReadResourceTest(options ReviewableReadResourceTestOptions
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {
-		req, err := hctx.NewRequestWithAuth("GET", options.Path, nil)
+		req, err := hctx.NewRequestWithAuth("GET", options.GetPath(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 		Expect(hctx.Recorder.Code).To(Equal(200))

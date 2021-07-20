@@ -12,16 +12,11 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 	var ctx HTTPTestContext
 	var err error
 
-	BeforeEach(func() {
-		ctx, err = SetupHTTPTestContext(nil)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
 	Describe("GET /applications/:application_id/approval-ruleset-bindings", func() {
 		var app dbmodels.Application
 
 		Setup := func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -65,6 +60,48 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			ruleset := items[0].(map[string]interface{})
 
 			Expect(ruleset).ToNot(HaveKey("application"))
+		})
+	})
+
+	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id", func() {
+		var app dbmodels.Application
+		var binding dbmodels.ApplicationApprovalRulesetBinding
+
+		Setup := func() {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				binding, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReadResourceTest(ReviewableReadResourceTestOptions{
+			HTTPTestCtx: &ctx,
+			GetPath: func() string {
+				return fmt.Sprintf("/v1/applications/%s/approval-ruleset-bindings/%s", app.ID, binding.ApprovalRulesetID)
+			},
+			Setup: Setup,
+			AssertVersionValid: func(version map[string]interface{}) {
+				Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+			},
+		})
+
+		It("outputs applications", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body).To(HaveKeyWithValue("application", Not(BeEmpty())))
+			appJSON := body["application"].(map[string]interface{})
+			Expect(appJSON).To(HaveKeyWithValue("id", app.ID))
+			Expect(appJSON).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
 		})
 	})
 })

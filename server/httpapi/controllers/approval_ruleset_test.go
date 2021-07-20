@@ -200,7 +200,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 		includedTestCtx := IncludeReviewableReadResourceTest(ReviewableReadResourceTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/approval-rulesets/ruleset1",
+			GetPath:     func() string { return "/v1/approval-rulesets/ruleset1" },
 			Setup:       Setup,
 			AssertBaseResourceValid: func(resource map[string]interface{}) {
 				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))

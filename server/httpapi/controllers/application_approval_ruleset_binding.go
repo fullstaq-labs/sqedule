@@ -70,3 +70,62 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
+
+func (ctx Context) GetApplicationApprovalRulesetBinding(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	applicationID := ginctx.Param("application_id")
+	rulesetID := ginctx.Param("ruleset_id")
+
+	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
+		ctx.Db.Preload("Application").Preload("ApprovalRuleset"),
+		orgID, applicationID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		[]*dbmodels.ApplicationApprovalRulesetBinding{&binding})
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding latest version", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		[]*dbmodels.Application{&binding.Application})
+	if err != nil {
+		respondWithDbQueryError("application latest version", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		[]*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
+	if err != nil {
+		respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+		return
+	}
+
+	// Generate response
+
+	output := json.CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding, binding.Version, true, true)
+	ginctx.JSON(http.StatusOK, output)
+}

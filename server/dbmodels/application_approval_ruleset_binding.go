@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalrulesetbindingmode"
+	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
 
@@ -66,6 +67,14 @@ func FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, o
 	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID)
 	tx = tx.Find(&result)
 	return result, tx.Error
+}
+
+func FindApplicationApprovalRulesetBinding(db *gorm.DB, organizationID string, applicationID string, rulesetID string) (ApplicationApprovalRulesetBinding, error) {
+	var result ApplicationApprovalRulesetBinding
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND approval_ruleset_id = ?", organizationID, applicationID, rulesetID)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
 }
 
 func LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, bindings []*ApplicationApprovalRulesetBinding) error {

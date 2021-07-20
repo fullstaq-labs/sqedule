@@ -22,6 +22,7 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 
 	// Approval ruleset bindings
 	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.ListApplicationApprovalRulesetBindings)
+	rg.GET("applications/:application_id/approval-ruleset-bindings/:ruleset_id", ctx.GetApplicationApprovalRulesetBinding)
 
 	// Approval rulesets
 	rg.POST("approval-rulesets", ctx.CreateApprovalRuleset)
