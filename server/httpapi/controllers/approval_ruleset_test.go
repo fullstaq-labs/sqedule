@@ -126,11 +126,12 @@ var _ = Describe("approval-ruleset API", func() {
 		}
 
 		includedTestCtx := IncludeReviewableListResourcesTest(ReviewableListResourcesTestOptions{
-			HTTPTestCtx:             &ctx,
-			Path:                    "/v1/approval-rulesets",
-			Setup:                   func() { Setup() },
-			PrimaryKeyJSONFieldName: "id",
-			PrimaryKeyInitialValue:  "ruleset1",
+			HTTPTestCtx: &ctx,
+			GetPath:     func() string { return "/v1/approval-rulesets" },
+			Setup:       func() { Setup() },
+			AssertBaseResourceValid: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))
+			},
 		})
 
 		It("outputs the number of bound applications and releases", func() {
@@ -198,11 +199,12 @@ var _ = Describe("approval-ruleset API", func() {
 		}
 
 		includedTestCtx := IncludeReviewableReadResourceTest(ReviewableReadResourceTestOptions{
-			HTTPTestCtx:             &ctx,
-			Path:                    "/v1/approval-rulesets/ruleset1",
-			Setup:                   Setup,
-			PrimaryKeyJSONFieldName: "id",
-			PrimaryKeyInitialValue:  "ruleset1",
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/approval-rulesets/ruleset1",
+			Setup:       Setup,
+			AssertBaseResourceValid: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))
+			},
 		})
 
 		It("outputs application bindings", func() {
@@ -212,7 +214,10 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+
+			version := appBinding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
 			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
 			Expect(app).To(HaveKeyWithValue("id", "app1"))
@@ -311,7 +316,10 @@ var _ = Describe("approval-ruleset API", func() {
 				Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 				appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 				appBinding := appBindings[0].(map[string]interface{})
-				Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+
+				version := appBinding["latest_approved_version"].(map[string]interface{})
+				Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
 				Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 				app := appBinding["application"].(map[string]interface{})
 				Expect(app).To(HaveKeyWithValue("id", "app1"))
@@ -573,7 +581,10 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+
+			version := appBinding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
 			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
 			Expect(app).To(HaveKeyWithValue("id", "app1"))
@@ -732,7 +743,10 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+
+			version := appBinding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
 			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
 			Expect(app).To(HaveKeyWithValue("id", "app1"))
@@ -861,7 +875,10 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+
+			version := appBinding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
 			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
 			Expect(app).To(HaveKeyWithValue("id", "app1"))
@@ -1003,7 +1020,10 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
 			appBinding := appBindings[0].(map[string]interface{})
-			Expect(appBinding).To(HaveKeyWithValue("mode", "enforcing"))
+
+			version := appBinding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
 			Expect(appBinding).To(HaveKeyWithValue("application", Not(BeEmpty())))
 			app := appBinding["application"].(map[string]interface{})
 			Expect(app).To(HaveKeyWithValue("id", "app1"))

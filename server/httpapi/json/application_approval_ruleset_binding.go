@@ -8,71 +8,66 @@ import (
 // ******** Types, constants & variables ********
 //
 
-type ApplicationApprovalRulesetBinding struct {
-	VersionNumber    *uint32 `json:"version_number"`
-	AdjustmentNumber uint32  `json:"adjustment_number"`
-	Mode             string  `json:"mode"`
+type ApplicationApprovalRulesetBindingBase struct {
+	Application     *ApplicationWithLatestApprovedVersion     `json:"application,omitempty"`
+	ApprovalRuleset *ApprovalRulesetWithLatestApprovedVersion `json:"approval_ruleset,omitempty"`
 }
 
-type ApplicationApprovalRulesetBindingWithApplicationAssociation struct {
-	ApplicationApprovalRulesetBinding
-	Application Application `json:"application"`
+type ApplicationApprovalRulesetBindingWithVersion struct {
+	ReviewableBase
+	ApplicationApprovalRulesetBindingBase
+	Version *ApplicationApprovalRulesetBindingVersion `json:"version"`
 }
 
-type ApplicationApprovalRulesetBindingWithRulesetAssociation struct {
-	ApplicationApprovalRulesetBinding
-	ApprovalRuleset ApprovalRulesetWithLatestApprovedVersion `json:"approval_ruleset"`
+type ApplicationApprovalRulesetBindingWithLatestApprovedVersion struct {
+	ReviewableBase
+	ApplicationApprovalRulesetBindingBase
+	LatestApprovedVersion *ApplicationApprovalRulesetBindingVersion `json:"latest_approved_version"`
+}
+
+type ApplicationApprovalRulesetBindingVersion struct {
+	ReviewableVersionBase
+	Mode string `json:"mode"`
 }
 
 //
 // ******** Constructor functions ********
 //
 
-func CreateFromDbApplicationApprovalRulesetBinding(binding dbmodels.ApplicationApprovalRulesetBinding, version dbmodels.ApplicationApprovalRulesetBindingVersion,
-	adjustment dbmodels.ApplicationApprovalRulesetBindingAdjustment) ApplicationApprovalRulesetBinding {
-
-	return ApplicationApprovalRulesetBinding{
-		VersionNumber:    version.VersionNumber,
-		AdjustmentNumber: adjustment.AdjustmentNumber,
-		Mode:             string(adjustment.Mode),
+func CreateApplicationApprovalRulesetBindingVersion(version dbmodels.ApplicationApprovalRulesetBindingVersion) ApplicationApprovalRulesetBindingVersion {
+	return ApplicationApprovalRulesetBindingVersion{
+		ReviewableVersionBase: createReviewableVersionBase(version.ReviewableVersionBase, version.Adjustment.ReviewableAdjustmentBase),
+		Mode:                  string(version.Adjustment.Mode),
 	}
 }
 
-func CreateFromDbApplicationApprovalRulesetBindingWithApplicationAssociation(binding dbmodels.ApplicationApprovalRulesetBinding, version dbmodels.ApplicationApprovalRulesetBindingVersion,
-	adjustment dbmodels.ApplicationApprovalRulesetBindingAdjustment) ApplicationApprovalRulesetBindingWithApplicationAssociation {
+func CreateApplicationApprovalRulesetBindingWithLatestApprovedVersion(binding dbmodels.ApplicationApprovalRulesetBinding,
+	version *dbmodels.ApplicationApprovalRulesetBindingVersion) ApplicationApprovalRulesetBindingWithLatestApprovedVersion {
 
-	if binding.Application.Version == nil {
-		panic("Associated application must have an associated version")
-	}
-	if binding.Application.Version.VersionNumber == nil {
-		panic("Associated application's associated version must be finalized")
-	}
-	if binding.Application.Version.Adjustment == nil {
-		panic("Associated application must have an associated adjustment")
+	var versionJSON *ApplicationApprovalRulesetBindingVersion
+
+	if version != nil {
+		versionJSONStruct := CreateApplicationApprovalRulesetBindingVersion(*version)
+		versionJSON = &versionJSONStruct
 	}
 
-	return ApplicationApprovalRulesetBindingWithApplicationAssociation{
-		ApplicationApprovalRulesetBinding: CreateFromDbApplicationApprovalRulesetBinding(binding, version, adjustment),
-		Application: CreateFromDbApplication(binding.Application, *binding.Application.Version,
-			*binding.Application.Version.Adjustment, nil),
+	return ApplicationApprovalRulesetBindingWithLatestApprovedVersion{
+		ReviewableBase:        createReviewableBase(binding.ReviewableBase),
+		LatestApprovedVersion: versionJSON,
 	}
 }
 
-func CreateFromDbApplicationApprovalRulesetBindingWithRulesetAssociation(binding dbmodels.ApplicationApprovalRulesetBinding, version dbmodels.ApplicationApprovalRulesetBindingVersion,
-	adjustment dbmodels.ApplicationApprovalRulesetBindingAdjustment) ApplicationApprovalRulesetBindingWithRulesetAssociation {
+func CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding dbmodels.ApplicationApprovalRulesetBinding,
+	version *dbmodels.ApplicationApprovalRulesetBindingVersion, includeApp bool, includeRuleset bool) ApplicationApprovalRulesetBindingWithLatestApprovedVersion {
 
-	if binding.ApprovalRuleset.Version == nil {
-		panic("Given approval ruleset must have an associated version")
+	result := CreateApplicationApprovalRulesetBindingWithLatestApprovedVersion(binding, version)
+	if includeApp {
+		appJSONStruct := CreateApplicationWithLatestApprovedVersion(binding.Application, binding.Application.Version)
+		result.ApplicationApprovalRulesetBindingBase.Application = &appJSONStruct
 	}
-	if binding.ApprovalRuleset.Version.VersionNumber == nil {
-		panic("Given approval ruleset's associated version must be finalized")
+	if includeRuleset {
+		rulesetJSONStruct := CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset, binding.ApprovalRuleset.Version)
+		result.ApplicationApprovalRulesetBindingBase.ApprovalRuleset = &rulesetJSONStruct
 	}
-	if binding.ApprovalRuleset.Version.Adjustment == nil {
-		panic("Given approval ruleset must have an associated adjustment")
-	}
-
-	return ApplicationApprovalRulesetBindingWithRulesetAssociation{
-		ApplicationApprovalRulesetBinding: CreateFromDbApplicationApprovalRulesetBinding(binding, version, adjustment),
-		ApprovalRuleset:                   CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset, binding.ApprovalRuleset.Version),
-	}
+	return result
 }

@@ -28,12 +28,12 @@ type ReleasePatchablePart struct {
 
 type ReleaseWithApplicationAssociation struct {
 	Release
-	Application Application `json:"application"`
+	Application ApplicationWithLatestApprovedVersion `json:"application"`
 }
 
 type ReleaseWithAssociations struct {
 	Release
-	Application             *Application                                           `json:"application,omitempty"`
+	Application             *ApplicationWithLatestApprovedVersion                  `json:"application,omitempty"`
 	ApprovalRulesetBindings *[]ReleaseApprovalRulesetBindingWithRulesetAssociation `json:"approval_ruleset_bindings,omitempty"`
 }
 
@@ -80,10 +80,8 @@ func CreateFromDbReleaseWithApplicationAssociation(release dbmodels.Release) Rel
 	}
 
 	return ReleaseWithApplicationAssociation{
-		Release: CreateFromDbRelease(release),
-		Application: CreateFromDbApplication(release.Application,
-			*release.Application.Version, *release.Application.Version.Adjustment,
-			nil),
+		Release:     CreateFromDbRelease(release),
+		Application: CreateApplicationWithLatestApprovedVersion(release.Application, release.Application.Version),
 	}
 }
 
@@ -103,9 +101,7 @@ func CreateFromDbReleaseWithAssociations(release dbmodels.Release, includeApplic
 		if release.Application.Version.Adjustment == nil {
 			panic("Associated application must have an associated adjustment")
 		}
-		applicationJSON := CreateFromDbApplication(release.Application,
-			*release.Application.Version, *release.Application.Version.Adjustment,
-			nil)
+		applicationJSON := CreateApplicationWithLatestApprovedVersion(release.Application, release.Application.Version)
 		result.Application = &applicationJSON
 	}
 	if rulesetBindings != nil {

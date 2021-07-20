@@ -9,9 +9,9 @@ import (
 //
 
 type ApprovalRulesetBase struct {
-	ID                                 string                                                         `json:"id"`
-	ApplicationApprovalRulesetBindings *[]ApplicationApprovalRulesetBindingWithApplicationAssociation `json:"application_approval_ruleset_bindings,omitempty"`
-	NumBoundApplications               *uint                                                          `json:"num_bound_applications,omitempty"`
+	ID                                 string                                                        `json:"id"`
+	ApplicationApprovalRulesetBindings *[]ApplicationApprovalRulesetBindingWithLatestApprovedVersion `json:"application_approval_ruleset_bindings,omitempty"`
+	NumBoundApplications               *uint                                                         `json:"num_bound_applications,omitempty"`
 }
 
 type ApprovalRulesetWithVersion struct {
@@ -43,7 +43,7 @@ type ApprovalRulesetVersion struct {
 //
 
 func (base *ApprovalRulesetBase) PopulateFromDbmodelsApplicationApprovalRulesetBinding(bindings []dbmodels.ApplicationApprovalRulesetBinding) {
-	bindingsJSON := make([]ApplicationApprovalRulesetBindingWithApplicationAssociation, 0, len(bindings))
+	bindingsJSON := make([]ApplicationApprovalRulesetBindingWithLatestApprovedVersion, 0, len(bindings))
 
 	for _, binding := range bindings {
 		if binding.Version == nil {
@@ -57,8 +57,7 @@ func (base *ApprovalRulesetBase) PopulateFromDbmodelsApplicationApprovalRulesetB
 		}
 
 		bindingsJSON = append(bindingsJSON,
-			CreateFromDbApplicationApprovalRulesetBindingWithApplicationAssociation(binding,
-				*binding.Version, *binding.Version.Adjustment))
+			CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding, binding.Version, true, false))
 	}
 
 	base.ApplicationApprovalRulesetBindings = &bindingsJSON

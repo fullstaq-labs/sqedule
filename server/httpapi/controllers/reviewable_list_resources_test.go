@@ -7,11 +7,11 @@ import (
 
 type ReviewableListResourcesTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
-	Path        string
+	GetPath     func() string
 	Setup       func()
 
-	PrimaryKeyJSONFieldName string
-	PrimaryKeyInitialValue  interface{}
+	AssertBaseResourceValid func(resource map[string]interface{})
+	AssertVersionValid      func(version map[string]interface{})
 }
 
 type ReviewableListResourcesTestContext struct {
@@ -23,7 +23,7 @@ func IncludeReviewableListResourcesTest(options ReviewableListResourcesTestOptio
 	var hctx *HTTPTestContext = options.HTTPTestCtx
 
 	rctx.MakeRequest = func() gin.H {
-		req, err := hctx.NewRequestWithAuth("GET", options.Path, nil)
+		req, err := hctx.NewRequestWithAuth("GET", options.GetPath(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		hctx.ServeHTTP(req)
 		Expect(hctx.Recorder.Code).To(Equal(200))
@@ -39,14 +39,19 @@ func IncludeReviewableListResourcesTest(options ReviewableListResourcesTestOptio
 		body := rctx.MakeRequest()
 
 		Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
-
 		items := body["items"].([]interface{})
 		ruleset := items[0].(map[string]interface{})
-		Expect(ruleset).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
-		Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
 
+		Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
 		version := ruleset["latest_approved_version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+
+		if options.AssertVersionValid != nil {
+			options.AssertVersionValid(version)
+		}
+		if options.AssertBaseResourceValid != nil {
+			options.AssertBaseResourceValid(ruleset)
+		}
 	})
 
 	return &rctx

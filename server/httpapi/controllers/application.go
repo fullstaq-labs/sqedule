@@ -48,9 +48,9 @@ func (ctx Context) ListApplications(ginctx *gin.Context) {
 
 	// Generate response
 
-	outputList := make([]json.Application, 0, len(apps))
+	outputList := make([]json.ApplicationWithLatestApprovedVersion, 0, len(apps))
 	for _, app := range apps {
-		outputList = append(outputList, json.CreateFromDbApplication(app, *app.Version, *app.Version.Adjustment, nil))
+		outputList = append(outputList, json.CreateApplicationWithLatestApprovedVersion(app, app.Version))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }
@@ -108,6 +108,6 @@ func (ctx Context) GetApplication(ginctx *gin.Context) {
 
 	// Generate response
 
-	output := json.CreateFromDbApplication(app, *app.Version, *app.Version.Adjustment, &bindings)
+	output := json.CreateApplicationWithLatestApprovedVersionAndRulesetBindings(app, app.Version, bindings)
 	ginctx.JSON(http.StatusOK, output)
 }

@@ -12,7 +12,7 @@ func TestIsUniqueConstraintError(t *testing.T) {
 		return
 	}
 
-	err = db.Exec("CREATE TABLE foo (id INT PRIMARY KEY NOT NULL UNIQUE, name TEXT NOT NULL UNIQUE)").Error
+	err = db.Exec("CREATE TABLE IF NOT EXISTS foo (id INT PRIMARY KEY NOT NULL UNIQUE, name TEXT NOT NULL UNIQUE)").Error
 	if !assert.NoError(t, err) {
 		return
 	}
