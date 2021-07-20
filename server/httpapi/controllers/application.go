@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (ctx Context) GetApplications(ginctx *gin.Context) {
+func (ctx Context) ListApplications(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)

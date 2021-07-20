@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (ctx Context) GetApplicationApprovalRulesetBindings(ginctx *gin.Context) {
+func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)

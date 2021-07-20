@@ -106,7 +106,7 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusCreated, output)
 }
 
-func (ctx Context) GetApprovalRulesets(ginctx *gin.Context) {
+func (ctx Context) ListApprovalRulesets(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
@@ -384,7 +384,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 // ******** Operations on approved versions ********
 //
 
-func (ctx Context) GetApprovalRulesetVersions(ginctx *gin.Context) {
+func (ctx Context) ListApprovalRulesetVersions(ginctx *gin.Context) {
 	ctx.getApprovalRulesetVersionsOrProposals(ginctx, true)
 }
 
@@ -575,7 +575,7 @@ func (ctx Context) getApprovalRulesetVersionOrProposal(ginctx *gin.Context, appr
 // ******** Operations on proposals ********
 //
 
-func (ctx Context) GetApprovalRulesetProposals(ginctx *gin.Context) {
+func (ctx Context) ListApprovalRulesetProposals(ginctx *gin.Context) {
 	ctx.getApprovalRulesetVersionsOrProposals(ginctx, false)
 }
 

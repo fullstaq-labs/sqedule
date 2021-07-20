@@ -17,7 +17,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (ctx Context) GetReleases(ginctx *gin.Context) {
+func (ctx Context) ListReleases(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
