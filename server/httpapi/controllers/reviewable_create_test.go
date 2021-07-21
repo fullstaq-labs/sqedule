@@ -24,9 +24,6 @@ type ReviewableCreateTestOptions struct {
 	AssertBaseResourceValid func(resource interface{})
 	AssertVersionJSONValid  func(version map[string]interface{})
 	AssertAdjustmentValid   func(adjustment interface{})
-	// GetVersionedField           func(adjustment interface{}) interface{}
-	// VersionedFieldJSONFieldName string
-	// VersionedFieldInitialValue  interface{}
 }
 
 type ReviewableCreateTestContext struct {
