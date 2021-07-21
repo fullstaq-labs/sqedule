@@ -14,6 +14,13 @@ import (
 // ******** Types, constants & variables ********
 //
 
+type ApplicationApprovalRulesetBindingAction string
+
+const (
+	ApplicationApprovalRulesetBindingActionCreate ApplicationApprovalRulesetBindingAction = "create"
+	ApplicationApprovalRulesetBindingActionUpdate ApplicationApprovalRulesetBindingAction = "update"
+)
+
 type ApplicationApprovalRulesetBindingPrimaryKey struct {
 	ApplicationID     string `gorm:"type:citext; primaryKey; not null"`
 	ApprovalRulesetID string `gorm:"type:citext; primaryKey; not null"`
@@ -79,6 +86,17 @@ func (binding ApplicationApprovalRulesetBinding) NewDraftVersion() (*Application
 	}
 
 	return version, &adjustment
+}
+
+func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ApplicationApprovalRulesetBindingAction, oldMode approvalrulesetbindingmode.Mode) bool {
+	switch action {
+	case ApplicationApprovalRulesetBindingActionCreate:
+		return binding.Version.Adjustment.Mode == approvalrulesetbindingmode.Enforcing
+	case ApplicationApprovalRulesetBindingActionUpdate:
+		return oldMode != binding.Version.Adjustment.Mode
+	default:
+		panic("Unknown action " + action)
+	}
 }
 
 //

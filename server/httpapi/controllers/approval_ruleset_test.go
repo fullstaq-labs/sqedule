@@ -18,12 +18,12 @@ var _ = Describe("approval-ruleset API", func() {
 	var ctx HTTPTestContext
 	var err error
 
-	BeforeEach(func() {
-		ctx, err = SetupHTTPTestContext(nil)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
 	Describe("POST /approval-rulesets", func() {
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
 		includedTestCtx := IncludeReviewableCreateTest(ReviewableCreateTestOptions{
 			HTTPTestCtx: &ctx,
 			Path:        "/v1/approval-rulesets",
@@ -71,7 +71,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 	Describe("GET /approval-rulesets", func() {
 		Setup := func() (ruleset dbmodels.ApprovalRuleset) {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -176,7 +176,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
 		Setup := func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -264,13 +264,17 @@ var _ = Describe("approval-ruleset API", func() {
 	})
 
 	Describe("PATCH /approval-rulesets/:id", func() {
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
 		Describe("upon patching unversioned data", func() {
 			var mockRelease dbmodels.Release
 			var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
 			Setup := func() {
 				_, err = dbmodels.CreateMockApprovalRuleset(ctx.Db, ctx.Org, "ruleset1", nil)
-				Expect(err).ToNot(HaveOccurred())
 			}
 
 			SetupWithAssocations := func() {
@@ -306,11 +310,13 @@ var _ = Describe("approval-ruleset API", func() {
 				Setup:            Setup,
 				UnversionedInput: gin.H{"id": "ruleset2"},
 				ResourceType:     reflect.TypeOf(dbmodels.ApprovalRuleset{}),
-				GetPrimaryKey: func(resource interface{}) interface{} {
-					return resource.(*dbmodels.ApprovalRuleset).ID
+				AssertBaseJSONValid: func(resource map[string]interface{}) {
+					Expect(resource).To(HaveKeyWithValue("id", "ruleset2"))
 				},
-				PrimaryKeyJSONFieldName: "id",
-				PrimaryKeyUpdatedValue:  "ruleset2",
+				AssertBaseResourceValid: func(resource interface{}) {
+					ruleset := resource.(*dbmodels.ApprovalRuleset)
+					Expect(ruleset.ID).To(Equal("ruleset2"))
+				},
 			})
 
 			It("outputs application bindings", func() {
@@ -445,7 +451,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
 		Setup := func(approved bool) {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -543,7 +549,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
 		Setup := func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -634,7 +640,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
 		Setup := func(approved bool) {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -689,7 +695,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
 		Setup := func(approved bool) {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				var ruleset dbmodels.ApprovalRuleset
 
 				if approved {
@@ -777,7 +783,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockProposal1, mockProposal2 dbmodels.ApprovalRulesetVersion
 
 		Setup := func(reviewState reviewstate.State) {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				mockVersion = *mockRuleset.Version
@@ -941,7 +947,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockProposal1, mockProposal2 dbmodels.ApprovalRulesetVersion
 
 		Setup := func(reviewState reviewstate.State) {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				mockVersion = *ruleset.Version
@@ -1060,7 +1066,7 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockProposal dbmodels.ApprovalRulesetVersion
 
 		Setup := func() {
-			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				mockVersion = *ruleset.Version

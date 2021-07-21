@@ -19,9 +19,8 @@ type ReviewableUpdateUnversionedDataTestOptions struct {
 
 	ResourceType reflect.Type
 
-	GetPrimaryKey           func(resource interface{}) interface{}
-	PrimaryKeyJSONFieldName string
-	PrimaryKeyUpdatedValue  interface{}
+	AssertBaseJSONValid     func(resource map[string]interface{})
+	AssertBaseResourceValid func(resource interface{})
 }
 
 type ReviewableUpdateUnversionedDataTestContext struct {
@@ -53,12 +52,16 @@ func IncludeReviewableUpdateUnversionedDataTest(options ReviewableUpdateUnversio
 		options.Setup()
 		body := rctx.MakeRequest(200)
 
-		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyUpdatedValue))
+		if options.AssertBaseJSONValid != nil {
+			options.AssertBaseJSONValid(body)
+		}
 
 		resource := reflect.New(options.ResourceType)
 		tx := hctx.Db.Take(resource.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
-		Expect(options.GetPrimaryKey(resource.Interface())).To(Equal(options.PrimaryKeyUpdatedValue))
+		if options.AssertBaseResourceValid != nil {
+			options.AssertBaseResourceValid(resource.Interface())
+		}
 	})
 
 	return &rctx

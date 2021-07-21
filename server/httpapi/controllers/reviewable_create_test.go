@@ -72,7 +72,6 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 			version := body["version"].(map[string]interface{})
 			options.AssertVersionJSONValid(version)
 		}
-		//Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldInitialValue))
 	})
 
 	It("creates a new resource", func() {
@@ -91,7 +90,6 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		if options.AssertAdjustmentValid != nil {
 			options.AssertAdjustmentValid(adjustment.Interface())
 		}
-		//Expect(options.GetVersionedField(adjustment.Interface())).To(Equal(options.VersionedFieldInitialValue))
 	})
 
 	It("creates a draft proposal by default", func() {
