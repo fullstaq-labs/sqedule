@@ -3,7 +3,9 @@ package dbmodels
 import (
 	"reflect"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalrulesetbindingmode"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -46,6 +48,45 @@ type ApplicationApprovalRulesetBindingAdjustment struct {
 	Mode approvalrulesetbindingmode.Mode `gorm:"type:approval_ruleset_binding_mode; not null"`
 
 	ApplicationApprovalRulesetBindingVersion ApplicationApprovalRulesetBindingVersion `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingVersionID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+//
+// ******** ApplicationApprovalRulesetBinding methods ********
+//
+
+// NewDraftVersion returns an unsaved ApplicationApprovalRulesetBindingVersion and ApplicationApprovalRulesetBindingAdjustment
+// in draft proposal state. Their contents are identical to the currently loaded Version and Adjustment.
+func (binding ApplicationApprovalRulesetBinding) NewDraftVersion() (*ApplicationApprovalRulesetBindingVersion, *ApplicationApprovalRulesetBindingAdjustment) {
+	var adjustment ApplicationApprovalRulesetBindingAdjustment
+	var version *ApplicationApprovalRulesetBindingVersion = &adjustment.ApplicationApprovalRulesetBindingVersion
+
+	if binding.Version != nil && binding.Version.Adjustment != nil {
+		adjustment = *binding.Version.Adjustment
+	}
+
+	version.BaseModel = binding.BaseModel
+	version.ReviewableVersionBase = ReviewableVersionBase{}
+	version.ApplicationApprovalRulesetBinding = binding
+	version.ApplicationID = binding.ApplicationID
+	version.ApprovalRulesetID = binding.ApprovalRulesetID
+	version.Adjustment = &adjustment
+
+	adjustment.BaseModel = binding.BaseModel
+	adjustment.ApplicationApprovalRulesetBindingVersionID = 0
+	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: 1,
+		ReviewState:      reviewstate.Draft,
+	}
+
+	return version, &adjustment
+}
+
+//
+// ******** ApplicationApprovalRulesetBindingAdjustment methods ********
+//
+
+func (adjustment ApplicationApprovalRulesetBindingAdjustment) IsEnabled() bool {
+	return lib.DerefBoolPtrWithDefault(adjustment.Enabled, true)
 }
 
 //

@@ -325,14 +325,14 @@ var _ = Describe("release API", func() {
 		})
 
 		It("outputs approval ruleset bindings", func() {
-			Expect(body["approval_ruleset_bindings"]).ToNot(BeEmpty())
+			Expect(body["approval_ruleset_bindings"]).ToNot(BeNil())
 
 			bindings := body["approval_ruleset_bindings"].([]interface{})
 			Expect(bindings).To(HaveLen(1))
 
 			binding := bindings[0].(map[string]interface{})
 			Expect(binding["mode"]).To(Equal("enforcing"))
-			Expect(binding["approval_ruleset"]).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
+			Expect(binding["approval_ruleset"]).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
 
 			approvalRuleset := binding["approval_ruleset"].(map[string]interface{})
 			approvalRulesetVersion := approvalRuleset["latest_approved_version"]

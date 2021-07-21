@@ -10,8 +10,8 @@ type ReviewableListResourcesTestOptions struct {
 	GetPath     func() string
 	Setup       func()
 
-	AssertBaseResourceValid func(resource map[string]interface{})
-	AssertVersionValid      func(version map[string]interface{})
+	AssertBaseJSONValid    func(resource map[string]interface{})
+	AssertVersionJSONValid func(version map[string]interface{})
 }
 
 type ReviewableListResourcesTestContext struct {
@@ -42,15 +42,15 @@ func IncludeReviewableListResourcesTest(options ReviewableListResourcesTestOptio
 		items := body["items"].([]interface{})
 		ruleset := items[0].(map[string]interface{})
 
-		Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
+		Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
 		version := ruleset["latest_approved_version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
 
-		if options.AssertVersionValid != nil {
-			options.AssertVersionValid(version)
+		if options.AssertVersionJSONValid != nil {
+			options.AssertVersionJSONValid(version)
 		}
-		if options.AssertBaseResourceValid != nil {
-			options.AssertBaseResourceValid(ruleset)
+		if options.AssertBaseJSONValid != nil {
+			options.AssertBaseJSONValid(ruleset)
 		}
 	})
 

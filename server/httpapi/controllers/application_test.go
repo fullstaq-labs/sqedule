@@ -34,10 +34,10 @@ var _ = Describe("application API", func() {
 			HTTPTestCtx: &ctx,
 			GetPath:     func() string { return "/v1/applications" },
 			Setup:       Setup,
-			AssertBaseResourceValid: func(resource map[string]interface{}) {
+			AssertBaseJSONValid: func(resource map[string]interface{}) {
 				Expect(resource).To(HaveKeyWithValue("id", app.ID))
 			},
-			AssertVersionValid: func(version map[string]interface{}) {
+			AssertVersionJSONValid: func(version map[string]interface{}) {
 				Expect(version).To(HaveKeyWithValue("display_name", app.Version.Adjustment.DisplayName))
 				Expect(version).To(HaveKeyWithValue("enabled", app.Version.Adjustment.IsEnabled()))
 			},
@@ -79,10 +79,10 @@ var _ = Describe("application API", func() {
 			HTTPTestCtx: &ctx,
 			GetPath:     func() string { return "/v1/applications/app1" },
 			Setup:       Setup,
-			AssertBaseResourceValid: func(resource map[string]interface{}) {
+			AssertBaseJSONValid: func(resource map[string]interface{}) {
 				Expect(resource).To(HaveKeyWithValue("id", app.ID))
 			},
-			AssertVersionValid: func(version map[string]interface{}) {
+			AssertVersionJSONValid: func(version map[string]interface{}) {
 				Expect(version).To(HaveKeyWithValue("display_name", app.Version.Adjustment.DisplayName))
 				Expect(version).To(HaveKeyWithValue("enabled", app.Version.Adjustment.IsEnabled()))
 			},
@@ -99,10 +99,10 @@ var _ = Describe("application API", func() {
 			version := binding["latest_approved_version"].(map[string]interface{})
 			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
 
-			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeEmpty())))
+			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
 			ruleset := binding["approval_ruleset"].(map[string]interface{})
 			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
-			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
 
 			version = ruleset["latest_approved_version"].(map[string]interface{})
 			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))

@@ -10,8 +10,8 @@ type ReviewableReadResourceTestOptions struct {
 	GetPath     func() string
 	Setup       func()
 
-	AssertBaseResourceValid func(resource map[string]interface{})
-	AssertVersionValid      func(version map[string]interface{})
+	AssertBaseJSONValid    func(resource map[string]interface{})
+	AssertVersionJSONValid func(version map[string]interface{})
 }
 
 type ReviewableReadResourceTestContext struct {
@@ -38,16 +38,16 @@ func IncludeReviewableReadResourceTest(options ReviewableReadResourceTestOptions
 		options.Setup()
 		body := rctx.MakeRequest()
 
-		Expect(body).To(HaveKeyWithValue("latest_approved_version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
 
 		version := body["latest_approved_version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
 
-		if options.AssertVersionValid != nil {
-			options.AssertVersionValid(version)
+		if options.AssertVersionJSONValid != nil {
+			options.AssertVersionJSONValid(version)
 		}
-		if options.AssertBaseResourceValid != nil {
-			options.AssertBaseResourceValid(body)
+		if options.AssertBaseJSONValid != nil {
+			options.AssertBaseJSONValid(body)
 		}
 	})
 

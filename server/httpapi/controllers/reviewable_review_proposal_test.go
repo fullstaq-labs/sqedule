@@ -62,7 +62,7 @@ func IncludeReviewableReviewProposalTest(options ReviewableReviewProposalTestOpt
 		options.Setup(reviewstate.Reviewing)
 		body := rctx.MakeRequest(false, "approved", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		versionJSON := body["version"]
 
 		Expect(versionJSON).To(HaveKeyWithValue("id", Not(BeNil())))
@@ -81,7 +81,7 @@ func IncludeReviewableReviewProposalTest(options ReviewableReviewProposalTestOpt
 		options.Setup(reviewstate.Reviewing)
 		body := rctx.MakeRequest(false, "rejected", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		versionJSON := body["version"]
 
 		Expect(versionJSON).To(HaveKeyWithValue("id", Not(BeNil())))

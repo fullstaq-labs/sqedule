@@ -47,7 +47,7 @@ func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions
 		options.Setup(false)
 		body := rctx.MakeRequest(200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"]
 
 		Expect(version).To(HaveKeyWithValue("id", Not(BeNil())))

@@ -20,12 +20,13 @@ type ReviewableCreateTestOptions struct {
 	ResourceType   reflect.Type
 	AdjustmentType reflect.Type
 
-	GetPrimaryKey               func(resource interface{}) interface{}
-	PrimaryKeyJSONFieldName     string
-	PrimaryKeyInitialValue      interface{}
-	GetVersionedField           func(adjustment interface{}) interface{}
-	VersionedFieldJSONFieldName string
-	VersionedFieldInitialValue  interface{}
+	AssertBaseJSONValid     func(resource map[string]interface{})
+	AssertBaseResourceValid func(resource interface{})
+	AssertVersionJSONValid  func(version map[string]interface{})
+	AssertAdjustmentValid   func(adjustment interface{})
+	// GetVersionedField           func(adjustment interface{}) interface{}
+	// VersionedFieldJSONFieldName string
+	// VersionedFieldInitialValue  interface{}
 }
 
 type ReviewableCreateTestContext struct {
@@ -65,11 +66,16 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 	It("outputs the created resource", func() {
 		body := rctx.MakeRequest("", 201)
 
-		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		if options.AssertBaseJSONValid != nil {
+			options.AssertBaseJSONValid(body)
+		}
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 
-		version := body["version"].(map[string]interface{})
-		Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldInitialValue))
+		if options.AssertVersionJSONValid != nil {
+			version := body["version"].(map[string]interface{})
+			options.AssertVersionJSONValid(version)
+		}
+		//Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldInitialValue))
 	})
 
 	It("creates a new resource", func() {
@@ -78,12 +84,17 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		resource := reflect.New(options.ResourceType)
 		tx := hctx.Db.Take(resource.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
-		Expect(options.GetPrimaryKey(resource.Interface())).To(Equal(options.PrimaryKeyInitialValue))
+		if options.AssertBaseResourceValid != nil {
+			options.AssertBaseResourceValid(resource.Interface())
+		}
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx = hctx.Db.Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
-		Expect(options.GetVersionedField(adjustment.Interface())).To(Equal(options.VersionedFieldInitialValue))
+		if options.AssertAdjustmentValid != nil {
+			options.AssertAdjustmentValid(adjustment.Interface())
+		}
+		//Expect(options.GetVersionedField(adjustment.Interface())).To(Equal(options.VersionedFieldInitialValue))
 	})
 
 	It("creates a draft proposal by default", func() {
@@ -105,7 +116,7 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 	It("creates a draft proposal if proposal_state is draft", func() {
 		body := rctx.MakeRequest("draft", 201)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -121,7 +132,7 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 	It("submits the version for approval if proposal_state is final", func() {
 		body := rctx.MakeRequest("final", 201)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(SatisfyAny(
 			HaveKeyWithValue("version_state", "proposal"),

@@ -110,7 +110,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldUpdatedValue))
 	})
@@ -119,7 +119,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -135,7 +135,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("draft", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -151,7 +151,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("abandon", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -167,7 +167,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		options.Setup()
 		body := rctx.MakeRequest("final", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		versionJSON := body["version"].(map[string]interface{})
 		Expect(versionJSON).To(SatisfyAny(
 			HaveKeyWithValue("version_state", "proposal"),

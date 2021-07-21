@@ -31,7 +31,7 @@ type ApplicationApprovalRulesetBindingVersion struct {
 }
 
 //
-// ******** Constructor functions ********
+// ******** Constructor functions: Version ********
 //
 
 func CreateApplicationApprovalRulesetBindingVersion(version dbmodels.ApplicationApprovalRulesetBindingVersion) ApplicationApprovalRulesetBindingVersion {
@@ -41,20 +41,53 @@ func CreateApplicationApprovalRulesetBindingVersion(version dbmodels.Application
 	}
 }
 
+//
+// ******** Constructor functions: WithVersion ********
+//
+
+func CreateApplicationApprovalRulesetBindingWithVersion(binding dbmodels.ApplicationApprovalRulesetBinding, version *dbmodels.ApplicationApprovalRulesetBindingVersion) ApplicationApprovalRulesetBindingWithVersion {
+	result := ApplicationApprovalRulesetBindingWithVersion{
+		ReviewableBase: createReviewableBase(binding.ReviewableBase),
+	}
+
+	if version != nil {
+		jsonStruct := CreateApplicationApprovalRulesetBindingVersion(*version)
+		result.Version = &jsonStruct
+	}
+
+	return result
+}
+
+func CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding dbmodels.ApplicationApprovalRulesetBinding, version *dbmodels.ApplicationApprovalRulesetBindingVersion,
+	includeApp bool, includeRuleset bool) ApplicationApprovalRulesetBindingWithVersion {
+
+	result := CreateApplicationApprovalRulesetBindingWithVersion(binding, version)
+	if includeApp {
+		jsonStruct := CreateApplicationWithLatestApprovedVersion(binding.Application, binding.Application.Version)
+		result.ApplicationApprovalRulesetBindingBase.Application = &jsonStruct
+	}
+	if includeRuleset {
+		jsonStruct := CreateApprovalRulesetWithLatestApprovedVersion(binding.ApprovalRuleset, binding.ApprovalRuleset.Version)
+		result.ApplicationApprovalRulesetBindingBase.ApprovalRuleset = &jsonStruct
+	}
+	return result
+}
+
+//
+// ******** Constructor functions: WithLatestApprovedVersion ********
+//
+
 func CreateApplicationApprovalRulesetBindingWithLatestApprovedVersion(binding dbmodels.ApplicationApprovalRulesetBinding,
 	version *dbmodels.ApplicationApprovalRulesetBindingVersion) ApplicationApprovalRulesetBindingWithLatestApprovedVersion {
 
-	var versionJSON *ApplicationApprovalRulesetBindingVersion
-
+	result := ApplicationApprovalRulesetBindingWithLatestApprovedVersion{
+		ReviewableBase: createReviewableBase(binding.ReviewableBase),
+	}
 	if version != nil {
-		versionJSONStruct := CreateApplicationApprovalRulesetBindingVersion(*version)
-		versionJSON = &versionJSONStruct
+		jsonStruct := CreateApplicationApprovalRulesetBindingVersion(*version)
+		result.LatestApprovedVersion = &jsonStruct
 	}
-
-	return ApplicationApprovalRulesetBindingWithLatestApprovedVersion{
-		ReviewableBase:        createReviewableBase(binding.ReviewableBase),
-		LatestApprovedVersion: versionJSON,
-	}
+	return result
 }
 
 func CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding dbmodels.ApplicationApprovalRulesetBinding,

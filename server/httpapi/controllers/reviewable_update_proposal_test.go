@@ -78,7 +78,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		options.Setup(reviewstate.Draft)
 		body := rctx.MakeRequest(false, "", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue(options.VersionedFieldJSONFieldName, options.VersionedFieldUpdatedValue))
 	})
@@ -93,7 +93,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		options.Setup(reviewstate.Draft)
 		body := rctx.MakeRequest(false, "", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -109,7 +109,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		options.Setup(reviewstate.Draft)
 		body := rctx.MakeRequest(false, "draft", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -125,7 +125,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		options.Setup(reviewstate.Draft)
 		body := rctx.MakeRequest(false, "abandon", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
@@ -141,7 +141,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		options.Setup(reviewstate.Draft)
 		body := rctx.MakeRequest(false, "final", 200)
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		versionJSON := body["version"].(map[string]interface{})
 		Expect(versionJSON).To(SatisfyAny(
 			HaveKeyWithValue("version_state", "proposal"),
@@ -202,7 +202,7 @@ func IncludeReviewableUpdateProposalTest(options ReviewableUpdateProposalTestOpt
 		Expect(adjustment.GetReviewState()).To(Equal(reviewstate.Reviewing))
 
 		body := rctx.MakeRequest(false, "final", 200)
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		versionJSON := body["version"].(map[string]interface{})
 		Expect(versionJSON).To(HaveKeyWithValue("version_state", "approved"))
 

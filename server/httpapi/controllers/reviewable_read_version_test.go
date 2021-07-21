@@ -45,7 +45,7 @@ func IncludeReviewableReadVersionTest(options ReviewableReadVersionTestOptions) 
 		options.Setup()
 		body := rctx.MakeRequest()
 
-		Expect(body).To(HaveKeyWithValue("version", Not(BeEmpty())))
+		Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 		version := body["version"]
 
 		Expect(version).To(HaveKeyWithValue("id", Not(BeNil())))

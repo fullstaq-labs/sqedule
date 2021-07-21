@@ -27,13 +27,17 @@ type CreationAuditRecord struct {
 
 	// Subject association
 
-	ApplicationVersionID        *uint64               `gorm:"check:((CASE WHEN application_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
+	ApplicationVersionID        *uint64               `gorm:"check:((CASE WHEN application_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN approval_ruleset_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN application_approval_ruleset_binding_adjustment_number IS NULL THEN 0 ELSE 1 END) + (CASE WHEN manual_approval_rule_outcome_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_created_event_id IS NULL THEN 0 ELSE 1 END) + (CASE WHEN release_cancelled_event_id IS NULL THEN 0 ELSE 1 END) = 1)"`
 	ApplicationAdjustmentNumber *uint32               `gorm:"type:int; check:((application_version_id IS NULL) = (application_adjustment_number IS NULL))"`
 	ApplicationAdjustment       ApplicationAdjustment `gorm:"foreignKey:OrganizationID,ApplicationVersionID,ApplicationAdjustmentNumber; references:OrganizationID,ApplicationVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	ApprovalRulesetVersionID        *uint64
 	ApprovalRulesetAdjustmentNumber *uint32                   `gorm:"type:int; check:((approval_ruleset_version_id IS NULL) = (approval_ruleset_adjustment_number IS NULL))"`
 	ApprovalRulesetAdjustment       ApprovalRulesetAdjustment `gorm:"foreignKey:OrganizationID,ApprovalRulesetVersionID,ApprovalRulesetAdjustmentNumber; references:OrganizationID,ApprovalRulesetVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	ApplicationApprovalRulesetBindingVersionID        *uint64
+	ApplicationApprovalRulesetBindingAdjustmentNumber *uint32                                     `gorm:"type:int; check:((application_approval_ruleset_binding_version_id IS NULL) = (application_approval_ruleset_binding_adjustment_number IS NULL))"`
+	ApplicationApprovalRulesetBindingAdjustment       ApplicationApprovalRulesetBindingAdjustment `gorm:"foreignKey:OrganizationID,ApplicationApprovalRulesetBindingVersionID,ApplicationApprovalRulesetBindingAdjustmentNumber; references:OrganizationID,ApplicationApprovalRulesetBindingVersionID,AdjustmentNumber; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	ManualApprovalRuleOutcomeID *uint64
 	ManualApprovalRuleOutcome   ManualApprovalRuleOutcome `gorm:"foreignKey:OrganizationID,ManualApprovalRuleOutcomeID; references:OrganizationID,ID; constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`

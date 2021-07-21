@@ -8,8 +8,127 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+//
+// ******** Operations on resources ********
+//
+
+func (ctx Context) CreateApplicationApprovalRulesetBinding(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	applicationID := ginctx.Param("application_id")
+	rulesetID := ginctx.Param("ruleset_id")
+
+	var input json.ApplicationApprovalRulesetBindingInput
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+	if input.Version == nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: 'version' field must be set"})
+		return
+	}
+	if !input.Version.ProposalState.IsEffectivelyDraft() && input.Version.ProposalState != proposalstate.Final {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: version.proposal_state must be either draft or final ('" +
+			input.Version.ProposalState + "' given)"})
+		return
+	}
+
+	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionManipulateApprovalRulesetBinding, application) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Modify database
+
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
+	if err != nil {
+		respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&application})
+	if err != nil {
+		respondWithDbQueryError("application latest version", err, ginctx)
+		return
+	}
+
+	binding := dbmodels.ApplicationApprovalRulesetBinding{
+		BaseModel: dbmodels.BaseModel{OrganizationID: orgID},
+		ApplicationApprovalRulesetBindingPrimaryKey: dbmodels.ApplicationApprovalRulesetBindingPrimaryKey{
+			ApplicationID:     applicationID,
+			ApprovalRulesetID: rulesetID,
+		},
+		Application:     application,
+		ApprovalRuleset: ruleset,
+	}
+	version, adjustment := binding.NewDraftVersion()
+	json.PatchApplicationApprovalRulesetBinding(&binding, input)
+	json.PatchApplicationApprovalRulesetBindingAdjustment(orgID, adjustment, *input.Version)
+	if input.Version.ProposalState == proposalstate.Final {
+		dbmodels.FinalizeReviewableProposal(&version.ReviewableVersionBase,
+			&adjustment.ReviewableAdjustmentBase, 0, false)
+	}
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Omit(clause.Associations).Create(&binding).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Omit(clause.Associations).Create(version).Error
+		if err != nil {
+			return err
+		}
+
+		adjustment.ApplicationApprovalRulesetBindingVersionID = version.ID
+		err = tx.Omit(clause.Associations).Create(adjustment).Error
+		if err != nil {
+			return err
+		}
+
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
+		creationRecord.ApplicationApprovalRulesetBindingVersionID = &version.ID
+		creationRecord.ApplicationApprovalRulesetBindingAdjustmentNumber = &adjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, version, true, true)
+	ginctx.JSON(http.StatusCreated, output)
+}
 
 func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
