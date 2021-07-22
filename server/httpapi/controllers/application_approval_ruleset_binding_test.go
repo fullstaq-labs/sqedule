@@ -388,4 +388,114 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			Expect(version).To(HaveKeyWithValue("display_name", "Ruleset"))
 		})
 	})
+
+	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals", func() {
+		Setup := func(versionIsApproved bool) {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				binding, err := dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				if versionIsApproved {
+					version, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					version, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version,
+						func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableListProposalsTest(ReviewableListProposalsTestOptions{
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals",
+			Setup:       Setup,
+		})
+	})
+
+	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id", func() {
+		var version dbmodels.ApplicationApprovalRulesetBindingVersion
+
+		Setup := func(versionIsApproved bool) {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				binding, err := dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				if versionIsApproved {
+					version, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					version, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version,
+						func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReadProposalTest(ReviewableReadProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", version.ID)
+			},
+			Setup: Setup,
+
+			ResourceTypeNameInResponse: "application approval ruleset binding proposal",
+
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+				Expect(resource["approval_ruleset"]).To(HaveKeyWithValue("id", "ruleset1"))
+			},
+		})
+
+		It("outputs no application", func() {
+			Setup(false)
+			body := includedTestCtx.MakeRequest(200)
+			Expect(body).ToNot(HaveKey("application"))
+		})
+
+		It("outputs approval ruleset", func() {
+			Setup(false)
+			body := includedTestCtx.MakeRequest(200)
+			Expect(body).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+
+			ruleset := body["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "Ruleset"))
+		})
+	})
 })

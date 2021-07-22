@@ -8,12 +8,11 @@ import (
 type ReviewableReadProposalTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	GetPath     func() string
-	Setup       func(approved bool)
+	Setup       func(versionIsApproved bool)
 
 	ResourceTypeNameInResponse string
 
-	PrimaryKeyJSONFieldName string
-	PrimaryKeyInitialValue  interface{}
+	AssertNonVersionedJSONFieldsExist func(resource map[string]interface{})
 }
 
 type ReviewableReadProposalTestContext struct {
@@ -40,7 +39,9 @@ func IncludeReviewableReadProposalTest(options ReviewableReadProposalTestOptions
 		options.Setup(false)
 		body := rctx.MakeRequest(200)
 
-		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
+		if options.AssertNonVersionedJSONFieldsExist != nil {
+			options.AssertNonVersionedJSONFieldsExist(body)
+		}
 	})
 
 	It("outputs the requested proposal", func() {

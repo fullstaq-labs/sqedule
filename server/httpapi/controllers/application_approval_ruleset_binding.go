@@ -507,3 +507,15 @@ func (ctx Context) getApplicationApprovalRulesetBindingVersionOrProposal(ginctx 
 	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, binding.Version, false, true)
 	ginctx.JSON(http.StatusOK, output)
 }
+
+//
+// ******** Operations on proposals ********
+//
+
+func (ctx Context) ListApplicationApprovalRulesetBindingProposals(ginctx *gin.Context) {
+	ctx.listApplicationApprovalRulesetBindingVersionsOrProposals(ginctx, false)
+}
+
+func (ctx Context) GetApplicationApprovalRulesetBindingProposal(ginctx *gin.Context) {
+	ctx.getApplicationApprovalRulesetBindingVersionOrProposal(ginctx, false)
+}

@@ -640,12 +640,12 @@ var _ = Describe("approval-ruleset API", func() {
 	Describe("GET /approval-rulesets/:id/proposals", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
-		Setup := func(approved bool) {
+		Setup := func(versionIsApproved bool) {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				if approved {
+				if versionIsApproved {
 					version, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
 					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, version, 1, nil)
@@ -695,11 +695,11 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockVersion dbmodels.ApprovalRulesetVersion
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
-		Setup := func(approved bool) {
+		Setup := func(versionIsApproved bool) {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				var ruleset dbmodels.ApprovalRuleset
 
-				if approved {
+				if versionIsApproved {
 					ruleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 					Expect(err).ToNot(HaveOccurred())
 
@@ -743,8 +743,9 @@ var _ = Describe("approval-ruleset API", func() {
 
 			ResourceTypeNameInResponse: "approval ruleset proposal",
 
-			PrimaryKeyJSONFieldName: "id",
-			PrimaryKeyInitialValue:  "ruleset1",
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))
+			},
 		})
 
 		It("outputs application bindings", func() {
