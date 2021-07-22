@@ -49,12 +49,10 @@ func CreateApplicationApprovalRulesetBindingWithVersion(binding dbmodels.Applica
 	result := ApplicationApprovalRulesetBindingWithVersion{
 		ReviewableBase: createReviewableBase(binding.ReviewableBase),
 	}
-
 	if version != nil {
 		jsonStruct := CreateApplicationApprovalRulesetBindingVersion(*version)
 		result.Version = &jsonStruct
 	}
-
 	return result
 }
 

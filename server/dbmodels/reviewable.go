@@ -16,6 +16,14 @@ import (
 // ******** Types, constants & variables ********
 //
 
+type ReviewableAction string
+
+const (
+	ReviewableActionCreate ReviewableAction = "create"
+	ReviewableActionUpdate ReviewableAction = "update"
+	ReviewableActionDelete ReviewableAction = "delete"
+)
+
 type IReviewable interface {
 	GetPrimaryKey() interface{}
 	GetPrimaryKeyGormValue() []interface{}

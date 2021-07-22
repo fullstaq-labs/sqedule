@@ -14,13 +14,6 @@ import (
 // ******** Types, constants & variables ********
 //
 
-type ApplicationApprovalRulesetBindingAction string
-
-const (
-	ApplicationApprovalRulesetBindingActionCreate ApplicationApprovalRulesetBindingAction = "create"
-	ApplicationApprovalRulesetBindingActionUpdate ApplicationApprovalRulesetBindingAction = "update"
-)
-
 type ApplicationApprovalRulesetBindingPrimaryKey struct {
 	ApplicationID     string `gorm:"type:citext; primaryKey; not null"`
 	ApprovalRulesetID string `gorm:"type:citext; primaryKey; not null"`
@@ -88,14 +81,14 @@ func (binding ApplicationApprovalRulesetBinding) NewDraftVersion() (*Application
 	return version, &adjustment
 }
 
-func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ApplicationApprovalRulesetBindingAction, oldMode approvalrulesetbindingmode.Mode) bool {
+func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ReviewableAction, oldMode approvalrulesetbindingmode.Mode) bool {
 	switch action {
-	case ApplicationApprovalRulesetBindingActionCreate:
+	case ReviewableActionCreate:
 		return binding.Version.Adjustment.Mode == approvalrulesetbindingmode.Enforcing
-	case ApplicationApprovalRulesetBindingActionUpdate:
+	case ReviewableActionUpdate:
 		return oldMode != binding.Version.Adjustment.Mode
 	default:
-		panic("Unknown action " + action)
+		panic("Unsupported action " + action)
 	}
 }
 
@@ -134,6 +127,52 @@ func FindApplicationApprovalRulesetBinding(db *gorm.DB, organizationID string, a
 	tx := db.Where("organization_id = ? AND application_id = ? AND approval_ruleset_id = ?", organizationID, applicationID, rulesetID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApplicationApprovalRulesetBindingVersionByNumber(db *gorm.DB, organizationID string, applicationID string, rulesetID string, versionNumber uint32) (ApplicationApprovalRulesetBindingVersion, error) {
+	var result ApplicationApprovalRulesetBindingVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND approval_ruleset_id = ? AND version_number = ?", organizationID, applicationID, rulesetID, versionNumber)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApplicationApprovalRulesetBindingVersionByID(db *gorm.DB, organizationID string, applicationID string, rulesetID string, versionID uint64) (ApplicationApprovalRulesetBindingVersion, error) {
+	var result ApplicationApprovalRulesetBindingVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND approval_ruleset_id = ? AND id = ?", organizationID, applicationID, rulesetID, versionID)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApplicationApprovalRulesetBindingProposals(db *gorm.DB, organizationID string, applicationID string, rulesetID string) ([]ApplicationApprovalRulesetBindingVersion, error) {
+	var result []ApplicationApprovalRulesetBindingVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND approval_ruleset_id = ? AND version_number IS NULL", organizationID, applicationID, rulesetID)
+	tx.Find(&result)
+	return result, tx.Error
+}
+
+func FindApplicationApprovalRulesetBindingProposalByID(db *gorm.DB, organizationID string, applicationID string, rulesetID string, versionID uint64) (ApplicationApprovalRulesetBindingVersion, error) {
+	return FindApplicationApprovalRulesetBindingVersionByID(db.Where("version_number IS NULL"), organizationID, applicationID, rulesetID, versionID)
+}
+
+// FindApplicationApprovalRulesetBindingVersions finds, for a given ApplicationApprovalRulesetBinding, all its Versions
+// and returns them ordered by version number (descending).
+//
+// The `approved` parameter determines whether it finds approved or proposed versions.
+func FindApplicationApprovalRulesetBindingVersions(db *gorm.DB, organizationID string, applicationID string, rulesetID string, approved bool, pagination dbutils.PaginationOptions) ([]ApplicationApprovalRulesetBindingVersion, error) {
+	var result []ApplicationApprovalRulesetBindingVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND approval_ruleset_id = ?", organizationID, applicationID, rulesetID)
+	if approved {
+		tx = tx.Where("version_number IS NOT NULL").Order("version_number DESC")
+	} else {
+		tx = tx.Where("version_number IS NULL")
+	}
+	tx = dbutils.ApplyDbQueryPaginationOptions(tx, pagination)
+	tx.Find(&result)
+	return result, tx.Error
 }
 
 func LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, bindings []*ApplicationApprovalRulesetBinding) error {
@@ -183,6 +222,15 @@ func MakeApplicationApprovalRulesetBindingsPointerArray(bindings []ApplicationAp
 	result := make([]*ApplicationApprovalRulesetBinding, 0, len(bindings))
 	for i := range bindings {
 		result = append(result, &bindings[i])
+	}
+	return result
+}
+
+// MakeApplicationApprovalRulesetBindingVersionsPointerArray turns a `[]ApplicationApprovalRulesetBindingVersion` into a `[]*ApplicationApprovalRulesetBindingVersion`.
+func MakeApplicationApprovalRulesetBindingVersionsPointerArray(versions []ApplicationApprovalRulesetBindingVersion) []*ApplicationApprovalRulesetBindingVersion {
+	result := make([]*ApplicationApprovalRulesetBindingVersion, 0, len(versions))
+	for i := range versions {
+		result = append(result, &versions[i])
 	}
 	return result
 }

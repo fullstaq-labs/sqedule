@@ -63,7 +63,8 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 	json.PatchApprovalRulesetAdjustment(orgID, adjustment, *input.Version)
 	if input.Version.ProposalState == proposalstate.Final {
 		dbmodels.FinalizeReviewableProposal(&version.ReviewableVersionBase,
-			&adjustment.ReviewableAdjustmentBase, 0, false)
+			&adjustment.ReviewableAdjustmentBase, 0,
+			ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionCreate, false))
 	}
 
 	err := ctx.Db.Transaction(func(tx *gorm.DB) error {
@@ -330,7 +331,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 				dbmodels.FinalizeReviewableProposal(&newVersion.ReviewableVersionBase,
 					&newAdjustment.ReviewableAdjustmentBase,
 					latestApprovedVersionNumber,
-					ruleset.CheckNewProposalsRequireReview(len(appBindings) > 0))
+					ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionUpdate, len(appBindings) > 0))
 			} else {
 				dbmodels.SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(&newAdjustment.ReviewableAdjustmentBase,
 					input.Version.ProposalState)
@@ -385,10 +386,10 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 //
 
 func (ctx Context) ListApprovalRulesetVersions(ginctx *gin.Context) {
-	ctx.getApprovalRulesetVersionsOrProposals(ginctx, true)
+	ctx.listApprovalRulesetVersionsOrProposals(ginctx, true)
 }
 
-func (ctx Context) getApprovalRulesetVersionsOrProposals(ginctx *gin.Context, approved bool) {
+func (ctx Context) listApprovalRulesetVersionsOrProposals(ginctx *gin.Context, approved bool) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
@@ -576,7 +577,7 @@ func (ctx Context) getApprovalRulesetVersionOrProposal(ginctx *gin.Context, appr
 //
 
 func (ctx Context) ListApprovalRulesetProposals(ginctx *gin.Context) {
-	ctx.getApprovalRulesetVersionsOrProposals(ginctx, false)
+	ctx.listApprovalRulesetVersionsOrProposals(ginctx, false)
 }
 
 func (ctx Context) GetApprovalRulesetProposal(ginctx *gin.Context) {
@@ -693,7 +694,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 			dbmodels.FinalizeReviewableProposal(&proposalUpdate.ReviewableVersionBase,
 				&newAdjustment.ReviewableAdjustmentBase,
 				latestApprovedVersionNumber,
-				ruleset.CheckNewProposalsRequireReview(len(appBindings) > 0))
+				ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionUpdate, len(appBindings) > 0))
 			if err = tx.Omit(clause.Associations).Model(&proposal).Updates(proposalUpdate).Error; err != nil {
 				return err
 			}

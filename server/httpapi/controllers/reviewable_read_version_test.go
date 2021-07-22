@@ -10,8 +10,7 @@ type ReviewableReadVersionTestOptions struct {
 	Path        string
 	Setup       func()
 
-	PrimaryKeyJSONFieldName string
-	PrimaryKeyInitialValue  interface{}
+	AssertNonVersionedJSONFieldsExist func(resource map[string]interface{})
 }
 
 type ReviewableReadVersionTestContext struct {
@@ -38,7 +37,9 @@ func IncludeReviewableReadVersionTest(options ReviewableReadVersionTestOptions) 
 		options.Setup()
 		body := rctx.MakeRequest()
 
-		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
+		if options.AssertNonVersionedJSONFieldsExist != nil {
+			options.AssertNonVersionedJSONFieldsExist(body)
+		}
 	})
 
 	It("outputs the requested version", func() {

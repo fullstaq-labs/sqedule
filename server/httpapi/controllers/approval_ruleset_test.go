@@ -450,12 +450,12 @@ var _ = Describe("approval-ruleset API", func() {
 	Describe("GET /approval-rulesets/:id/versions", func() {
 		var mockScheduleApprovalRule dbmodels.ScheduleApprovalRule
 
-		Setup := func(approved bool) {
+		Setup := func(versionIsApproved bool) {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				if approved {
+				if versionIsApproved {
 					// Create a ruleset with 3 versions
 					rulesetVersion1, err := dbmodels.CreateMockApprovalRulesetVersion(tx, ruleset, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
@@ -580,8 +580,9 @@ var _ = Describe("approval-ruleset API", func() {
 			Path:        "/v1/approval-rulesets/ruleset1/versions/1",
 			Setup:       Setup,
 
-			PrimaryKeyJSONFieldName: "id",
-			PrimaryKeyInitialValue:  "ruleset1",
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))
+			},
 		})
 
 		It("outputs application bindings", func() {

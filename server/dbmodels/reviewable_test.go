@@ -47,7 +47,7 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Binding 1: create version 2.1 and 2.2
-			binding1Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, &versionNumber2)
+			binding1Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, &versionNumber2, nil)
 			Expect(err).ToNot(HaveOccurred())
 			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1Version2, nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -57,7 +57,7 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Binding 1: Create next version (no version number) and its adjustment
-			binding1VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, nil)
+			binding1VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1VersionNext, nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -68,7 +68,7 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Binding 2: create version 2.1, 2.2 and 2.3
-			binding2Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, &versionNumber2)
+			binding2Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, &versionNumber2, nil)
 			Expect(err).ToNot(HaveOccurred())
 			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -82,7 +82,7 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Binding 2: Create next version (no version number) and its adjustment
-			binding2VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, nil)
+			binding2VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2VersionNext, nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -148,7 +148,7 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			savetx := tx.Create(&binding)
 			Expect(savetx.Error).ToNot(HaveOccurred())
 
-			_, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding, nil)
+			_, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Run test: latest version should not exist
@@ -170,7 +170,7 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 
 			// Create version 2 with no adjustments
 			var versionNumber2 uint32 = 2
-			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding, &versionNumber2)
+			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding, &versionNumber2, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Run test: latest version should be 2, adjustment version nil
@@ -255,7 +255,7 @@ var _ = Describe("LoadReviewablesLatestVersions", func() {
 
 			binding1, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, org, app1, ruleset, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app1, binding1, lib.NewUint32Ptr(2))
+			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app1, binding1, lib.NewUint32Ptr(2), nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			binding2, err := CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, org, app2, ruleset, nil)
@@ -263,9 +263,9 @@ var _ = Describe("LoadReviewablesLatestVersions", func() {
 			// We deliberately create version 3 out of order so that we test
 			// whether LoadReviewablesLatestVersions() returns the highest
 			// version number.
-			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app2, binding2, lib.NewUint32Ptr(3))
+			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app2, binding2, lib.NewUint32Ptr(3), nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app2, binding2, lib.NewUint32Ptr(2))
+			_, err = CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app2, binding2, lib.NewUint32Ptr(2), nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			binding1.Version = nil

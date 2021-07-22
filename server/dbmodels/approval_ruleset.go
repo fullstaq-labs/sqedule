@@ -165,8 +165,15 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 	return version, &adjustment
 }
 
-func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(hasBoundApplications bool) bool {
-	return hasBoundApplications
+func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(action ReviewableAction, hasBoundApplications bool) bool {
+	switch action {
+	case ReviewableActionCreate:
+		return false
+	case ReviewableActionUpdate:
+		return hasBoundApplications
+	default:
+		panic("Unsupported action " + action)
+	}
 }
 
 //
@@ -300,9 +307,9 @@ func FindApprovalRulesetProposalByID(db *gorm.DB, organizationID string, ruleset
 func FindApprovalRulesetVersions(db *gorm.DB, organizationID string, rulesetID string, approved bool, pagination dbutils.PaginationOptions) ([]ApprovalRulesetVersion, error) {
 	var result []ApprovalRulesetVersion
 
-	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID).Order("version_number DESC")
+	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID)
 	if approved {
-		tx = tx.Where("version_number IS NOT NULL")
+		tx = tx.Where("version_number IS NOT NULL").Order("version_number DESC")
 	} else {
 		tx = tx.Where("version_number IS NULL")
 	}

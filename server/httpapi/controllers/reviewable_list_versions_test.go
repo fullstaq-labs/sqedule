@@ -8,7 +8,7 @@ import (
 type ReviewableListVersionsTestOptions struct {
 	HTTPTestCtx *HTTPTestContext
 	Path        string
-	Setup       func(approved bool)
+	Setup       func(versionIsApproved bool)
 }
 
 type ReviewableListVersionsTestContext struct {
