@@ -304,7 +304,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 					// Create a binding with 3 versions
 					version1, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version1, nil)
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version1, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					// We deliberately create version 3 out of order so that we test
@@ -312,18 +312,18 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 					version3, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(3), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version3, nil)
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version3, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 
 					version2, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(2), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version2, nil)
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version2, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 				} else {
 					version, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version,
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version, 1,
 						func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
@@ -405,13 +405,13 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				if versionIsApproved {
 					version, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version, nil)
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 				} else {
 					version, err := dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version,
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version, 1,
 						func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
@@ -447,13 +447,13 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				if versionIsApproved {
 					version, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, lib.NewUint32Ptr(1), nil)
 					Expect(err).ToNot(HaveOccurred())
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version, nil)
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version, 1, nil)
 					Expect(err).ToNot(HaveOccurred())
 				} else {
 					version, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, version,
+					_, err = dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, version, 1,
 						func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 							adjustment.ReviewState = reviewstate.Draft
 						})
@@ -530,7 +530,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				proposal1, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal1Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, proposal1,
+				proposal1Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, proposal1, 1,
 					func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 						adjustment.ReviewState = proposal1ReviewState
 					})
@@ -540,7 +540,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				proposal2, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal2Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, proposal2,
+				proposal2Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, proposal2, 1,
 					func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 						adjustment.ReviewState = reviewstate.Reviewing
 					})
@@ -637,7 +637,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				proposal1, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal1Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, proposal1,
+				proposal1Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, proposal1, 1,
 					func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 						adjustment.ReviewState = reviewState
 					})
@@ -647,7 +647,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				proposal2, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				proposal2Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, ctx.Org, proposal2,
+				proposal2Adjustment, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, proposal2, 1,
 					func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
 						adjustment.ReviewState = reviewState
 					})
@@ -716,6 +716,87 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 			version := ruleset["latest_approved_version"].(map[string]interface{})
 			Expect(version).To(HaveKeyWithValue("display_name", "Ruleset"))
+		})
+	})
+
+	Describe("DELETE /approval-rulesets/:id/proposals/:version_id", func() {
+		var version, proposal dbmodels.ApplicationApprovalRulesetBindingVersion
+
+		Setup := func() {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				binding, err := dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				version = *binding.Version
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create a proposal with 2 adjustments
+
+				proposal, err = dbmodels.CreateMockApplicationApprovalRulesetBindingVersion(tx, ctx.Org, app, binding, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				// Adjustment 1
+
+				adjustment1, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, proposal, 1,
+					func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockCreationAuditRecord(tx, ctx.Org,
+					func(record *dbmodels.CreationAuditRecord) {
+						record.ApplicationApprovalRulesetBindingVersionID = &proposal.ID
+						record.ApplicationApprovalRulesetBindingAdjustmentNumber = &adjustment1.AdjustmentNumber
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				// Adjustment 2
+
+				adjustment2, err := dbmodels.CreateMockApplicationApprovalRulesetBindingAdjustment(tx, proposal, 2,
+					func(adjustment *dbmodels.ApplicationApprovalRulesetBindingAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+				proposal.Adjustment = &adjustment2
+
+				_, err = dbmodels.CreateMockCreationAuditRecord(tx, ctx.Org,
+					func(record *dbmodels.CreationAuditRecord) {
+						record.ApplicationApprovalRulesetBindingVersionID = &proposal.ID
+						record.ApplicationApprovalRulesetBindingAdjustmentNumber = &adjustment2.AdjustmentNumber
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableDeleteProposalTest(ReviewableDeleteProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetProposalPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", proposal.ID)
+			},
+			GetApprovedVersionPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", version.ID)
+			},
+			Setup:                      Setup,
+			ResourceTypeNameInResponse: "application approval ruleset binding proposal",
+			CountProposals: func() uint {
+				var count int64
+				err = ctx.Db.Model(dbmodels.ApplicationApprovalRulesetBindingVersion{}).Where("version_number IS NULL").Count(&count).Error
+				Expect(err).ToNot(HaveOccurred())
+				return uint(count)
+			},
+			CountProposalAdjustments: func() uint {
+				var count int64
+				err = ctx.Db.Model(dbmodels.ApplicationApprovalRulesetBindingAdjustment{}).Where("application_approval_ruleset_binding_version_id = ?", proposal.ID).Count(&count).Error
+				Expect(err).ToNot(HaveOccurred())
+				return uint(count)
+			},
 		})
 	})
 })

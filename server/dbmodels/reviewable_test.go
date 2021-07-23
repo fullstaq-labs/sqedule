@@ -49,17 +49,15 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			// Binding 1: create version 2.1 and 2.2
 			binding1Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, &versionNumber2, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1Version2, nil)
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding1Version2, 1, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
-				adjustment.AdjustmentNumber = 2
-			})
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding1Version2, 2, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Binding 1: Create next version (no version number) and its adjustment
 			binding1VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding1, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding1VersionNext, nil)
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding1VersionNext, 1, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Create binding 2
@@ -70,21 +68,17 @@ var _ = Describe("LoadReviewablesLatestVersionsAndAdjustments", func() {
 			// Binding 2: create version 2.1, 2.2 and 2.3
 			binding2Version2, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, &versionNumber2, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, nil)
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding2Version2, 1, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
-				adjustment.AdjustmentNumber = 2
-			})
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding2Version2, 2, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2Version2, func(adjustment *ApplicationApprovalRulesetBindingAdjustment) {
-				adjustment.AdjustmentNumber = 3
-			})
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding2Version2, 3, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Binding 2: Create next version (no version number) and its adjustment
 			binding2VersionNext, err := CreateMockApplicationApprovalRulesetBindingVersion(tx, org, app, binding2, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, org, binding2VersionNext, nil)
+			_, err = CreateMockApplicationApprovalRulesetBindingAdjustment(tx, binding2VersionNext, 1, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			err = LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(tx, org.ID, []*ApplicationApprovalRulesetBinding{&binding1, &binding2})

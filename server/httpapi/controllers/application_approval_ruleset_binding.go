@@ -850,3 +850,75 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposalReviewState(gi
 	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, proposal, false, true)
 	ginctx.JSON(http.StatusOK, output)
 }
+
+func (ctx Context) DeleteApplicationApprovalRulesetBindingProposal(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	applicationID := ginctx.Param("application_id")
+	rulesetID := ginctx.Param("ruleset_id")
+	versionID, err := strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionManipulateApprovalRulesetBinding, application) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(ctx.Db, orgID, applicationID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
+		return
+	}
+
+	version, err := dbmodels.FindApplicationApprovalRulesetBindingProposalByID(ctx.Db, orgID, applicationID, rulesetID, versionID)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding proposal", err, ginctx)
+		return
+	}
+	binding.Version = &version
+
+	// Modify database
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		err = dbmodels.DeleteAuditCreationRecordsForApplicationApprovalRulesetBindingProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
+		}
+		err = dbmodels.DeleteApplicationApprovalRulesetBindingAdjustmentsForProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
+		}
+
+		err = tx.Delete(&version).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	ginctx.JSON(http.StatusOK, gin.H{})
+}

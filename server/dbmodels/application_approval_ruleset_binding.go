@@ -235,6 +235,17 @@ func LoadApplicationApprovalRulesetBindingVersionsLatestAdjustments(db *gorm.DB,
 }
 
 //
+// ******** Deletion functions ********
+//
+
+func DeleteApplicationApprovalRulesetBindingAdjustmentsForProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
+	return db.
+		Where("organization_id = ? AND application_approval_ruleset_binding_version_id = ?", organizationID, proposalID).
+		Delete(ApplicationApprovalRulesetBindingAdjustment{}).
+		Error
+}
+
+//
 // ******** Other functions ********
 //
 
