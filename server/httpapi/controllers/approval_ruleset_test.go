@@ -784,18 +784,35 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockVersion dbmodels.ApprovalRulesetVersion
 		var mockProposal1, mockProposal2 dbmodels.ApprovalRulesetVersion
 
-		Setup := func(reviewState reviewstate.State) {
-			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
-				mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		Setup := func(hasApprovedVersion bool, proposal1ReviewState reviewstate.State) {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				if hasApprovedVersion {
+					mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+					mockVersion = *mockRuleset.Version
+
+					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
+						mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
+						mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					mockRuleset, err = dbmodels.CreateMockApprovalRuleset(tx, ctx.Org, "ruleset1", nil)
+				}
 				Expect(err).ToNot(HaveOccurred())
-				mockVersion = *mockRuleset.Version
 
 				mockProposal1, err = dbmodels.CreateMockApprovalRulesetVersion(tx, mockRuleset, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal1, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = reviewState
+						adjustment.ReviewState = proposal1ReviewState
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal1.Adjustment = &proposal1Adjustment
@@ -809,14 +826,6 @@ var _ = Describe("approval-ruleset API", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal2.Adjustment = &proposal2Adjustment
-
-				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
-					mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				_, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org,
-					mockRuleset.Version.ID, *mockRuleset.Version.Adjustment, nil)
-				Expect(err).ToNot(HaveOccurred())
 
 				return nil
 			})
@@ -838,13 +847,12 @@ var _ = Describe("approval-ruleset API", func() {
 					},
 				},
 			},
+			AutoApproveInput:           gin.H{"display_name": "Ruleset 2"},
 			AdjustmentType:             reflect.TypeOf(dbmodels.ApprovalRulesetAdjustment{}),
 			ResourceTypeNameInResponse: "approval ruleset proposal",
-			GetPrimaryKey: func(resource interface{}) interface{} {
-				return resource.(*dbmodels.ApprovalRuleset).ID
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))
 			},
-			PrimaryKeyJSONFieldName: "id",
-			PrimaryKeyInitialValue:  "ruleset1",
 			GetResourceVersionAndLatestAdjustment: func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment) {
 				version, err := dbmodels.FindApprovalRulesetVersionByID(ctx.Db, ctx.Org.ID, mockRuleset.ID, mockProposal1.ID)
 				Expect(err).ToNot(HaveOccurred())
@@ -869,7 +877,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs application bindings", func() {
-			Setup(reviewstate.Draft)
+			Setup(true, reviewstate.Draft)
 
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
@@ -882,7 +890,7 @@ var _ = Describe("approval-ruleset API", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			body := includedTestCtx.MakeRequest(false, "", 200)
+			body := includedTestCtx.MakeRequest(false, false, "", 200)
 
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
 			appBindings := body["application_approval_ruleset_bindings"].([]interface{})
@@ -897,8 +905,8 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs the updated approval rules", func() {
-			Setup(reviewstate.Draft)
-			body := includedTestCtx.MakeRequest(false, "", 200)
+			Setup(true, reviewstate.Draft)
+			body := includedTestCtx.MakeRequest(false, false, "", 200)
 
 			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
 			version := body["version"].(map[string]interface{})
@@ -910,8 +918,8 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("creates new ApprovalRule objects rather than modifying existing ones in-place", func() {
-			Setup(reviewstate.Draft)
-			includedTestCtx.MakeRequest(false, "", 200)
+			Setup(true, reviewstate.Draft)
+			includedTestCtx.MakeRequest(false, false, "", 200)
 
 			var count int64
 			err = ctx.Db.Model(dbmodels.ScheduleApprovalRule{}).Count(&count).Error
@@ -920,7 +928,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("copies the previous adjustment's approval rules if no new approval rules are given", func() {
-			Setup(reviewstate.Draft)
+			Setup(true, reviewstate.Draft)
 			rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
 				mockProposal1.ID, *mockProposal1.Adjustment, nil)
 			Expect(err).ToNot(HaveOccurred())

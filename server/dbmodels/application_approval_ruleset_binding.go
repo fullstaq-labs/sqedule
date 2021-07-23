@@ -81,15 +81,35 @@ func (binding ApplicationApprovalRulesetBinding) NewDraftVersion() (*Application
 	return version, &adjustment
 }
 
-func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ReviewableAction, oldMode approvalrulesetbindingmode.Mode) bool {
+func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ReviewableAction, newMode *approvalrulesetbindingmode.Mode) bool {
 	switch action {
 	case ReviewableActionCreate:
-		return binding.Version.Adjustment.Mode == approvalrulesetbindingmode.Enforcing
+		return *newMode == approvalrulesetbindingmode.Enforcing
 	case ReviewableActionUpdate:
-		return oldMode != binding.Version.Adjustment.Mode
+		if binding.Version == nil {
+			return newMode != nil && *newMode == approvalrulesetbindingmode.Enforcing
+		} else {
+			return newMode != nil && binding.Version.Adjustment.Mode != *newMode
+		}
 	default:
 		panic("Unsupported action " + action)
 	}
+}
+
+//
+// ******** ApplicationApprovalRulesetBindingAdjustment methods ********
+//
+
+// NewAdjustment returns an unsaved ApplicationApprovalRulesetBindingAdjustment in draft state. Its contents
+// are identical to the previous Adjustment.
+func (adjustment ApplicationApprovalRulesetBindingAdjustment) NewAdjustment() ApplicationApprovalRulesetBindingAdjustment {
+	result := adjustment
+	result.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
+		ReviewState:      reviewstate.Draft,
+	}
+	result.Enabled = lib.CopyBoolPtr(adjustment.Enabled)
+	return result
 }
 
 //
@@ -242,6 +262,34 @@ func CollectApplicationApprovalRulesetBindingVersions(bindings []*ApplicationApp
 	for _, elem := range bindings {
 		if elem.Version != nil {
 			result = append(result, elem.Version)
+		}
+	}
+	return result
+}
+
+// CollectApplicationApprovalRulesetBindingVersionIDEquals returns the first ApplicationApprovalRulesetBindingVersion
+// whose ID equals `versionID`.
+func CollectApplicationApprovalRulesetBindingVersionIDEquals(versions []ApplicationApprovalRulesetBindingVersion, versionID uint64) *ApplicationApprovalRulesetBindingVersion {
+	for i := range versions {
+		if versions[i].ID == versionID {
+			return &versions[i]
+		}
+	}
+	return nil
+}
+
+// CollectApplicationApprovalRulesetBindingVersionIDNotEquals returns those ApplicationApprovalRulesetBindingVersion
+// whose IDs don't equal `versionID`.
+func CollectApplicationApprovalRulesetBindingVersionIDNotEquals(versions []ApplicationApprovalRulesetBindingVersion, versionID uint64) []*ApplicationApprovalRulesetBindingVersion {
+	l := len(versions)
+	if l > 0 {
+		l -= 1
+	}
+
+	result := make([]*ApplicationApprovalRulesetBindingVersion, 0, l)
+	for i := range versions {
+		if versions[i].ID != versionID {
+			result = append(result, &versions[i])
 		}
 	}
 	return result

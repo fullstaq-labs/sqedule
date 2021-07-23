@@ -165,12 +165,12 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 	return version, &adjustment
 }
 
-func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(action ReviewableAction, hasBoundApplications bool) bool {
+func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(action ReviewableAction, hasBoundApplications bool, rulesChanged bool) bool {
 	switch action {
 	case ReviewableActionCreate:
 		return false
 	case ReviewableActionUpdate:
-		return hasBoundApplications
+		return hasBoundApplications && rulesChanged
 	default:
 		panic("Unsupported action " + action)
 	}
@@ -200,6 +200,7 @@ func (adjustment ApprovalRulesetAdjustment) NewAdjustment() ApprovalRulesetAdjus
 		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
 		ReviewState:      reviewstate.Draft,
 	}
+	result.Enabled = lib.CopyBoolPtr(adjustment.Enabled)
 	result.Rules = adjustment.Rules.CopyAsUnsaved()
 	return result
 }

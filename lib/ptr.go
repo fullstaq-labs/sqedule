@@ -63,3 +63,13 @@ func DerefBoolPtrWithDefault(ptr *bool, defaultValue bool) bool {
 		return *ptr
 	}
 }
+
+// CopyBoolPtr copies the value if the given boolean pointer into a new boolean pointer.
+// If the pointer is nil, then it returns nil.
+func CopyBoolPtr(ptr *bool) *bool {
+	if ptr == nil {
+		return nil
+	} else {
+		return NewBoolPtr(*ptr)
+	}
+}

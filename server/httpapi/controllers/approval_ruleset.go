@@ -64,7 +64,7 @@ func (ctx Context) CreateApprovalRuleset(ginctx *gin.Context) {
 	if input.Version.ProposalState == proposalstate.Final {
 		dbmodels.FinalizeReviewableProposal(&version.ReviewableVersionBase,
 			&adjustment.ReviewableAdjustmentBase, 0,
-			ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionCreate, false))
+			ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionCreate, false, true))
 	}
 
 	err := ctx.Db.Transaction(func(tx *gorm.DB) error {
@@ -331,7 +331,10 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 				dbmodels.FinalizeReviewableProposal(&newVersion.ReviewableVersionBase,
 					&newAdjustment.ReviewableAdjustmentBase,
 					latestApprovedVersionNumber,
-					ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionUpdate, len(appBindings) > 0))
+					ruleset.CheckNewProposalsRequireReview(
+						dbmodels.ReviewableActionUpdate,
+						len(appBindings) > 0,
+						input.Version.ApprovalRules != nil))
 			} else {
 				dbmodels.SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(&newAdjustment.ReviewableAdjustmentBase,
 					input.Version.ProposalState)
@@ -620,7 +623,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 	// Query database
 
 	var latestApprovedVersionNumber uint32 = 0
-	dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
+	err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
 	if err != nil {
 		respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
 		return
@@ -640,7 +643,6 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusNotFound, gin.H{"error": "approval ruleset proposal not found"})
 		return
 	}
-	ruleset.Version = proposal
 
 	otherProposals := dbmodels.CollectApprovalRulesetVersionIDNotEquals(proposals, versionID)
 
@@ -657,7 +659,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 	}
 
 	err = dbmodels.LoadApprovalRulesetAdjustmentsApprovalRules(ctx.Db, orgID,
-		[]*dbmodels.ApprovalRulesetAdjustment{ruleset.Version.Adjustment})
+		[]*dbmodels.ApprovalRulesetAdjustment{proposal.Adjustment})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
 		return
@@ -694,7 +696,10 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 			dbmodels.FinalizeReviewableProposal(&proposalUpdate.ReviewableVersionBase,
 				&newAdjustment.ReviewableAdjustmentBase,
 				latestApprovedVersionNumber,
-				ruleset.CheckNewProposalsRequireReview(dbmodels.ReviewableActionUpdate, len(appBindings) > 0))
+				ruleset.CheckNewProposalsRequireReview(
+					dbmodels.ReviewableActionUpdate,
+					len(appBindings) > 0,
+					input.ApprovalRules != nil))
 			if err = tx.Omit(clause.Associations).Model(&proposal).Updates(proposalUpdate).Error; err != nil {
 				return err
 			}
@@ -751,8 +756,8 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 
 	// Generate response
 
-	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, ruleset.Version,
-		appBindings, []dbmodels.ReleaseApprovalRulesetBinding{}, ruleset.Version.Adjustment.Rules)
+	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, proposal,
+		appBindings, []dbmodels.ReleaseApprovalRulesetBinding{}, proposal.Adjustment.Rules)
 	ginctx.JSON(http.StatusOK, output)
 }
 
