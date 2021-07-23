@@ -956,8 +956,13 @@ var _ = Describe("approval-ruleset API", func() {
 		var mockVersion dbmodels.ApprovalRulesetVersion
 		var mockProposal1, mockProposal2 dbmodels.ApprovalRulesetVersion
 
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
 		Setup := func(reviewState reviewstate.State) {
-			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
 				mockVersion = *ruleset.Version
@@ -1027,8 +1032,9 @@ var _ = Describe("approval-ruleset API", func() {
 
 				return &proposal, proposal.Adjustment
 			},
-			PrimaryKeyJSONFieldName:     "id",
-			PrimaryKeyInitialValue:      "ruleset1",
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "ruleset1"))
+			},
 			VersionedFieldJSONFieldName: "display_name",
 			VersionedFieldInitialValue:  "Ruleset",
 		})

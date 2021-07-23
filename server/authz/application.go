@@ -13,6 +13,7 @@ const (
 	ActionDeleteApplication SingularAction = "application/delete"
 
 	ActionManipulateApprovalRulesetBinding SingularAction = "application_approval_ruleset_binding/manipulate"
+	ActionReviewApprovalRulesetBinding     SingularAction = "application_approval_ruleset_binding/review"
 
 	ActionCreateRelease SingularAction = "release/create"
 )
@@ -45,6 +46,7 @@ func (ApplicationAuthorizer) SingularAuthorizations(orgMember dbmodels.IOrganiza
 	result[ActionUpdateApplication] = struct{}{}
 	result[ActionDeleteApplication] = struct{}{}
 	result[ActionManipulateApprovalRulesetBinding] = struct{}{}
+	result[ActionReviewApprovalRulesetBinding] = struct{}{}
 	result[ActionCreateRelease] = struct{}{}
 
 	return result

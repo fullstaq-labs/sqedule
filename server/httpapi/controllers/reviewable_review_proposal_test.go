@@ -18,10 +18,9 @@ type ReviewableReviewProposalTestOptions struct {
 	GetFirstProposalAndAdjustment  func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment)
 	GetSecondProposalAndAdjustment func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment)
 
-	PrimaryKeyJSONFieldName     string
-	PrimaryKeyInitialValue      interface{}
-	VersionedFieldJSONFieldName string
-	VersionedFieldInitialValue  interface{}
+	AssertNonVersionedJSONFieldsExist func(resource map[string]interface{})
+	VersionedFieldJSONFieldName       string
+	VersionedFieldInitialValue        interface{}
 }
 
 type ReviewableReviewProposalTestContext struct {
@@ -55,7 +54,9 @@ func IncludeReviewableReviewProposalTest(options ReviewableReviewProposalTestOpt
 		options.Setup(reviewstate.Reviewing)
 		body := rctx.MakeRequest(false, "approved", 200)
 
-		Expect(body).To(HaveKeyWithValue(options.PrimaryKeyJSONFieldName, options.PrimaryKeyInitialValue))
+		if options.AssertNonVersionedJSONFieldsExist != nil {
+			options.AssertNonVersionedJSONFieldsExist(body)
+		}
 	})
 
 	Specify("approving works", func() {

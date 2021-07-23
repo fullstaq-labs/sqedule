@@ -1,9 +1,12 @@
 package controllers
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
@@ -11,6 +14,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	reviewstateinput "github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstate"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -649,6 +653,167 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 		proposal.Adjustment = &newAdjustment
 
 		if newAdjustment.ReviewState == reviewstate.Approved {
+			// Ensure no other proposals are in the Reviewing state
+
+			for _, proposal := range otherProposals {
+				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+					continue
+				}
+
+				newAdjustment := proposal.Adjustment.NewAdjustment()
+				newAdjustment.ReviewState = reviewstate.Draft
+				err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
+				if err != nil {
+					return err
+				}
+
+				creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
+				creationRecord.ApplicationApprovalRulesetBindingVersionID = &proposal.ID
+				creationRecord.ApplicationApprovalRulesetBindingAdjustmentNumber = &newAdjustment.AdjustmentNumber
+				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, proposal, false, true)
+	ginctx.JSON(http.StatusOK, output)
+}
+
+func (ctx Context) UpdateApplicationApprovalRulesetBindingProposalReviewState(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	applicationID := ginctx.Param("application_id")
+	rulesetID := ginctx.Param("ruleset_id")
+	versionID, err := strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	var input json.ReviewableReviewStateInput
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReviewApprovalRulesetBinding, application) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
+		ctx.Db.Preload("ApprovalRuleset"),
+		orgID, applicationID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
+		return
+	}
+
+	var latestApprovedVersionNumber uint32 = 0
+
+	if input.State == reviewstateinput.Approved {
+		dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApplicationApprovalRulesetBinding{&binding})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
+			return
+		}
+
+		if binding.Version != nil {
+			latestApprovedVersionNumber = *binding.Version.VersionNumber
+		}
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
+	if err != nil {
+		respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
+		return
+	}
+
+	proposals, err := dbmodels.FindApplicationApprovalRulesetBindingProposals(ctx.Db, orgID, applicationID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding proposals", err, ginctx)
+		return
+	}
+
+	proposal := dbmodels.CollectApplicationApprovalRulesetBindingVersionIDEquals(proposals, versionID)
+	if proposal == nil {
+		ginctx.JSON(http.StatusNotFound, gin.H{"error": "application approval ruleset binding proposal not found"})
+		return
+	}
+
+	otherProposals := dbmodels.CollectApplicationApprovalRulesetBindingVersionIDNotEquals(proposals, versionID)
+
+	err = dbmodels.LoadApplicationApprovalRulesetBindingVersionsLatestAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationApprovalRulesetBindingVersionsPointerArray(proposals))
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset binding adjustments", err, ginctx)
+		return
+	}
+
+	if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+		ginctx.JSON(http.StatusUnprocessableEntity, gin.H{"error": "This proposal is not awaiting review"})
+		return
+	}
+
+	// Modify database
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		// Create new Adjustment with new review state
+
+		proposalUpdate := *proposal
+		newAdjustment := proposal.Adjustment.NewAdjustment()
+
+		if input.State == reviewstateinput.Approved {
+			newAdjustment.ReviewState = reviewstate.Approved
+			proposalUpdate.ApprovedAt = sql.NullTime{Time: time.Now(), Valid: true}
+			proposalUpdate.VersionNumber = lib.NewUint32Ptr(latestApprovedVersionNumber + 1)
+		} else {
+			newAdjustment.ReviewState = reviewstate.Rejected
+		}
+
+		if err = tx.Omit(clause.Associations).Model(proposal).Updates(proposalUpdate).Error; err != nil {
+			return err
+		}
+		if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
+			return err
+		}
+
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ApplicationApprovalRulesetBindingVersionID = &proposal.ID
+		creationRecord.ApplicationApprovalRulesetBindingAdjustmentNumber = &newAdjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+		if err != nil {
+			return err
+		}
+
+		proposal.Adjustment = &newAdjustment
+
+		if input.State == reviewstateinput.Approved {
 			// Ensure no other proposals are in the Reviewing state
 
 			for _, proposal := range otherProposals {

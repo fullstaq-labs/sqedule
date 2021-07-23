@@ -820,7 +820,6 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 		ginctx.JSON(http.StatusNotFound, gin.H{"error": "approval ruleset proposal not found"})
 		return
 	}
-	ruleset.Version = proposal
 
 	otherProposals := dbmodels.CollectApprovalRulesetVersionIDNotEquals(proposals, versionID)
 
@@ -837,7 +836,7 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 	}
 
 	err = dbmodels.LoadApprovalRulesetAdjustmentsApprovalRules(ctx.Db, orgID,
-		[]*dbmodels.ApprovalRulesetAdjustment{ruleset.Version.Adjustment})
+		[]*dbmodels.ApprovalRulesetAdjustment{proposal.Adjustment})
 	if err != nil {
 		respondWithDbQueryError("approval rules", err, ginctx)
 		return
@@ -928,8 +927,8 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 
 	// Generate response
 
-	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, ruleset.Version,
-		appBindings, []dbmodels.ReleaseApprovalRulesetBinding{}, ruleset.Version.Adjustment.Rules)
+	output := json.CreateApprovalRulesetWithVersionAndBindingsAndRules(ruleset, proposal,
+		appBindings, []dbmodels.ReleaseApprovalRulesetBinding{}, proposal.Adjustment.Rules)
 	ginctx.JSON(http.StatusOK, output)
 }
 
