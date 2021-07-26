@@ -141,18 +141,26 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	orgID := orgMember.GetOrganizationID()
 	applicationID := ginctx.Param("application_id")
 
-	application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
-	if err != nil {
-		respondWithDbQueryError("application", err, ginctx)
-		return
-	}
-
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
-		respondWithUnauthorizedError(ginctx)
-		return
+	if len(applicationID) > 0 {
+		application, err := dbmodels.FindApplication(ctx.Db, orgID, applicationID)
+		if err != nil {
+			respondWithDbQueryError("application", err, ginctx)
+			return
+		}
+
+		authorizer := authz.ApplicationAuthorizer{}
+		if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+			respondWithUnauthorizedError(ginctx)
+			return
+		}
+	} else {
+		authorizer := authz.ApplicationApprovalRulesetBindingAuthorizer{}
+		if !authz.AuthorizeCollectionAction(authorizer, orgMember, authz.ActionListApplicationApprovalRulesetBindings) {
+			respondWithUnauthorizedError(ginctx)
+			return
+		}
 	}
 
 	// Query database
@@ -162,9 +170,11 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	bindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(
-		tx.Preload("ApprovalRuleset"),
-		orgID, applicationID)
+	tx = tx.Preload("ApprovalRuleset")
+	if len(applicationID) == 0 {
+		tx = tx.Preload("Application")
+	}
+	bindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(tx, orgID, applicationID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
 		return
@@ -180,8 +190,17 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
 		dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(bindings))
 	if err != nil {
-		respondWithDbQueryError("approval rulesets", err, ginctx)
+		respondWithDbQueryError("approval ruleset latest versions", err, ginctx)
 		return
+	}
+
+	if len(applicationID) == 0 {
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			dbmodels.CollectApplicationsWithApplicationApprovalRulesetBindings(bindings))
+		if err != nil {
+			respondWithDbQueryError("application latest versions", err, ginctx)
+			return
+		}
 	}
 
 	// Generate response
@@ -189,7 +208,8 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	outputList := make([]json.ApplicationApprovalRulesetBindingWithLatestApprovedVersion, 0, len(bindings))
 	for _, binding := range bindings {
 		outputList = append(outputList,
-			json.CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding, binding.Version, false, true))
+			json.CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(
+				binding, binding.Version, len(applicationID) == 0, true))
 	}
 	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
 }

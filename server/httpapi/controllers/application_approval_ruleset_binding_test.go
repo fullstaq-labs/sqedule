@@ -79,6 +79,69 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
+	Describe("GET /applications-approval-ruleset-bindings", func() {
+		var app dbmodels.Application
+
+		Setup := func() {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableListResourcesTest(ReviewableListResourcesTestOptions{
+			HTTPTestCtx: &ctx,
+			GetPath:     func() string { return "/v1/application-approval-ruleset-bindings" },
+			Setup:       Setup,
+			AssertVersionJSONValid: func(version map[string]interface{}) {
+				Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+			},
+		})
+
+		It("outputs applications", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
+			items := body["items"].([]interface{})
+			ruleset := items[0].(map[string]interface{})
+
+			Expect(ruleset).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := ruleset["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
+		})
+
+		It("outputs approval rulesets", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
+			items := body["items"].([]interface{})
+			binding := items[0].(map[string]interface{})
+
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "Ruleset"))
+		})
+	})
+
 	Describe("GET /applications/:application_id/approval-ruleset-bindings", func() {
 		var app dbmodels.Application
 
@@ -124,9 +187,16 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 			Expect(body).To(HaveKeyWithValue("items", HaveLen(1)))
 			items := body["items"].([]interface{})
-			ruleset := items[0].(map[string]interface{})
+			binding := items[0].(map[string]interface{})
 
-			Expect(ruleset).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "Ruleset"))
 		})
 	})
 
