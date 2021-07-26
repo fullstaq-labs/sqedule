@@ -60,7 +60,7 @@ func GetApiErrorMessage(resp *resty.Response) string {
 
 	object, ok := e.(*map[string]interface{})
 	if !ok {
-		return fmt.Sprintf("%#v", object)
+		return fmt.Sprintf("HTTP %s: %#v", resp.Status(), object)
 	}
 	if object == nil || *object == nil {
 		return fmt.Sprintf("unknown error (HTTP %s)", resp.Status())
@@ -82,5 +82,9 @@ func GetApiErrorMessage(resp *resty.Response) string {
 		}
 	}
 
-	return fmt.Sprintf("%#v", object)
+	if len(*object) == 0 {
+		return fmt.Sprintf("unknown error (HTTP %s)", resp.Status())
+	} else {
+		return fmt.Sprintf("HTTP %s: %#v", resp.Status(), object)
+	}
 }
