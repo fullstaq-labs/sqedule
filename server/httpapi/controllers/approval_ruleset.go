@@ -327,6 +327,8 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 
 		if input.Version != nil {
 			newVersion, newAdjustment := ruleset.NewDraftVersion()
+			json.PatchApprovalRulesetAdjustment(orgID, newAdjustment, *input.Version)
+
 			if input.Version.ProposalState == proposalstate.Final {
 				dbmodels.FinalizeReviewableProposal(&newVersion.ReviewableVersionBase,
 					&newAdjustment.ReviewableAdjustmentBase,
@@ -345,7 +347,6 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 			}
 
 			newAdjustment.ApprovalRulesetVersionID = newVersion.ID
-			json.PatchApprovalRulesetAdjustment(orgID, newAdjustment, *input.Version)
 			if err = tx.Omit(clause.Associations).Create(newAdjustment).Error; err != nil {
 				return err
 			}
@@ -690,6 +691,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 		// Create new Adjustment with patched state
 
 		newAdjustment := proposal.Adjustment.NewAdjustment()
+		json.PatchApprovalRulesetAdjustment(orgID, &newAdjustment, input)
 
 		if input.ProposalState == proposalstate.Final {
 			proposalUpdate := proposal
@@ -699,7 +701,8 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 				ruleset.CheckNewProposalsRequireReview(
 					dbmodels.ReviewableActionUpdate,
 					len(appBindings) > 0,
-					input.ApprovalRules != nil))
+					// TODO: check whether rules have changed compared to the last approved version, as to allow system auto-approval
+					true))
 			if err = tx.Omit(clause.Associations).Model(&proposal).Updates(proposalUpdate).Error; err != nil {
 				return err
 			}
@@ -708,7 +711,6 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 				input.ProposalState)
 		}
 
-		json.PatchApprovalRulesetAdjustment(orgID, &newAdjustment, input)
 		if err = newAdjustment.Create(tx); err != nil {
 			return err
 		}
