@@ -13,18 +13,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-// approvalRulesetProposalReviewCmd represents the 'approval-ruleset proposal review' command
-var approvalRulesetProposalReviewCmd = &cobra.Command{
+// applicationApprovalRulesetBindingProposalReviewCmd represents the 'application-approval-ruleset-binding proposal review' command
+var applicationApprovalRulesetBindingProposalReviewCmd = &cobra.Command{
 	Use:   "review",
-	Short: "Review an approval ruleset proposal",
+	Short: "Review an application approval ruleset binding proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
-		return approvalRulesetProposalReviewCmd_run(viper.GetViper(), mocking.RealPrinter{})
+		return applicationApprovalRulesetBindingProposalReviewCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }
 
-func approvalRulesetProposalReviewCmd_run(viper *viper.Viper, printer mocking.IPrinter) error {
-	err := approvalRulesetProposalReviewCmd_checkConfig(viper)
+func applicationApprovalRulesetBindingProposalReviewCmd_run(viper *viper.Viper, printer mocking.IPrinter) error {
+	err := applicationApprovalRulesetBindingProposalReviewCmd_checkConfig(viper)
 	if err != nil {
 		return err
 	}
@@ -42,16 +42,17 @@ func approvalRulesetProposalReviewCmd_run(viper *viper.Viper, printer mocking.IP
 
 	var result interface{}
 	resp, err := req.
-		SetBody(approvalRulesetProposalReviewCmd_createBody(viper)).
+		SetBody(applicationApprovalRulesetBindingProposalReviewCmd_createBody(viper)).
 		SetResult(&result).
-		Put(fmt.Sprintf("/approval-rulesets/%s/proposals/%s/review-state",
+		Put(fmt.Sprintf("/application-approval-ruleset-bindings/%s/%s/proposals/%s/review-state",
+			url.PathEscape(viper.GetString("application-id")),
 			url.PathEscape(viper.GetString("approval-ruleset-id")),
 			url.PathEscape(viper.GetString("id"))))
 	if err != nil {
 		return err
 	}
 	if resp.IsError() {
-		return fmt.Errorf("Error reviewing approval ruleset proposal: %s", cli.GetApiErrorMessage(resp))
+		return fmt.Errorf("Error reviewing application approval ruleset binding proposal: %s", cli.GetApiErrorMessage(resp))
 	}
 
 	output, err := encjson.MarshalIndent(result, "", "    ")
@@ -65,13 +66,13 @@ func approvalRulesetProposalReviewCmd_run(viper *viper.Viper, printer mocking.IP
 	return nil
 }
 
-func approvalRulesetProposalReviewCmd_checkConfig(viper *viper.Viper) error {
+func applicationApprovalRulesetBindingProposalReviewCmd_checkConfig(viper *viper.Viper) error {
 	return cli.RequireConfigOptions(viper, cli.ConfigRequirementSpec{
-		StringNonEmpty: []string{"approval-ruleset-id", "id", "action"},
+		StringNonEmpty: []string{"application-id", "approval-ruleset-id", "id", "action"},
 	})
 }
 
-func approvalRulesetProposalReviewCmd_createBody(viper *viper.Viper) json.ReviewableReviewStateInput {
+func applicationApprovalRulesetBindingProposalReviewCmd_createBody(viper *viper.Viper) json.ReviewableReviewStateInput {
 	var state reviewstate.Input
 
 	switch viper.GetString("action") {
@@ -89,13 +90,14 @@ func approvalRulesetProposalReviewCmd_createBody(viper *viper.Viper) json.Review
 }
 
 func init() {
-	cmd := approvalRulesetProposalReviewCmd
+	cmd := applicationApprovalRulesetBindingProposalReviewCmd
 	flags := cmd.Flags()
-	approvalRulesetProposalCmd.AddCommand(cmd)
+	applicationApprovalRulesetBindingProposalCmd.AddCommand(cmd)
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("approval-ruleset-id", "", "Approval ruleset ID (required)")
+	flags.String("application-id", "", "ID of the bound application (required)")
+	flags.String("approval-ruleset-id", "", "ID of the bound application approval ruleset (required)")
 	flags.String("id", "", "Proposal ID (required)")
 	flags.String("action", "", "'approve' or 'reject'")
 }

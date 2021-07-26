@@ -16,7 +16,7 @@ var applicationApprovalRulesetBindingCmd = &cobra.Command{
 	Short: "Manage application approval ruleset bindings",
 }
 
-func defineApplicationApprovalRulesetBindingCreateOrUpdateFlags(flags *pflag.FlagSet, creating bool) {
+func defineApplicationApprovalRulesetBindingCreateOrUpdateFlags(flags *pflag.FlagSet) {
 	flags.String("mode", "enforcing", "Binding mode; 'enforcing' or 'permissive'")
 	flags.String("proposal-state", "draft", "'draft', 'final' or 'abandon'")
 	flags.Bool("enabled", true, "Whether to enable this ruleset")

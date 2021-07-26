@@ -94,5 +94,5 @@ func init() {
 
 	flags.String("application-id", "", "ID of the application to bind to (required)")
 	flags.String("approval-ruleset-id", "", "ID of the approval ruleset to bind to (required)")
-	defineApplicationApprovalRulesetBindingCreateOrUpdateFlags(flags, true)
+	defineApplicationApprovalRulesetBindingCreateOrUpdateFlags(flags)
 }
