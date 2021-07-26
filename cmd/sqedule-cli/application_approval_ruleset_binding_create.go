@@ -44,7 +44,7 @@ func applicationApprovalRulesetBindingCreateCmd_run(viper *viper.Viper, printer 
 	resp, err := req.
 		SetBody(applicationApprovalRulesetBindingCreateCmd_createBody(viper)).
 		SetResult(&ruleset).
-		Post(fmt.Sprintf("/applications/%s/approval-ruleset-bindings/%s",
+		Post(fmt.Sprintf("/application-approval-ruleset-bindings/%s/%s",
 			url.PathEscape(viper.GetString("application-id")),
 			url.PathEscape(viper.GetString("approval-ruleset-id"))))
 	if err != nil {

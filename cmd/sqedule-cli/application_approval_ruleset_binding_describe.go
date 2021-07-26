@@ -41,7 +41,7 @@ func applicationApprovalRulesetBindingDescribeCmd_run(viper *viper.Viper, printe
 	var result interface{}
 	resp, err := req.
 		SetResult(&result).
-		Get(fmt.Sprintf("/applications/%s/approval-ruleset-bindings/%s",
+		Get(fmt.Sprintf("/application-approval-ruleset-bindings/%s/%s",
 			url.PathEscape(viper.GetString("application-id")),
 			url.PathEscape(viper.GetString("approval-ruleset-id"))))
 	if err != nil {

@@ -18,7 +18,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 	var ctx HTTPTestContext
 	var err error
 
-	Describe("POST /applications/:application_id/approval-ruleset-bindings/:ruleset_id", func() {
+	Describe("POST /application-approval-ruleset-bindings/:application_id/:ruleset_id", func() {
 		BeforeEach(func() {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				_, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
@@ -34,7 +34,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 		includedTestCtx := IncludeReviewableCreateTest(ReviewableCreateTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/applications/app1/approval-ruleset-bindings/ruleset1",
+			Path:        "/v1/application-approval-ruleset-bindings/app1/ruleset1",
 			UnversionedInput: gin.H{
 				"id": "ruleset1",
 			},
@@ -61,9 +61,16 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			},
 		})
 
-		It("output no application", func() {
+		It("output application", func() {
 			body := includedTestCtx.MakeRequest("", 201)
-			Expect(body).ToNot(HaveKey("application"))
+			Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := body["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 		})
 
 		It("outputs approval ruleset", func() {
@@ -200,7 +207,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id", func() {
+	Describe("GET /application-approval-ruleset-bindings/:application_id/:ruleset_id", func() {
 		var app dbmodels.Application
 		var binding dbmodels.ApplicationApprovalRulesetBinding
 
@@ -223,7 +230,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		includedTestCtx := IncludeReviewableReadResourceTest(ReviewableReadResourceTestOptions{
 			HTTPTestCtx: &ctx,
 			GetPath: func() string {
-				return fmt.Sprintf("/v1/applications/%s/approval-ruleset-bindings/%s", app.ID, binding.ApprovalRulesetID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/%s/%s", app.ID, binding.ApprovalRulesetID)
 			},
 			Setup: Setup,
 			AssertVersionJSONValid: func(version map[string]interface{}) {
@@ -231,10 +238,17 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			},
 		})
 
-		It("outputs no application", func() {
+		It("outputs application", func() {
 			Setup()
 			body := includedTestCtx.MakeRequest()
-			Expect(body).ToNot(HaveKey("application"))
+			Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := body["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 		})
 
 		It("outputs approval ruleset", func() {
@@ -251,7 +265,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("PATCH /applications/:application_id/approval-rulesets-bindings/:ruleset_id", func() {
+	Describe("PATCH /application-approval-ruleset-bindings/:application_id/:ruleset_id", func() {
 		BeforeEach(func() {
 			ctx, err = SetupHTTPTestContext(nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -276,16 +290,23 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 			includedTestCtx := IncludeReviewableUpdateUnversionedDataTest(ReviewableUpdateUnversionedDataTestOptions{
 				HTTPTestCtx:      &ctx,
-				Path:             "/v1/applications/app1/approval-ruleset-bindings/ruleset1",
+				Path:             "/v1/application-approval-ruleset-bindings/app1/ruleset1",
 				Setup:            Setup,
 				UnversionedInput: gin.H{},
 				ResourceType:     reflect.TypeOf(dbmodels.ApplicationApprovalRulesetBinding{}),
 			})
 
-			It("outputs no application", func() {
+			It("outputs application", func() {
 				Setup()
 				body := includedTestCtx.MakeRequest(200)
-				Expect(body).ToNot(HaveKey("application"))
+				Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+				app := body["application"].(map[string]interface{})
+				Expect(app).To(HaveKeyWithValue("id", "app1"))
+				Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+				version := app["latest_approved_version"].(map[string]interface{})
+				Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 			})
 
 			It("outputs approval ruleset", func() {
@@ -323,7 +344,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 			includedTestCtx := IncludeReviewableUpdateVersionedDataTest(ReviewableUpdateVersionedDataTestOptions{
 				HTTPTestCtx:    &ctx,
-				Path:           "/v1/applications/app1/approval-ruleset-bindings/ruleset1",
+				Path:           "/v1/application-approval-ruleset-bindings/app1/ruleset1",
 				Setup:          Setup,
 				VersionedInput: gin.H{"mode": "permissive"},
 				AdjustmentType: reflect.TypeOf(dbmodels.ApplicationApprovalRulesetBindingAdjustment{}),
@@ -337,10 +358,17 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				VersionedFieldUpdatedValue:  "permissive",
 			})
 
-			It("outputs no application", func() {
+			It("outputs application", func() {
 				Setup()
 				body := includedTestCtx.MakeRequest("", 200)
-				Expect(body).ToNot(HaveKey("application"))
+				Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+				app := body["application"].(map[string]interface{})
+				Expect(app).To(HaveKeyWithValue("id", "app1"))
+				Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+				version := app["latest_approved_version"].(map[string]interface{})
+				Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 			})
 
 			It("outputs approval ruleset", func() {
@@ -358,7 +386,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id/versions", func() {
+	Describe("GET /application-approval-ruleset-bindings/:application_id/:ruleset_id/versions", func() {
 		Setup := func(versionIsApproved bool) {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
@@ -407,12 +435,12 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 		IncludeReviewableListVersionsTest(ReviewableListVersionsTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/applications/app1/approval-ruleset-bindings/ruleset1/versions",
+			Path:        "/v1/application-approval-ruleset-bindings/app1/ruleset1/versions",
 			Setup:       Setup,
 		})
 	})
 
-	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id/versions/:version_number", func() {
+	Describe("GET /application-approval-ruleset-bindings/:application_id/:ruleset_id/versions/:version_number", func() {
 		Setup := func() {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
@@ -431,7 +459,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 		includedTestCtx := IncludeReviewableReadVersionTest(ReviewableReadVersionTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/applications/app1/approval-ruleset-bindings/ruleset1/versions/1",
+			Path:        "/v1/application-approval-ruleset-bindings/app1/ruleset1/versions/1",
 			Setup:       Setup,
 
 			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
@@ -440,10 +468,17 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			},
 		})
 
-		It("outputs no application", func() {
+		It("outputs application", func() {
 			Setup()
 			body := includedTestCtx.MakeRequest()
-			Expect(body).ToNot(HaveKey("application"))
+			Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := body["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 		})
 
 		It("outputs approval ruleset", func() {
@@ -460,7 +495,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals", func() {
+	Describe("GET /application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals", func() {
 		Setup := func(versionIsApproved bool) {
 			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
 				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
@@ -495,12 +530,12 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 
 		IncludeReviewableListProposalsTest(ReviewableListProposalsTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals",
+			Path:        "/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals",
 			Setup:       Setup,
 		})
 	})
 
-	Describe("GET /applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id", func() {
+	Describe("GET /application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id", func() {
 		var version dbmodels.ApplicationApprovalRulesetBindingVersion
 
 		Setup := func(versionIsApproved bool) {
@@ -538,7 +573,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		includedTestCtx := IncludeReviewableReadProposalTest(ReviewableReadProposalTestOptions{
 			HTTPTestCtx: &ctx,
 			GetPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", version.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d", version.ID)
 			},
 			Setup: Setup,
 
@@ -550,10 +585,17 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			},
 		})
 
-		It("outputs no application", func() {
+		It("outputs application", func() {
 			Setup(false)
 			body := includedTestCtx.MakeRequest(200)
-			Expect(body).ToNot(HaveKey("application"))
+			Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := body["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 		})
 
 		It("outputs approval ruleset", func() {
@@ -570,7 +612,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("PATCH /applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id", func() {
+	Describe("PATCH /application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id", func() {
 		var app dbmodels.Application
 		var ruleset dbmodels.ApprovalRuleset
 		var proposal1, proposal2, version dbmodels.ApplicationApprovalRulesetBindingVersion
@@ -625,10 +667,10 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		includedTestCtx := IncludeReviewableUpdateProposalTest(ReviewableUpdateProposalTestOptions{
 			HTTPTestCtx: &ctx,
 			GetProposalPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", proposal1.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d", proposal1.ID)
 			},
 			GetApprovedVersionPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", version.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d", version.ID)
 			},
 			Setup:                      Setup,
 			Input:                      gin.H{"mode": "permissive"},
@@ -667,7 +709,14 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		It("outputs no application", func() {
 			Setup(true, reviewstate.Draft)
 			body := includedTestCtx.MakeRequest(false, false, "", 200)
-			Expect(body).ToNot(HaveKey("application"))
+			Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := body["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 		})
 
 		It("outputs approval ruleset", func() {
@@ -684,7 +733,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("PUT /applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id/review-state", func() {
+	Describe("PUT /application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id/review-state", func() {
 		var proposal1, proposal2, version dbmodels.ApplicationApprovalRulesetBindingVersion
 
 		BeforeEach(func() {
@@ -732,10 +781,10 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		includedTestCtx := IncludeReviewableReviewProposalTest(ReviewableReviewProposalTestOptions{
 			HTTPTestCtx: &ctx,
 			GetProposalPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d/review-state", proposal1.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d/review-state", proposal1.ID)
 			},
 			GetApprovedVersionPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d/review-state", version.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d/review-state", version.ID)
 			},
 			Setup:                      Setup,
 			ResourceTypeNameInResponse: "application approval ruleset binding proposal",
@@ -769,10 +818,17 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 			VersionedFieldInitialValue:  "enforcing",
 		})
 
-		It("outputs no application", func() {
+		It("outputs application", func() {
 			Setup(reviewstate.Reviewing)
 			body := includedTestCtx.MakeRequest(false, "approved", 200)
-			Expect(body).ToNot(HaveKey("application"))
+			Expect(body).To(HaveKeyWithValue("application", Not(BeNil())))
+
+			app := body["application"].(map[string]interface{})
+			Expect(app).To(HaveKeyWithValue("id", "app1"))
+			Expect(app).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version := app["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("display_name", "App 1"))
 		})
 
 		It("outputs approval ruleset", func() {
@@ -789,7 +845,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("DELETE /approval-rulesets/:id/proposals/:version_id", func() {
+	Describe("DELETE /application-approval-ruleset-bindings/:application_id/:id/proposals/:version_id", func() {
 		var version, proposal dbmodels.ApplicationApprovalRulesetBindingVersion
 
 		Setup := func() {
@@ -848,10 +904,10 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		IncludeReviewableDeleteProposalTest(ReviewableDeleteProposalTestOptions{
 			HTTPTestCtx: &ctx,
 			GetProposalPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", proposal.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d", proposal.ID)
 			},
 			GetApprovedVersionPath: func() string {
-				return fmt.Sprintf("/v1/applications/app1/approval-ruleset-bindings/ruleset1/proposals/%d", version.ID)
+				return fmt.Sprintf("/v1/application-approval-ruleset-bindings/app1/ruleset1/proposals/%d", version.ID)
 			},
 			Setup:                      Setup,
 			ResourceTypeNameInResponse: "application approval ruleset binding proposal",

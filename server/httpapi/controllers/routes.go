@@ -22,17 +22,17 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 
 	// Approval ruleset bindings
 	rg.GET("application-approval-ruleset-bindings", ctx.ListApplicationApprovalRulesetBindings)
-	rg.POST("applications/:application_id/approval-ruleset-bindings/:ruleset_id", ctx.CreateApplicationApprovalRulesetBinding)
+	rg.POST("application-approval-ruleset-bindings/:application_id/:ruleset_id", ctx.CreateApplicationApprovalRulesetBinding)
+	rg.GET("application-approval-ruleset-bindings/:application_id/:ruleset_id", ctx.GetApplicationApprovalRulesetBinding)
+	rg.PATCH("application-approval-ruleset-bindings/:application_id/:ruleset_id", ctx.UpdateApplicationApprovalRulesetBinding)
+	rg.GET("application-approval-ruleset-bindings/:application_id/:ruleset_id/versions", ctx.ListApplicationApprovalRulesetBindingVersions)
+	rg.GET("application-approval-ruleset-bindings/:application_id/:ruleset_id/versions/:version_number", ctx.GetApplicationApprovalRulesetBindingVersion)
+	rg.GET("application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals", ctx.ListApplicationApprovalRulesetBindingProposals)
+	rg.GET("application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id", ctx.GetApplicationApprovalRulesetBindingProposal)
+	rg.PATCH("application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id", ctx.UpdateApplicationApprovalRulesetBindingProposal)
+	rg.PUT("application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id/review-state", ctx.UpdateApplicationApprovalRulesetBindingProposalReviewState)
+	rg.DELETE("application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id", ctx.DeleteApplicationApprovalRulesetBindingProposal)
 	rg.GET("applications/:application_id/approval-ruleset-bindings", ctx.ListApplicationApprovalRulesetBindings)
-	rg.GET("applications/:application_id/approval-ruleset-bindings/:ruleset_id", ctx.GetApplicationApprovalRulesetBinding)
-	rg.PATCH("applications/:application_id/approval-ruleset-bindings/:ruleset_id", ctx.UpdateApplicationApprovalRulesetBinding)
-	rg.GET("applications/:application_id/approval-ruleset-bindings/:ruleset_id/versions", ctx.ListApplicationApprovalRulesetBindingVersions)
-	rg.GET("applications/:application_id/approval-ruleset-bindings/:ruleset_id/versions/:version_number", ctx.GetApplicationApprovalRulesetBindingVersion)
-	rg.GET("applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals", ctx.ListApplicationApprovalRulesetBindingProposals)
-	rg.GET("applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id", ctx.GetApplicationApprovalRulesetBindingProposal)
-	rg.PATCH("applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id", ctx.UpdateApplicationApprovalRulesetBindingProposal)
-	rg.PUT("applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id/review-state", ctx.UpdateApplicationApprovalRulesetBindingProposalReviewState)
-	rg.DELETE("applications/:application_id/approval-ruleset-bindings/:ruleset_id/proposals/:version_id", ctx.DeleteApplicationApprovalRulesetBindingProposal)
 
 	// Approval rulesets
 	rg.POST("approval-rulesets", ctx.CreateApprovalRuleset)

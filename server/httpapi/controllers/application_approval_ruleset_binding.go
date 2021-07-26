@@ -38,6 +38,12 @@ func (ctx Context) CreateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	var input json.ApplicationApprovalRulesetBindingInput
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
@@ -55,17 +61,23 @@ func (ctx Context) CreateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionManipulateApprovalRulesetBinding, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appProposeBindAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionProposeBindApplicationToApprovalRuleset, application)
+	appReadAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetProposeBindAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionProposeBindApprovalRulesetToApplication, ruleset)
+	rulesetReadAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appProposeBindAuthorized || !rulesetProposeBindAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
 	// Modify database
 
-	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&application})
 	if err != nil {
-		respondWithDbQueryError("approval ruleset", err, ginctx)
+		respondWithDbQueryError("application latest version", err, ginctx)
 		return
 	}
 
@@ -130,7 +142,8 @@ func (ctx Context) CreateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 
 	// Generate response
 
-	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, version, false, true)
+	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, version,
+		appReadAuthorized, rulesetReadAuthorized)
 	ginctx.JSON(http.StatusCreated, output)
 }
 
@@ -162,6 +175,8 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 			return
 		}
 	}
+
+	// TODO: filter out bound apps and rulesets that the client is not authorized to read
 
 	// Query database
 
@@ -228,19 +243,27 @@ func (ctx Context) GetApplicationApprovalRulesetBinding(ginctx *gin.Context) {
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appAuthorized && !rulesetAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
 	// Query database
 
-	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
-		ctx.Db.Preload("ApprovalRuleset"),
-		orgID, applicationID, rulesetID)
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(ctx.Db, orgID, applicationID, rulesetID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
 		return
@@ -253,16 +276,32 @@ func (ctx Context) GetApplicationApprovalRulesetBinding(ginctx *gin.Context) {
 		return
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
-		[]*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
-	if err != nil {
-		respondWithDbQueryError("approval ruleset latest version", err, ginctx)
-		return
+	if appAuthorized {
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.Application{&application})
+		if err != nil {
+			respondWithDbQueryError("application latest version", err, ginctx)
+			return
+		}
+
+		binding.Application = application
+	}
+
+	if rulesetAuthorized {
+		err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.ApprovalRuleset{&ruleset})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+			return
+		}
+
+		binding.ApprovalRuleset = ruleset
 	}
 
 	// Generate response
 
-	output := json.CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding, binding.Version, false, true)
+	output := json.CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding, binding.Version,
+		appAuthorized, rulesetAuthorized)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -280,6 +319,12 @@ func (ctx Context) UpdateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	var input json.ApplicationApprovalRulesetBindingInput
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
@@ -288,17 +333,21 @@ func (ctx Context) UpdateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionManipulateApprovalRulesetBinding, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appProposeBindAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionProposeBindApplicationToApprovalRuleset, application)
+	appReadAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetProposeBindAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionProposeBindApprovalRulesetToApplication, ruleset)
+	rulesetReadAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appProposeBindAuthorized || !rulesetProposeBindAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
 	// Query database
 
-	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
-		ctx.Db.Preload("ApprovalRuleset"),
-		orgID, applicationID, rulesetID)
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(ctx.Db, orgID, applicationID, rulesetID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
 		return
@@ -311,11 +360,26 @@ func (ctx Context) UpdateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 		return
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
-		[]*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
-	if err != nil {
-		respondWithDbQueryError("approval ruleset latest version", err, ginctx)
-		return
+	if appReadAuthorized {
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.Application{&application})
+		if err != nil {
+			respondWithDbQueryError("application latest version", err, ginctx)
+			return
+		}
+
+		binding.Application = application
+	}
+
+	if rulesetReadAuthorized {
+		err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.ApprovalRuleset{&ruleset})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+			return
+		}
+
+		binding.ApprovalRuleset = ruleset
 	}
 
 	var latestApprovedVersionNumber uint32 = 0
@@ -380,7 +444,7 @@ func (ctx Context) UpdateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 	// Generate response
 
 	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, binding.Version,
-		false, true)
+		appReadAuthorized, rulesetReadAuthorized)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -406,10 +470,20 @@ func (ctx Context) listApplicationApprovalRulesetBindingVersionsOrProposals(ginc
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appAuthorized || !rulesetAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
@@ -481,28 +555,50 @@ func (ctx Context) getApplicationApprovalRulesetBindingVersionOrProposal(ginctx 
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appAuthorized || !rulesetAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
 	// Query database
 
-	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
-		ctx.Db.Preload("ApprovalRuleset"),
-		orgID, applicationID, rulesetID)
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(ctx.Db, orgID, applicationID, rulesetID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
 		return
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
-	if err != nil {
-		respondWithDbQueryError("approval rulesets", err, ginctx)
-		return
+	if appAuthorized {
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&application})
+		if err != nil {
+			respondWithDbQueryError("application latest version", err, ginctx)
+			return
+		}
+
+		binding.Application = application
+	}
+
+	if rulesetAuthorized {
+		err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+			return
+		}
+
+		binding.ApprovalRuleset = ruleset
 	}
 
 	var version dbmodels.ApplicationApprovalRulesetBindingVersion
@@ -529,7 +625,8 @@ func (ctx Context) getApplicationApprovalRulesetBindingVersionOrProposal(ginctx 
 	}
 
 	// Generate response
-	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, binding.Version, false, true)
+	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, binding.Version,
+		appAuthorized, rulesetAuthorized)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -565,6 +662,12 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	var input json.ApplicationApprovalRulesetBindingVersionInput
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
@@ -573,17 +676,21 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionManipulateApprovalRulesetBinding, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appProposeBindAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionProposeBindApplicationToApprovalRuleset, application)
+	appReadAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetPrposeBindAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionProposeBindApprovalRulesetToApplication, ruleset)
+	rulesetReadAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appProposeBindAuthorized || !rulesetPrposeBindAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
 	// Query database
 
-	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
-		ctx.Db.Preload("ApprovalRuleset"),
-		orgID, applicationID, rulesetID)
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(ctx.Db, orgID, applicationID, rulesetID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
 		return
@@ -601,10 +708,26 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 		latestApprovedVersionNumber = *binding.Version.VersionNumber
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
-	if err != nil {
-		respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
-		return
+	if appReadAuthorized {
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.Application{&application})
+		if err != nil {
+			respondWithDbQueryError("application latest version", err, ginctx)
+			return
+		}
+
+		binding.Application = application
+	}
+
+	if rulesetReadAuthorized {
+		err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.ApprovalRuleset{&ruleset})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+			return
+		}
+
+		binding.ApprovalRuleset = ruleset
 	}
 
 	proposals, err := dbmodels.FindApplicationApprovalRulesetBindingProposals(ctx.Db, orgID, applicationID, rulesetID)
@@ -706,7 +829,8 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 
 	// Generate response
 
-	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, proposal, false, true)
+	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, proposal,
+		appReadAuthorized, rulesetReadAuthorized)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -730,6 +854,12 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposalReviewState(gi
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	var input json.ReviewableReviewStateInput
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
@@ -738,17 +868,21 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposalReviewState(gi
 
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReviewApprovalRulesetBinding, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appBindingReviewAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReviewApplicationApprovalRulesetBinding, application)
+	appReadAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionReadApplication, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetBindingReviewAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReviewApprovalRulesetApplicationBinding, ruleset)
+	rulesetReadAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionReadApprovalRuleset, ruleset)
+
+	if !appBindingReviewAuthorized || !rulesetBindingReviewAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
 
 	// Query database
 
-	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(
-		ctx.Db.Preload("ApprovalRuleset"),
-		orgID, applicationID, rulesetID)
+	binding, err := dbmodels.FindApplicationApprovalRulesetBinding(ctx.Db, orgID, applicationID, rulesetID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset binding", err, ginctx)
 		return
@@ -768,10 +902,26 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposalReviewState(gi
 		}
 	}
 
-	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&binding.ApprovalRuleset})
-	if err != nil {
-		respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
-		return
+	if appReadAuthorized {
+		err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.Application{&application})
+		if err != nil {
+			respondWithDbQueryError("application latest version", err, ginctx)
+			return
+		}
+
+		binding.Application = application
+	}
+
+	if rulesetReadAuthorized {
+		err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID,
+			[]*dbmodels.ApprovalRuleset{&ruleset})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest version", err, ginctx)
+			return
+		}
+
+		binding.ApprovalRuleset = ruleset
 	}
 
 	proposals, err := dbmodels.FindApplicationApprovalRulesetBindingProposals(ctx.Db, orgID, applicationID, rulesetID)
@@ -867,7 +1017,8 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposalReviewState(gi
 
 	// Generate response
 
-	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, proposal, false, true)
+	output := json.CreateApplicationApprovalRulesetBindingWithVersionAndAssociations(binding, proposal,
+		appReadAuthorized, rulesetReadAuthorized)
 	ginctx.JSON(http.StatusOK, output)
 }
 
@@ -891,10 +1042,20 @@ func (ctx Context) DeleteApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 		return
 	}
 
+	ruleset, err := dbmodels.FindApprovalRuleset(ctx.Db, orgID, rulesetID)
+	if err != nil {
+		respondWithDbQueryError("approval ruleset", err, ginctx)
+		return
+	}
+
 	// Check authorization
 
-	authorizer := authz.ApplicationAuthorizer{}
-	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionManipulateApprovalRulesetBinding, application) {
+	appAuthorizer := authz.ApplicationAuthorizer{}
+	appAuthorized := authz.AuthorizeSingularAction(appAuthorizer, orgMember, authz.ActionProposeBindApplicationToApprovalRuleset, application)
+	rulesetAuthorizer := authz.ApprovalRulesetAuthorizer{}
+	rulesetAuthorized := authz.AuthorizeSingularAction(rulesetAuthorizer, orgMember, authz.ActionProposeBindApprovalRulesetToApplication, ruleset)
+
+	if !appAuthorized || !rulesetAuthorized {
 		respondWithUnauthorizedError(ginctx)
 		return
 	}
