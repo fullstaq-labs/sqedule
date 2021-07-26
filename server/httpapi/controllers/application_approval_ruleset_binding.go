@@ -105,7 +105,7 @@ func (ctx Context) CreateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 			&adjustment.ReviewableAdjustmentBase, 0,
 			binding.CheckNewProposalsRequireReview(
 				dbmodels.ReviewableActionCreate,
-				&binding.Version.Adjustment.Mode))
+				version.Adjustment.Mode))
 	}
 
 	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
@@ -400,24 +400,24 @@ func (ctx Context) UpdateApplicationApprovalRulesetBinding(ginctx *gin.Context) 
 
 		if input.Version != nil {
 			newVersion, newAdjustment := binding.NewDraftVersion()
+			json.PatchApplicationApprovalRulesetBindingAdjustment(orgID, newAdjustment, *input.Version)
+
 			if input.Version.ProposalState == proposalstate.Final {
 				dbmodels.FinalizeReviewableProposal(&newVersion.ReviewableVersionBase,
 					&newAdjustment.ReviewableAdjustmentBase,
 					latestApprovedVersionNumber,
 					binding.CheckNewProposalsRequireReview(
 						dbmodels.ReviewableActionUpdate,
-						input.Version.Mode))
+						newAdjustment.Mode))
 			} else {
 				dbmodels.SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(&newAdjustment.ReviewableAdjustmentBase,
 					input.Version.ProposalState)
 			}
-
 			if err = tx.Omit(clause.Associations).Create(newVersion).Error; err != nil {
 				return err
 			}
 
 			newAdjustment.ApplicationApprovalRulesetBindingVersionID = newVersion.ID
-			json.PatchApplicationApprovalRulesetBindingAdjustment(orgID, newAdjustment, *input.Version)
 			if err = tx.Omit(clause.Associations).Create(newAdjustment).Error; err != nil {
 				return err
 			}
@@ -762,6 +762,7 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 		// Create new Adjustment with patched state
 
 		newAdjustment := proposal.Adjustment.NewAdjustment()
+		json.PatchApplicationApprovalRulesetBindingAdjustment(orgID, &newAdjustment, input)
 
 		if input.ProposalState == proposalstate.Final {
 			proposalUpdate := proposal
@@ -769,8 +770,8 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 				&newAdjustment.ReviewableAdjustmentBase,
 				latestApprovedVersionNumber,
 				binding.CheckNewProposalsRequireReview(
-					dbmodels.ReviewableActionUpdate,
-					input.Mode))
+					dbmodels.ReviewableActionCreate,
+					newAdjustment.Mode))
 			if err = tx.Omit(clause.Associations).Model(&proposal).Updates(proposalUpdate).Error; err != nil {
 				return err
 			}
@@ -779,7 +780,6 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 				input.ProposalState)
 		}
 
-		json.PatchApplicationApprovalRulesetBindingAdjustment(orgID, &newAdjustment, input)
 		err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
 		if err != nil {
 			return err

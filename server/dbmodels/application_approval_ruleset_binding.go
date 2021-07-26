@@ -81,15 +81,15 @@ func (binding ApplicationApprovalRulesetBinding) NewDraftVersion() (*Application
 	return version, &adjustment
 }
 
-func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ReviewableAction, newMode *approvalrulesetbindingmode.Mode) bool {
+func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ReviewableAction, newMode approvalrulesetbindingmode.Mode) bool {
 	switch action {
 	case ReviewableActionCreate:
-		return *newMode == approvalrulesetbindingmode.Enforcing
+		return newMode == approvalrulesetbindingmode.Enforcing
 	case ReviewableActionUpdate:
 		if binding.Version == nil {
-			return newMode != nil && *newMode == approvalrulesetbindingmode.Enforcing
+			return newMode == approvalrulesetbindingmode.Enforcing
 		} else {
-			return newMode != nil && binding.Version.Adjustment.Mode != *newMode
+			return binding.Version.Adjustment.Mode != newMode
 		}
 	default:
 		panic("Unsupported action " + action)
