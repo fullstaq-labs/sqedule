@@ -124,7 +124,7 @@ func (adjustment ApplicationApprovalRulesetBindingAdjustment) IsEnabled() bool {
 // ******** Find/load functions ********
 //
 
-func FindAllApplicationApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string) ([]ApplicationApprovalRulesetBinding, error) {
+func FindApplicationApprovalRulesetBindings(db *gorm.DB, organizationID string, applicationID string) ([]ApplicationApprovalRulesetBinding, error) {
 	var result []ApplicationApprovalRulesetBinding
 	tx := db.Where("organization_id = ?", organizationID)
 	if len(applicationID) > 0 {
@@ -134,7 +134,14 @@ func FindAllApplicationApprovalRulesetBindings(db *gorm.DB, organizationID strin
 	return result, tx.Error
 }
 
-func FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, organizationID string, rulesetID string) ([]ApplicationApprovalRulesetBinding, error) {
+func FindApplicationApprovalRulesetBindingsWithApplication(db *gorm.DB, organizationID string, applicationID string) ([]ApplicationApprovalRulesetBinding, error) {
+	var result []ApplicationApprovalRulesetBinding
+	tx := db.Where("organization_id = ? AND application_id = ?", organizationID, applicationID)
+	tx = tx.Find(&result)
+	return result, tx.Error
+}
+
+func FindApplicationApprovalRulesetBindingsWithApprovalRuleset(db *gorm.DB, organizationID string, rulesetID string) ([]ApplicationApprovalRulesetBinding, error) {
 	var result []ApplicationApprovalRulesetBinding
 	tx := db.Where("organization_id = ? AND approval_ruleset_id = ?", organizationID, rulesetID)
 	tx = tx.Find(&result)

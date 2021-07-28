@@ -39,7 +39,7 @@ func (r Release) Description() string {
 // ******** Find/load functions ********
 //
 
-func FindAllReleases(db *gorm.DB, organizationID string, applicationID string) ([]Release, error) {
+func FindReleases(db *gorm.DB, organizationID string, applicationID string) ([]Release, error) {
 	var result []Release
 	tx := db.Where("organization_id = ?", organizationID)
 	if len(applicationID) > 0 {

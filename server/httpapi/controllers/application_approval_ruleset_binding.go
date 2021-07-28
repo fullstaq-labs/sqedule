@@ -189,7 +189,7 @@ func (ctx Context) ListApplicationApprovalRulesetBindings(ginctx *gin.Context) {
 	if len(applicationID) == 0 {
 		tx = tx.Preload("Application")
 	}
-	bindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(tx, orgID, applicationID)
+	bindings, err := dbmodels.FindApplicationApprovalRulesetBindings(tx, orgID, applicationID)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
 		return

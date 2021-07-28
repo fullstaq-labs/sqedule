@@ -222,7 +222,7 @@ func (adjustment *ApprovalRulesetAdjustment) Create(db *gorm.DB) error {
 // ******** Find/load functions ********
 //
 
-func FindAllApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetWithStats, error) {
+func FindApprovalRulesetsWithStats(db *gorm.DB, organizationID string, pagination dbutils.PaginationOptions) ([]ApprovalRulesetWithStats, error) {
 	var result []ApprovalRulesetWithStats
 	tx := db.
 		Model(&ApprovalRuleset{}).

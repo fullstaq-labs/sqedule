@@ -129,7 +129,7 @@ func (ctx Context) ListApprovalRulesets(ginctx *gin.Context) {
 		return
 	}
 
-	rulesets, err := dbmodels.FindAllApprovalRulesetsWithStats(ctx.Db, orgID, pagination)
+	rulesets, err := dbmodels.FindApprovalRulesetsWithStats(ctx.Db, orgID, pagination)
 	if err != nil {
 		respondWithDbQueryError("approval rulesets", err, ginctx)
 		return
@@ -207,7 +207,7 @@ func (ctx Context) GetApprovalRuleset(ginctx *gin.Context) {
 		}
 	}
 
-	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
+	appBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApprovalRuleset(
 		ctx.Db.Preload("Application"), orgID, id)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
@@ -296,7 +296,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 		}
 	}
 
-	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
+	appBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApprovalRuleset(
 		ctx.Db.Preload("Application"), orgID, id)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
@@ -534,7 +534,7 @@ func (ctx Context) getApprovalRulesetVersionOrProposal(ginctx *gin.Context, appr
 		return
 	}
 
-	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
+	appBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApprovalRuleset(
 		ctx.Db.Preload("Application"), orgID, id)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
@@ -666,7 +666,7 @@ func (ctx Context) UpdateApprovalRulesetProposal(ginctx *gin.Context) {
 		return
 	}
 
-	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
+	appBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApprovalRuleset(
 		ctx.Db.Preload("Application"), orgID, id)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
@@ -844,7 +844,7 @@ func (ctx Context) UpdateApprovalRulesetProposalReviewState(ginctx *gin.Context)
 		return
 	}
 
-	appBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindingsWithApprovalRuleset(
+	appBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApprovalRuleset(
 		ctx.Db.Preload("Application"), orgID, id)
 	if err != nil {
 		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)

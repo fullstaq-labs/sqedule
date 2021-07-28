@@ -845,7 +845,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 		})
 	})
 
-	Describe("DELETE /application-approval-ruleset-bindings/:application_id/:id/proposals/:version_id", func() {
+	Describe("DELETE /application-approval-ruleset-bindings/:application_id/:ruleset_id/proposals/:version_id", func() {
 		var version, proposal dbmodels.ApplicationApprovalRulesetBindingVersion
 
 		Setup := func() {

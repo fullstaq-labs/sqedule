@@ -44,6 +44,38 @@ func CreateApplicationVersion(version dbmodels.ApplicationVersion) ApplicationVe
 }
 
 //
+// ******** Constructor functions: WithVersion ********
+//
+
+func CreateApplicationWithVersion(app dbmodels.Application, version *dbmodels.ApplicationVersion) ApplicationWithVersion {
+	result := ApplicationWithVersion{
+		ReviewableBase: createReviewableBase(app.ReviewableBase),
+		ApplicationBase: ApplicationBase{
+			ID: app.ID,
+		},
+	}
+	if version != nil {
+		jsonStruct := CreateApplicationVersion(*version)
+		result.Version = &jsonStruct
+	}
+	return result
+}
+
+func CreateApplicationWithVersionAndAssociations(app dbmodels.Application, version *dbmodels.ApplicationVersion,
+	rulesetBindings *[]dbmodels.ApplicationApprovalRulesetBinding) ApplicationWithVersion {
+
+	result := CreateApplicationWithVersion(app, version)
+	if rulesetBindings != nil {
+		ary := make([]ApplicationApprovalRulesetBindingWithLatestApprovedVersion, 0, len(*rulesetBindings))
+		for _, binding := range *rulesetBindings {
+			ary = append(ary, CreateApplicationApprovalRulesetBindingWithLatestApprovedVersionAndAssociations(binding, binding.Version, false, true))
+		}
+		result.ApplicationBase.ApprovalRulesetBindings = &ary
+	}
+	return result
+}
+
+//
 // ******** Constructor functions: WithLatestApprovedVersion ********
 //
 

@@ -54,7 +54,7 @@ func (ctx Context) ListReleases(ginctx *gin.Context) {
 	if includeAppJSON {
 		tx = tx.Preload("Application")
 	}
-	releases, err := dbmodels.FindAllReleases(
+	releases, err := dbmodels.FindReleases(
 		tx.Order("created_at DESC"),
 		orgID, applicationID)
 	if err != nil {
@@ -135,7 +135,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			return err
 		}
 
-		appRulesetBindings, err := dbmodels.FindAllApplicationApprovalRulesetBindings(
+		appRulesetBindings, err := dbmodels.FindApplicationApprovalRulesetBindings(
 			tx.Preload("ApprovalRuleset"), orgID, applicationID)
 		if err != nil {
 			return err

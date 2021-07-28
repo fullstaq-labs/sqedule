@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/fullstaq-labs/sqedule/lib"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -41,6 +42,40 @@ type ApplicationAdjustment struct {
 }
 
 //
+// ******** Application methods ********
+//
+
+// NewDraftVersion returns an unsaved ApplicationVersion and ApplicationAdjustment
+// in draft proposal state. Their contents are identical to the currently loaded Version and Adjustment.
+func (app Application) NewDraftVersion() (*ApplicationVersion, *ApplicationAdjustment) {
+	var adjustment ApplicationAdjustment
+	var version *ApplicationVersion = &adjustment.ApplicationVersion
+
+	if app.Version != nil && app.Version.Adjustment != nil {
+		adjustment = *app.Version.Adjustment
+	}
+
+	version.BaseModel = app.BaseModel
+	version.ReviewableVersionBase = ReviewableVersionBase{}
+	version.Application = app
+	version.ApplicationID = app.ID
+	version.Adjustment = &adjustment
+
+	adjustment.BaseModel = app.BaseModel
+	adjustment.ApplicationVersionID = 0
+	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: 1,
+		ReviewState:      reviewstate.Draft,
+	}
+
+	return version, &adjustment
+}
+
+func (app Application) CheckNewProposalsRequireReview(action ReviewableAction) bool {
+	return true
+}
+
+//
 // ******** ApplicationAdjustment methods ********
 //
 
@@ -52,14 +87,14 @@ func (adjustment ApplicationAdjustment) IsEnabled() bool {
 // ******** Find/load functions ********
 //
 
-func FindAllApplications(db *gorm.DB, organizationID string) ([]Application, error) {
+func FindApplications(db *gorm.DB, organizationID string) ([]Application, error) {
 	var result []Application
 	tx := db.Where("organization_id = ?", organizationID)
 	tx = tx.Find(&result)
 	return result, tx.Error
 }
 
-func FindAllApplicationsWithApprovalRuleset(db *gorm.DB, organizationID string, approvalRulesetID string) ([]Application, error) {
+func FindApplicationsWithApprovalRuleset(db *gorm.DB, organizationID string, approvalRulesetID string) ([]Application, error) {
 	var result []Application
 	tx := db.
 		Table("application_approval_ruleset_bindings").
@@ -80,6 +115,14 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	var result Application
 
 	tx := db.Where("organization_id = ? AND id = ?", organizationID, id)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApplicationVersionByID(db *gorm.DB, organizationID string, applicationID string, versionID uint64) (ApplicationVersion, error) {
+	var result ApplicationVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND id = ?", organizationID, applicationID, versionID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
 }
