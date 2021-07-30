@@ -7,7 +7,6 @@ import (
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
-	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/gomega"
 	"gorm.io/gorm"
@@ -260,6 +259,206 @@ var _ = Describe("application API", func() {
 				version = ruleset["latest_approved_version"].(map[string]interface{})
 				Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
 			})
+		})
+	})
+
+	Describe("GET /applications/:id/versions", func() {
+		Setup := func(versionIsApproved bool) {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplication(tx, ctx.Org, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				if versionIsApproved {
+					// Create a binding with 3 versions
+					version1, err := dbmodels.CreateMockApplicationVersion(tx, app, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version1, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					// We deliberately create version 3 out of order so that we test
+					// whether the versions are outputted in order.
+
+					version3, err := dbmodels.CreateMockApplicationVersion(tx, app, lib.NewUint32Ptr(3), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version3, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					version2, err := dbmodels.CreateMockApplicationVersion(tx, app, lib.NewUint32Ptr(2), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version2, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					version, err := dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version, 1,
+						func(adjustment *dbmodels.ApplicationAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableListVersionsTest(ReviewableListVersionsTestOptions{
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/applications/app1/versions",
+			Setup:       Setup,
+		})
+	})
+
+	Describe("GET /applications/:id/versions/:version_number", func() {
+		Setup := func() {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReadVersionTest(ReviewableReadVersionTestOptions{
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/applications/app1/versions/1",
+			Setup:       Setup,
+
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "app1"))
+			},
+		})
+
+		It("outputs approval ruleset bindings", func() {
+			Setup()
+			body := includedTestCtx.MakeRequest()
+
+			Expect(body).To(HaveKeyWithValue("approval_ruleset_bindings", HaveLen(1)))
+			bindings := body["approval_ruleset_bindings"].([]interface{})
+			binding := bindings[0].(map[string]interface{})
+
+			version := binding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
+			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version = ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+		})
+	})
+
+	Describe("GET /applications/:id/proposals", func() {
+		Setup := func(versionIsApproved bool) {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplication(tx, ctx.Org, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				if versionIsApproved {
+					version, err := dbmodels.CreateMockApplicationVersion(tx, app, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					version, err := dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version, 1,
+						func(adjustment *dbmodels.ApplicationAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableListProposalsTest(ReviewableListProposalsTestOptions{
+			HTTPTestCtx: &ctx,
+			Path:        "/v1/applications/app1/proposals",
+			Setup:       Setup,
+		})
+	})
+
+	Describe("GET /applications/:id/proposals/:version_id", func() {
+		var version dbmodels.ApplicationVersion
+
+		Setup := func(versionIsApproved bool) {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplication(tx, ctx.Org, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				if versionIsApproved {
+					version, err = dbmodels.CreateMockApplicationVersion(tx, app, lib.NewUint32Ptr(1), nil)
+					Expect(err).ToNot(HaveOccurred())
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version, 1, nil)
+					Expect(err).ToNot(HaveOccurred())
+				} else {
+					version, err = dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+					Expect(err).ToNot(HaveOccurred())
+
+					_, err = dbmodels.CreateMockApplicationAdjustment(tx, version, 1,
+						func(adjustment *dbmodels.ApplicationAdjustment) {
+							adjustment.ReviewState = reviewstate.Draft
+						})
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReadProposalTest(ReviewableReadProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d", version.ID)
+			},
+			Setup: Setup,
+
+			ResourceTypeNameInResponse: "application proposal",
+
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "app1"))
+			},
+		})
+
+		It("outputs approval ruleset bindings", func() {
+			Setup(false)
+			body := includedTestCtx.MakeRequest(200)
+
+			Expect(body).To(HaveKeyWithValue("approval_ruleset_bindings", HaveLen(1)))
+			bindings := body["approval_ruleset_bindings"].([]interface{})
+			binding := bindings[0].(map[string]interface{})
+
+			version := binding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
+			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version = ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
 		})
 	})
 })

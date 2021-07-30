@@ -119,12 +119,50 @@ func FindApplication(db *gorm.DB, organizationID string, id string) (Application
 	return result, dbutils.CreateFindOperationError(tx)
 }
 
+func FindApplicationVersionByNumber(db *gorm.DB, organizationID string, applicationID string, versionNumber uint32) (ApplicationVersion, error) {
+	var result ApplicationVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND version_number = ?", organizationID, applicationID, versionNumber)
+	tx.Take(&result)
+	return result, dbutils.CreateFindOperationError(tx)
+}
+
 func FindApplicationVersionByID(db *gorm.DB, organizationID string, applicationID string, versionID uint64) (ApplicationVersion, error) {
 	var result ApplicationVersion
 
 	tx := db.Where("organization_id = ? AND application_id = ? AND id = ?", organizationID, applicationID, versionID)
 	tx.Take(&result)
 	return result, dbutils.CreateFindOperationError(tx)
+}
+
+func FindApplicationProposals(db *gorm.DB, organizationID string, applicationID string) ([]ApplicationVersion, error) {
+	var result []ApplicationVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ? AND version_number IS NULL", organizationID, applicationID)
+	tx.Find(&result)
+	return result, tx.Error
+}
+
+func FindApplicationProposalByID(db *gorm.DB, organizationID string, applicationID string, versionID uint64) (ApplicationVersion, error) {
+	return FindApplicationVersionByID(db.Where("version_number IS NULL"), organizationID, applicationID, versionID)
+}
+
+// FindApplicationVersions finds, for a given Application, all its Versions
+// and returns them ordered by version number (descending).
+//
+// The `approved` parameter determines whether it finds approved or proposed versions.
+func FindApplicationVersions(db *gorm.DB, organizationID string, applicationID string, approved bool, pagination dbutils.PaginationOptions) ([]ApplicationVersion, error) {
+	var result []ApplicationVersion
+
+	tx := db.Where("organization_id = ? AND application_id = ?", organizationID, applicationID)
+	if approved {
+		tx = tx.Where("version_number IS NOT NULL").Order("version_number DESC")
+	} else {
+		tx = tx.Where("version_number IS NULL")
+	}
+	tx = dbutils.ApplyDbQueryPaginationOptions(tx, pagination)
+	tx.Find(&result)
+	return result, tx.Error
 }
 
 func LoadApplicationsLatestVersionsAndAdjustments(db *gorm.DB, organizationID string, applications []*Application) error {
@@ -175,6 +213,15 @@ func MakeApplicationsPointerArray(apps []Application) []*Application {
 	result := make([]*Application, 0, len(apps))
 	for i := range apps {
 		result = append(result, &apps[i])
+	}
+	return result
+}
+
+// MakeApplicationVersionsPointerArray turns a `[]ApplicationVersion` into a `[]*ApplicationVersion`.
+func MakeApplicationVersionsPointerArray(versions []ApplicationVersion) []*ApplicationVersion {
+	result := make([]*ApplicationVersion, 0, len(versions))
+	for i := range versions {
+		result = append(result, &versions[i])
 	}
 	return result
 }

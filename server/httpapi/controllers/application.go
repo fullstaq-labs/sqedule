@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
@@ -324,4 +325,176 @@ func (ctx Context) UpdateApplication(ginctx *gin.Context) {
 
 	output := json.CreateApplicationWithVersionAndAssociations(app, app.Version, &rulesetBindings)
 	ginctx.JSON(http.StatusOK, output)
+}
+
+//
+// ******** Operations on approved versions ********
+//
+
+func (ctx Context) ListApplicationVersions(ginctx *gin.Context) {
+	ctx.listApplicationVersionsOrProposals(ginctx, true)
+}
+
+func (ctx Context) listApplicationVersionsOrProposals(ginctx *gin.Context, approved bool) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("application_id")
+
+	app, err := dbmodels.FindApplication(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, app) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	pagination, err := dbutils.ParsePaginationOptions(ginctx)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	versions, err := dbmodels.FindApplicationVersions(ctx.Db, orgID, id, approved, pagination)
+	if err != nil {
+		respondWithDbQueryError("application versions", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationVersionsPointerArray(versions))
+	if err != nil {
+		respondWithDbQueryError("application adjustments", err, ginctx)
+		return
+	}
+
+	// Generate response
+
+	outputList := make([]json.ApplicationVersion, 0, len(versions))
+	for _, version := range versions {
+		outputList = append(outputList, json.CreateApplicationVersion(version))
+	}
+	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
+}
+
+func (ctx Context) GetApplicationVersion(ginctx *gin.Context) {
+	ctx.getApplicationVersionOrProposal(ginctx, true)
+}
+
+func (ctx Context) getApplicationVersionOrProposal(ginctx *gin.Context, approved bool) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("application_id")
+
+	var versionNumberOrID uint64
+	var err error
+
+	if approved {
+		versionNumberOrID, err = strconv.ParseUint(ginctx.Param("version_number"), 10, 32)
+		if err != nil {
+			ginctx.JSON(http.StatusBadRequest,
+				gin.H{"error": "Error parsing 'version_number' parameter as an integer: " + err.Error()})
+			return
+		}
+	} else {
+		versionNumberOrID, err = strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+		if err != nil {
+			ginctx.JSON(http.StatusBadRequest,
+				gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+			return
+		}
+	}
+
+	app, err := dbmodels.FindApplication(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadApplication, app) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	binding, err := dbmodels.FindApplication(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	var version dbmodels.ApplicationVersion
+	if approved {
+		version, err = dbmodels.FindApplicationVersionByNumber(ctx.Db, orgID, id, uint32(versionNumberOrID))
+		if err != nil {
+			respondWithDbQueryError("application version", err, ginctx)
+			return
+		}
+	} else {
+		version, err = dbmodels.FindApplicationProposalByID(ctx.Db, orgID, id, versionNumberOrID)
+		if err != nil {
+			respondWithDbQueryError("application proposal", err, ginctx)
+			return
+		}
+	}
+	binding.Version = &version
+
+	err = dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, orgID,
+		[]*dbmodels.ApplicationVersion{&version})
+	if err != nil {
+		respondWithDbQueryError("application adjustment", err, ginctx)
+		return
+	}
+
+	rulesetBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApplication(
+		ctx.Db.Preload("ApprovalRuleset"),
+		orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(rulesetBindings))
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings latest versions", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(rulesetBindings))
+	if err != nil {
+		respondWithDbQueryError("approval rulesets latest versions", err, ginctx)
+		return
+	}
+
+	// Generate response
+	output := json.CreateApplicationWithVersionAndAssociations(binding, binding.Version, &rulesetBindings)
+	ginctx.JSON(http.StatusOK, output)
+}
+
+//
+// ******** Operations on proposals ********
+//
+
+func (ctx Context) ListApplicationProposals(ginctx *gin.Context) {
+	ctx.listApplicationVersionsOrProposals(ginctx, false)
+}
+
+func (ctx Context) GetApplicationProposal(ginctx *gin.Context) {
+	ctx.getApplicationVersionOrProposal(ginctx, false)
 }
