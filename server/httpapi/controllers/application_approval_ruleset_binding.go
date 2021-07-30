@@ -770,7 +770,7 @@ func (ctx Context) UpdateApplicationApprovalRulesetBindingProposal(ginctx *gin.C
 				&newAdjustment.ReviewableAdjustmentBase,
 				latestApprovedVersionNumber,
 				binding.CheckNewProposalsRequireReview(
-					dbmodels.ReviewableActionCreate,
+					dbmodels.ReviewableActionUpdate,
 					newAdjustment.Mode))
 			if err = tx.Omit(clause.Associations).Model(&proposal).Updates(proposalUpdate).Error; err != nil {
 				return err

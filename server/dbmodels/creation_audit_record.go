@@ -77,6 +77,13 @@ func NewCreationAuditRecord(organizationID string, creator IOrganizationMember, 
 // ******** Deletion functions ********
 //
 
+func DeleteAuditCreationRecordsForApplicationProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
+	return db.
+		Where("organization_id = ? AND application_version_id = ?", organizationID, proposalID).
+		Delete(CreationAuditRecord{}).
+		Error
+}
+
 func DeleteAuditCreationRecordsForApplicationApprovalRulesetBindingProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
 	return db.
 		Where("organization_id = ? AND application_approval_ruleset_binding_version_id = ?", organizationID, proposalID).

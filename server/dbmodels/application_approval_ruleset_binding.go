@@ -112,10 +112,6 @@ func (adjustment ApplicationApprovalRulesetBindingAdjustment) NewAdjustment() Ap
 	return result
 }
 
-//
-// ******** ApplicationApprovalRulesetBindingAdjustment methods ********
-//
-
 func (adjustment ApplicationApprovalRulesetBindingAdjustment) IsEnabled() bool {
 	return lib.DerefBoolPtrWithDefault(adjustment.Enabled, true)
 }

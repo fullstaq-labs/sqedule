@@ -7,6 +7,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/gomega"
 	"gorm.io/gorm"
@@ -459,6 +460,293 @@ var _ = Describe("application API", func() {
 
 			version = ruleset["latest_approved_version"].(map[string]interface{})
 			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+		})
+	})
+
+	Describe("PATCH /applications/:id/proposals/:version_id", func() {
+		var app dbmodels.Application
+		var proposal1, proposal2, version dbmodels.ApplicationVersion
+
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		Setup := func(hasApprovedVersion bool, proposal1ReviewState reviewstate.State) {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				if hasApprovedVersion {
+					app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+					version = *app.Version
+				} else {
+					app, err = dbmodels.CreateMockApplication(tx, ctx.Org, nil)
+				}
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				proposal1, err = dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				proposal1Adjustment, err := dbmodels.CreateMockApplicationAdjustment(tx, proposal1, 1,
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.ReviewState = proposal1ReviewState
+					})
+				Expect(err).ToNot(HaveOccurred())
+				proposal1.Adjustment = &proposal1Adjustment
+
+				proposal2, err = dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				proposal2Adjustment, err := dbmodels.CreateMockApplicationAdjustment(tx, proposal2, 1,
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.ReviewState = reviewstate.Reviewing
+					})
+				Expect(err).ToNot(HaveOccurred())
+				proposal2.Adjustment = &proposal2Adjustment
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableUpdateProposalTest(ReviewableUpdateProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetProposalPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d", proposal1.ID)
+			},
+			GetApprovedVersionPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d", version.ID)
+			},
+			Setup:                      Setup,
+			Input:                      gin.H{"display_name": "Changed Name"},
+			AutoApproveInput:           gin.H{"display_name": "Changed Name"},
+			AdjustmentType:             reflect.TypeOf(dbmodels.ApplicationAdjustment{}),
+			ResourceTypeNameInResponse: "application proposal",
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "app1"))
+			},
+			GetResourceVersionAndLatestAdjustment: func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment) {
+				version, err := dbmodels.FindApplicationVersionByID(ctx.Db, ctx.Org.ID, app.ID, proposal1.ID)
+				Expect(err).ToNot(HaveOccurred())
+
+				dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApplicationVersion{&version})
+				Expect(err).ToNot(HaveOccurred())
+
+				return &version, version.Adjustment
+			},
+			VersionedFieldJSONFieldName: "display_name",
+			VersionedFieldUpdatedValue:  "Changed Name",
+			GetSecondProposalAndAdjustment: func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment) {
+				var proposal dbmodels.ApplicationVersion
+				tx := ctx.Db.Where("id = ?", proposal2.ID).Take(&proposal)
+				Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
+
+				err := dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, ctx.Org.ID,
+					[]*dbmodels.ApplicationVersion{&proposal})
+				Expect(err).ToNot(HaveOccurred())
+
+				return &proposal, proposal.Adjustment
+			},
+		})
+
+		It("outputs approval ruleset bindings", func() {
+			Setup(true, reviewstate.Draft)
+			body := includedTestCtx.MakeRequest(false, false, "", 200)
+
+			Expect(body).To(HaveKeyWithValue("approval_ruleset_bindings", HaveLen(1)))
+			bindings := body["approval_ruleset_bindings"].([]interface{})
+			binding := bindings[0].(map[string]interface{})
+
+			version := binding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
+			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version = ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+		})
+	})
+
+	Describe("PUT /applications/:application_id/:ruleset_id/proposals/:version_id/review-state", func() {
+		var proposal1, proposal2, version dbmodels.ApplicationVersion
+
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		Setup := func(reviewState reviewstate.State) {
+			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockApplicationRulesetBindingWithEnforcingMode1Version(tx, ctx.Org, app, ruleset, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				proposal1, err = dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				proposal1Adjustment, err := dbmodels.CreateMockApplicationAdjustment(tx, proposal1, 1,
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.ReviewState = reviewState
+					})
+				Expect(err).ToNot(HaveOccurred())
+				proposal1.Adjustment = &proposal1Adjustment
+
+				proposal2, err = dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				proposal2Adjustment, err := dbmodels.CreateMockApplicationAdjustment(tx, proposal2, 1,
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.ReviewState = reviewState
+					})
+				Expect(err).ToNot(HaveOccurred())
+				proposal2.Adjustment = &proposal2Adjustment
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		includedTestCtx := IncludeReviewableReviewProposalTest(ReviewableReviewProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetProposalPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d/review-state", proposal1.ID)
+			},
+			GetApprovedVersionPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d/review-state", version.ID)
+			},
+			Setup:                      Setup,
+			ResourceTypeNameInResponse: "application proposal",
+			GetFirstProposalAndAdjustment: func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment) {
+				var proposal dbmodels.ApplicationVersion
+				tx := ctx.Db.Where("id = ?", proposal1.ID).Take(&proposal)
+				Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
+
+				err := dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApplicationVersion{&proposal})
+				Expect(err).ToNot(HaveOccurred())
+
+				return &proposal, proposal.Adjustment
+			},
+			GetSecondProposalAndAdjustment: func() (dbmodels.IReviewableVersion, dbmodels.IReviewableAdjustment) {
+				var proposal dbmodels.ApplicationVersion
+				tx := ctx.Db.Where("id = ?", proposal2.ID).Take(&proposal)
+				Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
+
+				err := dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApplicationVersion{&proposal})
+				Expect(err).ToNot(HaveOccurred())
+
+				return &proposal, proposal.Adjustment
+			},
+			AssertNonVersionedJSONFieldsExist: func(resource map[string]interface{}) {
+				Expect(resource).To(HaveKeyWithValue("id", "app1"))
+			},
+			VersionedFieldJSONFieldName: "display_name",
+			VersionedFieldInitialValue:  "App 1",
+		})
+
+		It("outputs approval ruleset bindings", func() {
+			Setup(reviewstate.Reviewing)
+			body := includedTestCtx.MakeRequest(false, "approved", 200)
+
+			Expect(body).To(HaveKeyWithValue("approval_ruleset_bindings", HaveLen(1)))
+			bindings := body["approval_ruleset_bindings"].([]interface{})
+			binding := bindings[0].(map[string]interface{})
+
+			version := binding["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("mode", "enforcing"))
+
+			Expect(binding).To(HaveKeyWithValue("approval_ruleset", Not(BeNil())))
+			ruleset := binding["approval_ruleset"].(map[string]interface{})
+			Expect(ruleset).To(HaveKeyWithValue("id", "ruleset1"))
+			Expect(ruleset).To(HaveKeyWithValue("latest_approved_version", Not(BeNil())))
+
+			version = ruleset["latest_approved_version"].(map[string]interface{})
+			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
+		})
+	})
+
+	Describe("DELETE /applications/:id/proposals/:version_id", func() {
+		var version, proposal dbmodels.ApplicationVersion
+
+		Setup := func() {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				// Create a proposal with 2 adjustments
+
+				proposal, err = dbmodels.CreateMockApplicationVersion(tx, app, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				// Adjustment 1
+
+				adjustment1, err := dbmodels.CreateMockApplicationAdjustment(tx, proposal, 1,
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockCreationAuditRecord(tx, ctx.Org,
+					func(record *dbmodels.CreationAuditRecord) {
+						record.ApplicationVersionID = &proposal.ID
+						record.ApplicationAdjustmentNumber = &adjustment1.AdjustmentNumber
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				// Adjustment 2
+
+				adjustment2, err := dbmodels.CreateMockApplicationAdjustment(tx, proposal, 2,
+					func(adjustment *dbmodels.ApplicationAdjustment) {
+						adjustment.ReviewState = reviewstate.Draft
+					})
+				Expect(err).ToNot(HaveOccurred())
+				proposal.Adjustment = &adjustment2
+
+				_, err = dbmodels.CreateMockCreationAuditRecord(tx, ctx.Org,
+					func(record *dbmodels.CreationAuditRecord) {
+						record.ApplicationVersionID = &proposal.ID
+						record.ApplicationAdjustmentNumber = &adjustment2.AdjustmentNumber
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		IncludeReviewableDeleteProposalTest(ReviewableDeleteProposalTestOptions{
+			HTTPTestCtx: &ctx,
+			GetProposalPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d", proposal.ID)
+			},
+			GetApprovedVersionPath: func() string {
+				return fmt.Sprintf("/v1/applications/app1/proposals/%d", version.ID)
+			},
+			Setup:                      Setup,
+			ResourceTypeNameInResponse: "application proposal",
+			CountProposals: func() uint {
+				var count int64
+				err = ctx.Db.Model(dbmodels.ApplicationVersion{}).Where("version_number IS NULL").Count(&count).Error
+				Expect(err).ToNot(HaveOccurred())
+				return uint(count)
+			},
+			CountProposalAdjustments: func() uint {
+				var count int64
+				err = ctx.Db.Model(dbmodels.ApplicationAdjustment{}).Where("application_version_id = ?", proposal.ID).Count(&count).Error
+				Expect(err).ToNot(HaveOccurred())
+				return uint(count)
+			},
 		})
 	})
 })

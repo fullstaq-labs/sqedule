@@ -1,15 +1,20 @@
 package controllers
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	reviewstateinput "github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstate"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -497,4 +502,405 @@ func (ctx Context) ListApplicationProposals(ginctx *gin.Context) {
 
 func (ctx Context) GetApplicationProposal(ginctx *gin.Context) {
 	ctx.getApplicationVersionOrProposal(ginctx, false)
+}
+
+func (ctx Context) UpdateApplicationProposal(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("application_id")
+	versionID, err := strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	app, err := dbmodels.FindApplication(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	var input json.ApplicationVersionInput
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionUpdateApplication, app) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	var latestApprovedVersionNumber uint32 = 0
+
+	err = dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		[]*dbmodels.Application{&app})
+	if err != nil {
+		respondWithDbQueryError("application latest approved version", err, ginctx)
+		return
+	}
+	if app.Version != nil {
+		latestApprovedVersionNumber = *app.Version.VersionNumber
+	}
+
+	proposals, err := dbmodels.FindApplicationProposals(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application proposals", err, ginctx)
+		return
+	}
+
+	proposal := dbmodels.CollectApplicationVersionIDEquals(proposals, versionID)
+	if proposal == nil {
+		ginctx.JSON(http.StatusNotFound, gin.H{"error": "application proposal not found"})
+		return
+	}
+
+	otherProposals := dbmodels.CollectApplicationVersionIDNotEquals(proposals, versionID)
+
+	err = dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationVersionsPointerArray(proposals))
+	if err != nil {
+		respondWithDbQueryError("application adjustment", err, ginctx)
+		return
+	}
+
+	rulesetBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApplication(
+		ctx.Db.Preload("ApprovalRuleset"),
+		orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(rulesetBindings))
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings latest versions", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(rulesetBindings))
+	if err != nil {
+		respondWithDbQueryError("approval rulesets latest versions", err, ginctx)
+		return
+	}
+
+	if proposal.Adjustment.ReviewState == reviewstate.Reviewing && input.ProposalState == proposalstate.Final {
+		ginctx.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Cannot finalize a proposal which is already being reviewed"})
+		return
+	}
+
+	// Modify database
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		// Create new Adjustment with patched state
+
+		newAdjustment := proposal.Adjustment.NewAdjustment()
+		json.PatchApplicationAdjustment(orgID, &newAdjustment, input)
+
+		if input.ProposalState == proposalstate.Final {
+			proposalUpdate := proposal
+			dbmodels.FinalizeReviewableProposal(&proposalUpdate.ReviewableVersionBase,
+				&newAdjustment.ReviewableAdjustmentBase,
+				latestApprovedVersionNumber,
+				app.CheckNewProposalsRequireReview(dbmodels.ReviewableActionCreate))
+			if err = tx.Omit(clause.Associations).Model(&proposal).Updates(proposalUpdate).Error; err != nil {
+				return err
+			}
+		} else {
+			dbmodels.SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(&newAdjustment.ReviewableAdjustmentBase,
+				input.ProposalState)
+		}
+
+		err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
+		if err != nil {
+			return err
+		}
+
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ApplicationVersionID = &proposal.ID
+		creationRecord.ApplicationAdjustmentNumber = &newAdjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+		if err != nil {
+			return err
+		}
+
+		proposal.Adjustment = &newAdjustment
+
+		if newAdjustment.ReviewState == reviewstate.Approved {
+			// Ensure no other proposals are in the Reviewing state
+
+			for _, proposal := range otherProposals {
+				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+					continue
+				}
+
+				newAdjustment := proposal.Adjustment.NewAdjustment()
+				newAdjustment.ReviewState = reviewstate.Draft
+				err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
+				if err != nil {
+					return err
+				}
+
+				creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
+				creationRecord.ApplicationVersionID = &proposal.ID
+				creationRecord.ApplicationAdjustmentNumber = &newAdjustment.AdjustmentNumber
+				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	output := json.CreateApplicationWithVersionAndAssociations(app, proposal, &rulesetBindings)
+	ginctx.JSON(http.StatusOK, output)
+}
+
+func (ctx Context) UpdateApplicationProposalReviewState(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("application_id")
+	versionID, err := strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	app, err := dbmodels.FindApplication(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	var input json.ReviewableReviewStateInput
+	if err := ginctx.ShouldBindJSON(&input); err != nil {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReviewApplication, app) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	var latestApprovedVersionNumber uint32 = 0
+
+	if input.State == reviewstateinput.Approved {
+		dbmodels.LoadApplicationsLatestVersionsAndAdjustments(ctx.Db, orgID, []*dbmodels.Application{&app})
+		if err != nil {
+			respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
+			return
+		}
+
+		if app.Version != nil {
+			latestApprovedVersionNumber = *app.Version.VersionNumber
+		}
+	}
+
+	proposals, err := dbmodels.FindApplicationProposals(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application proposals", err, ginctx)
+		return
+	}
+
+	proposal := dbmodels.CollectApplicationVersionIDEquals(proposals, versionID)
+	if proposal == nil {
+		ginctx.JSON(http.StatusNotFound, gin.H{"error": "application proposal not found"})
+		return
+	}
+
+	otherProposals := dbmodels.CollectApplicationVersionIDNotEquals(proposals, versionID)
+
+	err = dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationVersionsPointerArray(proposals))
+	if err != nil {
+		respondWithDbQueryError("application adjustments", err, ginctx)
+		return
+	}
+
+	rulesetBindings, err := dbmodels.FindApplicationApprovalRulesetBindingsWithApplication(
+		ctx.Db.Preload("ApprovalRuleset"),
+		orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApplicationApprovalRulesetBindingsLatestVersionsAndAdjustments(ctx.Db, orgID,
+		dbmodels.MakeApplicationApprovalRulesetBindingsPointerArray(rulesetBindings))
+	if err != nil {
+		respondWithDbQueryError("application approval ruleset bindings latest versions", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadApprovalRulesetsLatestVersionsAndAdjustments(ctx.Db, orgID, dbmodels.CollectApprovalRulesetsWithApplicationApprovalRulesetBindings(rulesetBindings))
+	if err != nil {
+		respondWithDbQueryError("approval rulesets latest versions", err, ginctx)
+		return
+	}
+
+	if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+		ginctx.JSON(http.StatusUnprocessableEntity, gin.H{"error": "This proposal is not awaiting review"})
+		return
+	}
+
+	// Modify database
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		// Create new Adjustment with new review state
+
+		proposalUpdate := *proposal
+		newAdjustment := proposal.Adjustment.NewAdjustment()
+
+		if input.State == reviewstateinput.Approved {
+			newAdjustment.ReviewState = reviewstate.Approved
+			proposalUpdate.ApprovedAt = sql.NullTime{Time: time.Now(), Valid: true}
+			proposalUpdate.VersionNumber = lib.NewUint32Ptr(latestApprovedVersionNumber + 1)
+		} else {
+			newAdjustment.ReviewState = reviewstate.Rejected
+		}
+
+		if err = tx.Omit(clause.Associations).Model(proposal).Updates(proposalUpdate).Error; err != nil {
+			return err
+		}
+		if err = tx.Omit(clause.Associations).Create(&newAdjustment).Error; err != nil {
+			return err
+		}
+
+		creationRecord := dbmodels.NewCreationAuditRecord(orgID, orgMember, ginctx.ClientIP())
+		creationRecord.ApplicationVersionID = &proposal.ID
+		creationRecord.ApplicationAdjustmentNumber = &newAdjustment.AdjustmentNumber
+		err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+		if err != nil {
+			return err
+		}
+
+		proposal.Adjustment = &newAdjustment
+
+		if input.State == reviewstateinput.Approved {
+			// Ensure no other proposals are in the Reviewing state
+
+			for _, proposal := range otherProposals {
+				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+					continue
+				}
+
+				newAdjustment := proposal.Adjustment.NewAdjustment()
+				newAdjustment.ReviewState = reviewstate.Draft
+				err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
+				if err != nil {
+					return err
+				}
+
+				creationRecord := dbmodels.NewCreationAuditRecord(orgID, nil, "")
+				creationRecord.ApplicationVersionID = &proposal.ID
+				creationRecord.ApplicationAdjustmentNumber = &newAdjustment.AdjustmentNumber
+				err = tx.Omit(clause.Associations).Create(&creationRecord).Error
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	output := json.CreateApplicationWithVersionAndAssociations(app, proposal, &rulesetBindings)
+	ginctx.JSON(http.StatusOK, output)
+}
+
+func (ctx Context) DeleteApplicationProposal(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	id := ginctx.Param("application_id")
+	versionID, err := strconv.ParseUint(ginctx.Param("version_id"), 10, 32)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'version_id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	app, err := dbmodels.FindApplication(ctx.Db, orgID, id)
+	if err != nil {
+		respondWithDbQueryError("application", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ApplicationAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionDeleteApplication, app) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	version, err := dbmodels.FindApplicationProposalByID(ctx.Db, orgID, id, versionID)
+	if err != nil {
+		respondWithDbQueryError("application proposal", err, ginctx)
+		return
+	}
+	app.Version = &version
+
+	// Modify database
+
+	err = ctx.Db.Transaction(func(tx *gorm.DB) error {
+		err = dbmodels.DeleteAuditCreationRecordsForApplicationProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
+		}
+		err = dbmodels.DeleteApplicationAdjustmentsForProposal(tx, orgID, version.ID)
+		if err != nil {
+			return err
+		}
+
+		err = tx.Delete(&version).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate response
+
+	ginctx.JSON(http.StatusOK, gin.H{})
 }

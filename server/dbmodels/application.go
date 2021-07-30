@@ -72,12 +72,24 @@ func (app Application) NewDraftVersion() (*ApplicationVersion, *ApplicationAdjus
 }
 
 func (app Application) CheckNewProposalsRequireReview(action ReviewableAction) bool {
-	return true
+	return false
 }
 
 //
 // ******** ApplicationAdjustment methods ********
 //
+
+// NewAdjustment returns an unsaved ApplicationAdjustment in draft state. Its contents
+// are identical to the previous Adjustment.
+func (adjustment ApplicationAdjustment) NewAdjustment() ApplicationAdjustment {
+	result := adjustment
+	result.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
+		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
+		ReviewState:      reviewstate.Draft,
+	}
+	result.Enabled = lib.CopyBoolPtr(adjustment.Enabled)
+	return result
+}
 
 func (adjustment ApplicationAdjustment) IsEnabled() bool {
 	return lib.DerefBoolPtrWithDefault(adjustment.Enabled, true)
@@ -205,6 +217,17 @@ func LoadApplicationVersionsLatestAdjustments(db *gorm.DB, organizationID string
 }
 
 //
+// ******** Deletion functions ********
+//
+
+func DeleteApplicationAdjustmentsForProposal(db *gorm.DB, organizationID string, proposalID uint64) error {
+	return db.
+		Where("organization_id = ? AND application_version_id = ?", organizationID, proposalID).
+		Delete(ApplicationAdjustment{}).
+		Error
+}
+
+//
 // ******** Other functions ********
 //
 
@@ -258,6 +281,34 @@ func CollectApplicationVersions(applications []*Application) []*ApplicationVersi
 	for _, elem := range applications {
 		if elem.Version != nil {
 			result = append(result, elem.Version)
+		}
+	}
+	return result
+}
+
+// CollectApplicationVersionIDEquals returns the first ApplicationVersion
+// whose ID equals `versionID`.
+func CollectApplicationVersionIDEquals(versions []ApplicationVersion, versionID uint64) *ApplicationVersion {
+	for i := range versions {
+		if versions[i].ID == versionID {
+			return &versions[i]
+		}
+	}
+	return nil
+}
+
+// CollectApplicationVersionIDNotEquals returns those ApplicationVersion
+// whose IDs don't equal `versionID`.
+func CollectApplicationVersionIDNotEquals(versions []ApplicationVersion, versionID uint64) []*ApplicationVersion {
+	l := len(versions)
+	if l > 0 {
+		l -= 1
+	}
+
+	result := make([]*ApplicationVersion, 0, l)
+	for i := range versions {
+		if versions[i].ID != versionID {
+			result = append(result, &versions[i])
 		}
 	}
 	return result
