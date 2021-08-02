@@ -25,7 +25,7 @@ var _ = Describe("application API", func() {
 
 		includedTestCtx := IncludeReviewableCreateTest(ReviewableCreateTestOptions{
 			HTTPTestCtx: &ctx,
-			Path:        "/v1/applications/app1",
+			Path:        "/v1/applications",
 			UnversionedInput: gin.H{
 				"id": "app1",
 			},

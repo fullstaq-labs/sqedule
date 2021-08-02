@@ -12,11 +12,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// applicationApprovalRulesetBindingCreateCmd represents the 'approval-ruleset create' command
+// applicationApprovalRulesetBindingCreateCmd represents the 'application-approval-ruleset-binding create' command
 var applicationApprovalRulesetBindingCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an application application approval ruleset binding binding",
-	Long:  "Creates an application application approval ruleset binding binding",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		return applicationApprovalRulesetBindingCreateCmd_run(viper.GetViper(), mocking.RealPrinter{})
@@ -51,7 +50,7 @@ func applicationApprovalRulesetBindingCreateCmd_run(viper *viper.Viper, printer 
 		return err
 	}
 	if resp.IsError() {
-		return fmt.Errorf("Error creating application application approval ruleset binding binding: %s", cli.GetApiErrorMessage(resp))
+		return fmt.Errorf("Error creating application approval ruleset binding binding: %s", cli.GetApiErrorMessage(resp))
 	}
 
 	output, err := encjson.MarshalIndent(ruleset, "", "    ")
@@ -60,7 +59,7 @@ func applicationApprovalRulesetBindingCreateCmd_run(viper *viper.Viper, printer 
 	}
 	printer.PrintOutputln(string(output))
 	cli.PrintSeparatorln(printer)
-	cli.PrintCelebrationlnf(printer, "Application application approval ruleset binding binding created!")
+	cli.PrintCelebrationlnf(printer, "Application approval ruleset binding binding created!")
 
 	version := ruleset["version"].(map[string]interface{})
 	if version["version_state"] == "approved" {

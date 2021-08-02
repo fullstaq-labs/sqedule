@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// applicationApprovalRulesetBindingDescribeCmd represents the 'approval-ruleset describe' command
+// applicationApprovalRulesetBindingDescribeCmd represents the 'application-approval-ruleset-binding describe' command
 var applicationApprovalRulesetBindingDescribeCmd = &cobra.Command{
 	Use:   "describe",
-	Short: "Describe an approval ruleset",
+	Short: "Describe an application approval ruleset binding",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		return applicationApprovalRulesetBindingDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{})

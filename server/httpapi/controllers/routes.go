@@ -11,16 +11,9 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 
 	// Applications
 	rg.GET("applications", ctx.ListApplications)
-	rg.POST("applications/:application_id", ctx.CreateApplication)
+	rg.POST("applications", ctx.CreateApplication)
 	rg.GET("applications/:application_id", ctx.GetApplication)
 	rg.PATCH("applications/:application_id", ctx.UpdateApplication)
-
-	// Releases
-	rg.GET("releases", ctx.ListReleases)
-	rg.GET("applications/:application_id/releases", ctx.ListReleases)
-	rg.POST("applications/:application_id/releases", ctx.CreateRelease)
-	rg.GET("applications/:application_id/releases/:id", ctx.GetRelease)
-	rg.PATCH("applications/:application_id/releases/:id", ctx.UpdateRelease)
 	rg.GET("applications/:application_id/versions", ctx.ListApplicationVersions)
 	rg.GET("applications/:application_id/versions/:version_number", ctx.GetApplicationVersion)
 	rg.GET("applications/:application_id/proposals", ctx.ListApplicationProposals)
@@ -28,6 +21,13 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 	rg.PATCH("applications/:application_id/proposals/:version_id", ctx.UpdateApplicationProposal)
 	rg.PUT("applications/:application_id/proposals/:version_id/review-state", ctx.UpdateApplicationProposalReviewState)
 	rg.DELETE("applications/:application_id/proposals/:version_id", ctx.DeleteApplicationProposal)
+
+	// Releases
+	rg.GET("releases", ctx.ListReleases)
+	rg.GET("applications/:application_id/releases", ctx.ListReleases)
+	rg.POST("applications/:application_id/releases", ctx.CreateRelease)
+	rg.GET("applications/:application_id/releases/:id", ctx.GetRelease)
+	rg.PATCH("applications/:application_id/releases/:id", ctx.UpdateRelease)
 
 	// Approval ruleset bindings
 	rg.GET("application-approval-ruleset-bindings", ctx.ListApplicationApprovalRulesetBindings)
