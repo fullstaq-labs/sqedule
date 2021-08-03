@@ -31,7 +31,7 @@ func applicationCreateOrUpdateCmd_createVersionInput(viper *viper.Viper) json.Ap
 		ReviewableVersionInputBase: json.ReviewableVersionInputBase{
 			ProposalState: proposalstate.State(viper.GetString("proposal-state")),
 		},
-		DisplayName: cli.GetViperStringIfSet(viper, "display_name"),
+		DisplayName: cli.GetViperStringIfSet(viper, "display-name"),
 		Enabled:     cli.GetViperBoolIfSet(viper, "enabled"),
 	}
 }
