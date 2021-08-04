@@ -49,7 +49,7 @@ func approvalRulesetUpdateCmd_run(viper *viper.Viper, printer mocking.IPrinter) 
 	resp, err := req.
 		SetBody(approvalRulesetUpdateCmd_createBody(viper)).
 		SetResult(&ruleset).
-		Get(fmt.Sprintf("/approval-rulesets/%s",
+		Patch(fmt.Sprintf("/approval-rulesets/%s",
 			url.PathEscape(viper.GetString("id"))))
 	if err != nil {
 		return err
