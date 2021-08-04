@@ -40,10 +40,10 @@ func approvalRulesetCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter) 
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(approvalRulesetCreateCmd_createBody(viper)).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Post("/approval-rulesets")
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func approvalRulesetCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter) 
 		return fmt.Errorf("Error creating approval ruleset: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
@@ -60,7 +60,7 @@ func approvalRulesetCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter) 
 	cli.PrintSeparatorln(printer)
 	cli.PrintCelebrationlnf(printer, "Approval ruleset '%s' created!", viper.GetString("id"))
 
-	version := ruleset["version"].(map[string]interface{})
+	version := result["version"].(map[string]interface{})
 	if version["version_state"] == "approved" {
 		cli.PrintTiplnf(printer, "It has been auto-approved by the system. To view it, use `sqedule approval-ruleset describe`")
 	} else {

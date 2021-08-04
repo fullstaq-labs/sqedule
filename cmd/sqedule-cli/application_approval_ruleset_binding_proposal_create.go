@@ -38,10 +38,10 @@ func applicationApprovalRulesetBindingProposalCreateCmd_run(viper *viper.Viper, 
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(applicationApprovalRulesetBindingProposalCreateCmd_createBody(viper)).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Patch(fmt.Sprintf("/application-approval-ruleset-bindings/%s/%s",
 			url.PathEscape(viper.GetString("application-id")),
 			url.PathEscape(viper.GetString("approval-ruleset-id"))))
@@ -52,14 +52,14 @@ func applicationApprovalRulesetBindingProposalCreateCmd_run(viper *viper.Viper, 
 		return fmt.Errorf("Error creating application approval ruleset binding proposal: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
 	printer.PrintOutputln(string(output))
 	cli.PrintSeparatorln(printer)
 	cli.PrintCelebrationlnf(printer, "Approval ruleset proposal (ID=%v) created!",
-		applicationApprovalRulesetBindingProposalCreateCmd_getProposalID(ruleset))
+		applicationApprovalRulesetBindingProposalCreateCmd_getProposalID(result))
 
 	return nil
 }

@@ -45,10 +45,10 @@ func approvalRulesetUpdateCmd_run(viper *viper.Viper, printer mocking.IPrinter) 
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(approvalRulesetUpdateCmd_createBody(viper)).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Patch(fmt.Sprintf("/approval-rulesets/%s",
 			url.PathEscape(viper.GetString("id"))))
 	if err != nil {
@@ -58,7 +58,7 @@ func approvalRulesetUpdateCmd_run(viper *viper.Viper, printer mocking.IPrinter) 
 		return fmt.Errorf("Error updating approval ruleset: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}

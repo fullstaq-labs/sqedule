@@ -39,10 +39,10 @@ func applicationCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter) erro
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(applicationCreateCmd_createBody(viper)).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Post("/applications")
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func applicationCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter) erro
 		return fmt.Errorf("Error creating application: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
@@ -59,7 +59,7 @@ func applicationCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter) erro
 	cli.PrintSeparatorln(printer)
 	cli.PrintCelebrationlnf(printer, "Application created!")
 
-	version := ruleset["version"].(map[string]interface{})
+	version := result["version"].(map[string]interface{})
 	if version["version_state"] == "approved" {
 		cli.PrintTiplnf(printer, "It has been auto-approved by the system. To view it, use `sqedule application describe`")
 	} else {

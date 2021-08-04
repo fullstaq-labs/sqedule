@@ -38,10 +38,10 @@ func applicationProposalCreateCmd_run(viper *viper.Viper, printer mocking.IPrint
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(applicationProposalCreateCmd_createBody(viper)).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Patch(fmt.Sprintf("/applications/%s",
 			url.PathEscape(viper.GetString("application-id"))))
 	if err != nil {
@@ -51,14 +51,14 @@ func applicationProposalCreateCmd_run(viper *viper.Viper, printer mocking.IPrint
 		return fmt.Errorf("Error creating application proposal: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
 	printer.PrintOutputln(string(output))
 	cli.PrintSeparatorln(printer)
 	cli.PrintCelebrationlnf(printer, "Approval ruleset proposal (ID=%v) created!",
-		applicationProposalCreateCmd_getProposalID(ruleset))
+		applicationProposalCreateCmd_getProposalID(result))
 
 	return nil
 }
@@ -69,8 +69,8 @@ func applicationProposalCreateCmd_createBody(viper *viper.Viper) map[string]inte
 	}
 }
 
-func applicationProposalCreateCmd_getProposalID(ruleset map[string]interface{}) interface{} {
-	version := ruleset["version"].(map[string]interface{})
+func applicationProposalCreateCmd_getProposalID(resource map[string]interface{}) interface{} {
+	version := resource["version"].(map[string]interface{})
 	return version["id"]
 }
 

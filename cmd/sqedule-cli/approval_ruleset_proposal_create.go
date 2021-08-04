@@ -38,10 +38,10 @@ func approvalRulesetProposalCreateCmd_run(viper *viper.Viper, printer mocking.IP
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(approvalRulesetProposalCreateCmd_createBody()).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Patch(fmt.Sprintf("/approval-rulesets/%s",
 			url.PathEscape(viper.GetString("approval-ruleset-id"))))
 	if err != nil {
@@ -51,14 +51,14 @@ func approvalRulesetProposalCreateCmd_run(viper *viper.Viper, printer mocking.IP
 		return fmt.Errorf("Error creating approval ruleset proposal: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
 	printer.PrintOutputln(string(output))
 	cli.PrintSeparatorln(printer)
 	cli.PrintCelebrationlnf(printer, "Approval ruleset proposal (ID=%v) created!",
-		approvalRulesetProposalCreateCmd_getProposalID(ruleset))
+		approvalRulesetProposalCreateCmd_getProposalID(result))
 
 	return nil
 }
@@ -69,8 +69,8 @@ func approvalRulesetProposalCreateCmd_createBody() map[string]interface{} {
 	}
 }
 
-func approvalRulesetProposalCreateCmd_getProposalID(ruleset map[string]interface{}) interface{} {
-	version := ruleset["version"].(map[string]interface{})
+func approvalRulesetProposalCreateCmd_getProposalID(resource map[string]interface{}) interface{} {
+	version := resource["version"].(map[string]interface{})
 	return version["id"]
 }
 

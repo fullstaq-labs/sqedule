@@ -39,10 +39,10 @@ func applicationApprovalRulesetBindingCreateCmd_run(viper *viper.Viper, printer 
 		return err
 	}
 
-	var ruleset map[string]interface{}
+	var result map[string]interface{}
 	resp, err := req.
 		SetBody(applicationApprovalRulesetBindingCreateCmd_createBody(viper)).
-		SetResult(&ruleset).
+		SetResult(&result).
 		Post(fmt.Sprintf("/application-approval-ruleset-bindings/%s/%s",
 			url.PathEscape(viper.GetString("application-id")),
 			url.PathEscape(viper.GetString("approval-ruleset-id"))))
@@ -53,7 +53,7 @@ func applicationApprovalRulesetBindingCreateCmd_run(viper *viper.Viper, printer 
 		return fmt.Errorf("Error creating application approval ruleset binding binding: %s", cli.GetApiErrorMessage(resp))
 	}
 
-	output, err := encjson.MarshalIndent(ruleset, "", "    ")
+	output, err := encjson.MarshalIndent(result, "", "    ")
 	if err != nil {
 		return fmt.Errorf("Error formatting result as JSON: %w", err)
 	}
@@ -61,7 +61,7 @@ func applicationApprovalRulesetBindingCreateCmd_run(viper *viper.Viper, printer 
 	cli.PrintSeparatorln(printer)
 	cli.PrintCelebrationlnf(printer, "Application approval ruleset binding binding created!")
 
-	version := ruleset["version"].(map[string]interface{})
+	version := result["version"].(map[string]interface{})
 	if version["version_state"] == "approved" {
 		cli.PrintTiplnf(printer, "It has been auto-approved by the system. To view it, use `sqedule application-approval-ruleset-binding describe`")
 	} else {
