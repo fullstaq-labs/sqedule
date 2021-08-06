@@ -3,7 +3,7 @@ version: '3.5'
 services:
   postgres:
     networks:
-      - sqedule  
+      - sqedule
     container_name: postgres_container
     image: postgres
     environment:
@@ -15,10 +15,10 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
-  
+
   pgadmin:
     networks:
-      - sqedule  
+      - sqedule
     container_name: pgadmin_container
     image: dpage/pgadmin4
     environment:
@@ -33,9 +33,9 @@ services:
 
   sqedule-web:
     networks:
-      - sqedule  
+      - sqedule
     container_name: sqedule-web
-    environment: 
+    environment:
       - REACT_APP_API_HOST=http://sqedule-server:3001
     depends_on:
       - sqedule-server
@@ -46,11 +46,11 @@ services:
 
   sqedule-server:
     networks:
-      - sqedule  
+      - sqedule
     depends_on:
       - postgres
     container_name: sqedule-server
-    image: sqedule:latest
+    image: sqedule-server:latest
     command: run --bind "" --db-type ${DB_TYPE} --db-connection 'dbname=${DB_NAME} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=postgres port=${POSTGRES_PORT}'
     ports:
       - 3001:3001

@@ -14,7 +14,7 @@ COPY . ./
 RUN go mod download
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -o sqedule -ldflags '-w -s' -a -installsuffix cgo ./cmd/sqedule-server
+RUN CGO_ENABLED=0 GOOS=linux go build -o sqedule-server -ldflags '-w -s' -a -installsuffix cgo ./cmd/server
 
 ######## Start a new stage from scratch #######
 FROM alpine:latest
@@ -26,4 +26,4 @@ COPY --from=builder /app/sqedule .
 EXPOSE 3001
 
 # Using entrypoint so we can use commands in docker compose. Rather than using CMD
-ENTRYPOINT ["./sqedule"] 
+ENTRYPOINT ["./sqedule-server"]

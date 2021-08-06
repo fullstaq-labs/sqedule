@@ -61,7 +61,7 @@ web-start: ## Start web UI
 
 .PHONY: local-server-start
 local-server-start: ## Start server
-	@go run ./cmd/sqedule-server server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
+	@go run ./cmd/server server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-start-all
 start-all: ## Start the webUI and Server
@@ -78,11 +78,11 @@ local-db-seed: ## Seeds the database
 
 .PHONY: local-db-migrate
 local-db-migrate: ## Migrate database
-	@go run ./cmd/sqedule-server db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
+	@go run ./cmd/server db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
 .PHONY: local-db-reset
 local-db-reset: ## Reset database
-	@go run ./cmd/sqedule-server db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	 --reset
+	@go run ./cmd/server db migrate --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'	 --reset
 
 .PHONY: local-db-init
 local-db-init: ## Do all DB init steps, requires database
@@ -110,9 +110,9 @@ docker-database: ## Start a postgres & pgadmin docker env
 docker-database-down: ## Stop the postgres & pgadmin docker env
 	@docker-compose -f devtools/docker-compose-db.yml down
 
-.PHONY: docker-build-sqedule
-docker-build-sqedule: ## Build docker image for sqedule
-	@docker build -t sqedule .
+.PHONY: docker-build-server
+docker-build-server: ## Build docker image for sqedule server
+	@docker build -t sqedule-server .
 
 .PHONY: docker-build-webui
 docker-build-webui: ## Build docker image for webUI
@@ -137,6 +137,6 @@ docker-db-init: ## Do all DB init steps, requires either docker-full or docker-d
 .PHONY: docker-full-init
 docker-full-init: ## Build docker containers, start all applications and prepare database
 	$(MAKE) docker-build-webui
-	$(MAKE) docker-build-sqedule
+	$(MAKE) docker-build-server
 	$(MAKE) docker-full
 	$(MAKE) docker-db-init
