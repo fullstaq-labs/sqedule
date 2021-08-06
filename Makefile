@@ -63,10 +63,6 @@ web-start: ## Start web UI
 local-server-start: ## Start server
 	@go run ./cmd/sqedule-server server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
 
-.PHONY: local-process-release
-process-release: ## Start process-release
-	@go run ./cmd/sqedule-server process-release --organization-id $(ORG) --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
-
 .PHONY: local-start-all
 start-all: ## Start the webUI and Server
 	($(MAKE) local-server-start)&
