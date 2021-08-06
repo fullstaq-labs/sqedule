@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -20,8 +21,11 @@ func defineDatabaseConnectionFlags(cmd *cobra.Command) (result databaseConnectio
 	result.dbType = cmd.Flags().StringP("db-type", "T", "", "database type (required). Learn more at 'sqedule db help'")
 	result.dbConnection = cmd.Flags().StringP("db-connection", "D", "", "database connection string. Learn more at 'schedule db help'")
 	result.dbLogLevel = cmd.Flags().String("db-log-level", "silent", "log level for database operations. One of: error,warn,info,silent")
-	cmd.MarkFlagRequired("db-type")
 	return result
+}
+
+func defineDatabaseConnectionConfigRequirementSpec(spec *cli.ConfigRequirementSpec) {
+	spec.StringNonEmpty = append(spec.StringNonEmpty, "db-type")
 }
 
 func init() {

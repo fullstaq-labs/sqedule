@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/server/dbmigrations"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/dbutils/gormigrate"
@@ -12,26 +13,25 @@ import (
 	"gorm.io/gorm"
 )
 
-var dbRollbackFlags struct {
-	dbconn databaseConnectionFlags
-	target *string
-}
-
 // dbRollbackCcmd represents the 'db rollback' command
 var dbRollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Rollback database schema",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
+		err := dbRollbackCmd_checkConfig(viper.GetViper())
+		if err != nil {
+			return err
+		}
 
-		dbLogger, err := createLoggerWithLevel(*dbRollbackFlags.dbconn.dbLogLevel)
+		dbLogger, err := createLoggerWithLevel(viper.GetString("db-log-level"))
 		if err != nil {
 			return fmt.Errorf("Error initializing logger: %w", err)
 		}
 
 		db, err := dbutils.EstablishDatabaseConnection(
-			*dbRollbackFlags.dbconn.dbType,
-			*dbRollbackFlags.dbconn.dbConnection,
+			viper.GetString("db-type"),
+			viper.GetString("db-connection"),
 			&gorm.Config{
 				Logger: dbLogger,
 			})
@@ -41,7 +41,7 @@ var dbRollbackCmd = &cobra.Command{
 
 		gormigrateOptions := createGormigrateOptions(logger)
 		migrator := gormigrate.New(db, &gormigrateOptions, dbmigrations.DbMigrations())
-		if err := migrator.RollbackTo(*dbRollbackFlags.target); err != nil {
+		if err := migrator.RollbackTo(viper.GetString("target")); err != nil {
 			return fmt.Errorf("Error rolling back database schema: %w", err)
 		}
 
@@ -50,13 +50,20 @@ var dbRollbackCmd = &cobra.Command{
 	},
 }
 
+func dbRollbackCmd_checkConfig(viper *viper.Viper) error {
+	spec := cli.ConfigRequirementSpec{
+		StringNonEmpty: []string{"target"},
+	}
+	defineDatabaseConnectionConfigRequirementSpec(&spec)
+	return cli.RequireConfigOptions(viper, spec)
+}
+
 func init() {
 	cmd := dbRollbackCmd
 	flags := cmd.Flags()
 	dbCmd.AddCommand(cmd)
 
-	dbRollbackFlags.dbconn = defineDatabaseConnectionFlags(cmd)
+	defineDatabaseConnectionFlags(cmd)
 
-	dbRollbackFlags.target = flags.String("target", "", "migration ID to rollback to (required)")
-	cmd.MarkFlagRequired("target")
+	flags.String("target", "", "migration ID to rollback to (required)")
 }
