@@ -6,6 +6,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // dbHelpCmd represents the 'db help' command
@@ -13,6 +14,8 @@ var dbHelpCmd = &cobra.Command{
 	Use:   "help",
 	Short: "Help with supported database types and connection strings",
 	Run: func(cmd *cobra.Command, args []string) {
+		viper.BindPFlags(cmd.Flags())
+
 		if !isatty.IsTerminal(os.Stdout.Fd()) {
 			color.Disable()
 		}

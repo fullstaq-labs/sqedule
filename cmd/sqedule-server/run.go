@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/fullstaq-labs/sqedule/server/approvalrulesprocessing"
+	"github.com/fullstaq-labs/sqedule/server/dbmigrations"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"github.com/fullstaq-labs/sqedule/server/dbutils/gormigrate"
 	"github.com/fullstaq-labs/sqedule/server/httpapi"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +32,8 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the Sqedule API server",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		viper.BindPFlags(cmd.Flags())
+
 		dbLogger, err := createLoggerWithLevel(*runFlags.dbconn.dbLogLevel)
 		if err != nil {
 			return fmt.Errorf("Error initializing logger: %w", err)
@@ -41,6 +47,15 @@ var runCmd = &cobra.Command{
 			})
 		if err != nil {
 			return fmt.Errorf("Error establishing database connection: %w", err)
+		}
+
+		if viper.GetBool("auto-db-migrate") {
+			logger.Warn(context.Background(), "Automatically migrating database schemas")
+			gormigrateOptions := createGormigrateOptions(dbLogger)
+			migrator := gormigrate.New(db, &gormigrateOptions, dbmigrations.DbMigrations())
+			if err = migrator.Migrate(); err != nil {
+				return fmt.Errorf("Error running migrations: %w", err)
+			}
 		}
 
 		engine := gin.Default()
@@ -74,4 +89,5 @@ func init() {
 	runFlags.bind = flags.String("bind", runDefaultBind, "IP to listen on")
 	runFlags.port = flags.Int("port", runDefaultPort, "port to listen on")
 	runFlags.corsOrigin = flags.String("cors-origin", "", "CORS origin to allow")
+	flags.Bool("auto-db-migrate", true, "automatically migrate database schema")
 }

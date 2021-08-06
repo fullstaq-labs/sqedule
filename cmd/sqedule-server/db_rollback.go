@@ -8,6 +8,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/dbutils/gormigrate"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +22,8 @@ var dbRollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Rollback database schema",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		viper.BindPFlags(cmd.Flags())
+
 		dbLogger, err := createLoggerWithLevel(*dbRollbackFlags.dbconn.dbLogLevel)
 		if err != nil {
 			return fmt.Errorf("Error initializing logger: %w", err)
