@@ -352,6 +352,7 @@ func (ctx Context) UpdateApprovalRuleset(ginctx *gin.Context) {
 			}
 
 			err = newAdjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
+				rule.AssociateWithApprovalRulesetAdjustment(*newAdjustment)
 				return tx.Omit(clause.Associations).Create(rule).Error
 			})
 			if err != nil {
