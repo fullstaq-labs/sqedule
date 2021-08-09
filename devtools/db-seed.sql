@@ -265,11 +265,12 @@ BEGIN
 
     IF (SELECT COUNT(*) FROM releases WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
         -- Create n_releases_finished releases that are finished
-        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at, finalized_at)
+        INSERT INTO releases (organization_id, application_id, state, metadata, created_at, updated_at, finalized_at)
         SELECT
             'org1' AS organization_id,
             'app1' AS application_id,
             'approved' AS state,
+            '{}' AS metadata,
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             NOW() - (INTERVAL '1 day' * series) AS updated_at,
             NOW() - (INTERVAL '1 day' * series) AS finalized_at
@@ -295,10 +296,11 @@ BEGIN
 
 
         -- Create 2 releases that are in progress
-        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
+        INSERT INTO releases (organization_id, application_id, state, metadata, created_at, updated_at) VALUES (
             'org1',
             'app1',
             'in_progress',
+            '{}',
             (current_date || ' 13:00')::timestamp with time zone,
             NOW()
         );
@@ -322,10 +324,11 @@ BEGIN
             'enforcing'
         );
 
-        INSERT INTO releases (organization_id, application_id, state, created_at, updated_at) VALUES (
+        INSERT INTO releases (organization_id, application_id, state, metadata, created_at, updated_at) VALUES (
             'org1',
             'app1',
             'in_progress',
+            '{}',
             (current_date || ' 18:00')::timestamp with time zone,
             NOW()
         );

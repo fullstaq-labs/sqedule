@@ -22,8 +22,9 @@ type Release struct {
 }
 
 type ReleasePatchablePart struct {
-	SourceIdentity *string `json:"source_identity"`
-	Comments       *string `json:"comments"`
+	SourceIdentity *string                 `json:"source_identity"`
+	Metadata       *map[string]interface{} `json:"metadata"`
+	Comments       *string                 `json:"comments"`
 }
 
 type ReleaseWithApplicationAssociation struct {
@@ -55,6 +56,12 @@ func CreateFromDbRelease(release dbmodels.Release) Release {
 		State:     string(release.State),
 		CreatedAt: release.CreatedAt,
 		UpdatedAt: release.UpdatedAt,
+	}
+	if release.Metadata != nil {
+		result.Metadata = (*map[string]interface{})(&release.Metadata)
+	} else {
+		emptyMap := map[string]interface{}{}
+		result.Metadata = &emptyMap
 	}
 	if release.SourceIdentity.Valid {
 		result.SourceIdentity = &release.SourceIdentity.String
@@ -122,6 +129,9 @@ func CreateFromDbReleaseWithAssociations(release dbmodels.Release, includeApplic
 func PatchDbRelease(release *dbmodels.Release, json ReleasePatchablePart) {
 	if json.SourceIdentity != nil {
 		release.SourceIdentity = sql.NullString{String: *json.SourceIdentity, Valid: true}
+	}
+	if json.Metadata != nil {
+		release.Metadata = *json.Metadata
 	}
 	if json.Comments != nil {
 		release.Comments = sql.NullString{String: *json.Comments, Valid: true}

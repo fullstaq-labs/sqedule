@@ -47,9 +47,14 @@ func releaseCreateCmd_run(viper *viper.Viper, printer mocking.IPrinter, testing 
 		return err
 	}
 
+	body, err := releaseCreateCmd_createBody(viper)
+	if err != nil {
+		return err
+	}
+
 	var release map[string]interface{}
 	resp, err := req.
-		SetBody(releaseCreateCmd_createBody(viper)).
+		SetBody(body).
 		SetResult(&release).
 		Post(fmt.Sprintf("/applications/%s/releases",
 			url.PathEscape(viper.GetString("application-id"))))
@@ -85,11 +90,20 @@ func releaseCreateCmd_checkConfig(viper *viper.Viper) error {
 	})
 }
 
-func releaseCreateCmd_createBody(viper *viper.Viper) json.ReleasePatchablePart {
-	return json.ReleasePatchablePart{
+func releaseCreateCmd_createBody(viper *viper.Viper) (json.ReleasePatchablePart, error) {
+	result := json.ReleasePatchablePart{
 		SourceIdentity: lib.NonEmptyStringOrNil(viper.GetString("source-identity")),
 		Comments:       lib.NonEmptyStringOrNil(viper.GetString("comments")),
 	}
+	if metadataText := viper.GetString("metadata"); len(metadataText) > 0 {
+		var metadata map[string]interface{}
+		err := encjson.Unmarshal([]byte(metadataText), &metadata)
+		if err != nil {
+			return json.ReleasePatchablePart{}, fmt.Errorf("Error parsing metadata as JSON object: %w", err)
+		}
+		result.Metadata = &metadata
+	}
+	return result, nil
 }
 
 func init() {
@@ -101,6 +115,7 @@ func init() {
 
 	flags.StringP("application-id", "a", "", "ID of application for which to create a release (required)")
 	flags.String("source-identity", "", "Source identity")
+	flags.String("metadata", "", "Metadata (JSON object)")
 	flags.String("comments", "", "Comments to add to the release")
 	flags.BoolP("wait", "w", false, "Wait until the release's approval state is final")
 	releaseWaitCmd_defineFlagsSharedWithCreateCmd(flags)

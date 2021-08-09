@@ -10,6 +10,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/organizationmemberrole"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -144,6 +145,7 @@ func CreateMockReleaseWithInProgressState(db *gorm.DB, organization Organization
 		ApplicationID: application.ID,
 		Application:   application,
 		State:         releasestate.InProgress,
+		Metadata:      datatypes.JSONMap{},
 	}
 	if customizeFunc != nil {
 		customizeFunc(&result)

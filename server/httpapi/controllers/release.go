@@ -13,6 +13,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -129,6 +130,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 			BaseModel:     dbmodels.BaseModel{OrganizationID: orgID},
 			ApplicationID: applicationID,
 			State:         releasestate.InProgress,
+			Metadata:      datatypes.JSONMap{},
 		}
 		json.PatchDbRelease(&release, input)
 		if err := tx.Create(&release).Error; err != nil {

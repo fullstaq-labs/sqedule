@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbutils/gormigrate"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -36,6 +37,7 @@ var migration20201021000060 = gormigrate.Migration{
 			ID             uint64      `gorm:"primaryKey; not null"`
 			State          string      `gorm:"type:release_state; not null"`
 			SourceIdentity sql.NullString
+			Metadata       datatypes.JSONMap `gorm:"not null"`
 			Comments       sql.NullString
 			CreatedAt      time.Time `gorm:"not null"`
 			UpdatedAt      time.Time `gorm:"not null"`

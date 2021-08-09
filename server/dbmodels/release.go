@@ -7,6 +7,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +22,7 @@ type Release struct {
 	ID             uint64             `gorm:"primaryKey; not null"`
 	State          releasestate.State `gorm:"type:release_state; not null"`
 	SourceIdentity sql.NullString
+	Metadata       datatypes.JSONMap `gorm:"not null"`
 	Comments       sql.NullString
 	CreatedAt      time.Time `gorm:"not null"`
 	UpdatedAt      time.Time `gorm:"not null"`
