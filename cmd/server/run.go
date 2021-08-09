@@ -7,6 +7,8 @@ import (
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/server/approvalrulesprocessing"
 	"github.com/fullstaq-labs/sqedule/server/dbmigrations"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/organizationmemberrole"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/dbutils/gormigrate"
 	"github.com/fullstaq-labs/sqedule/server/httpapi"
@@ -14,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 const (
@@ -56,6 +59,11 @@ var runCmd = &cobra.Command{
 			}
 		}
 
+		err = runCmd_createDefaultOrg(viper.GetViper(), db, logger)
+		if err != nil {
+			return err
+		}
+
 		engine := gin.Default()
 		ctx := httpapi.Context{
 			Db:         db,
@@ -75,6 +83,49 @@ var runCmd = &cobra.Command{
 		engine.Run(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")))
 		return nil
 	},
+}
+
+func runCmd_createDefaultOrg(viper *viper.Viper, db *gorm.DB, logger gormlogger.Interface) error {
+	// When removing this function, don't forget to also update the corresponding code in
+	// - server/httpapi/auth/middleware_org_member_lookup.go, getOrgMemberFromJwtClaims()
+	// - server/httpapi/router.go, installAuthenticationMiddlewares()
+	var org dbmodels.Organization
+
+	tx := db.Take(&org)
+	err := dbutils.CreateFindOperationError(tx)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return fmt.Errorf("Error querying whether any Organizations are defined: %w", tx.Error)
+	} else if err == nil {
+		return nil
+	}
+
+	logger.Warn(context.Background(), "Creating default Organization")
+	org = dbmodels.Organization{
+		ID:          "default",
+		DisplayName: "Default Organization",
+	}
+	if tx = db.Create(&org); tx.Error != nil {
+		return fmt.Errorf("Error creating default Organization: %w", tx.Error)
+	}
+
+	user := dbmodels.User{
+		OrganizationMember: dbmodels.OrganizationMember{
+			BaseModel: dbmodels.BaseModel{
+				OrganizationID: "default",
+				Organization:   org,
+			},
+			Role:         organizationmemberrole.Admin,
+			PasswordHash: "",
+		},
+		Email:     "nonexistant@default.org",
+		FirstName: "Default",
+		LastName:  "User",
+	}
+	if tx = db.Create(&user); tx.Error != nil {
+		return fmt.Errorf("Error creating default user account: %w", tx.Error)
+	}
+
+	return nil
 }
 
 func runCmd_checkConfig(viper *viper.Viper) error {

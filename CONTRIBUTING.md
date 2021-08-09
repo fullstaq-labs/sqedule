@@ -77,37 +77,10 @@ This example shows how you can request a list of releases from the API server. W
  * You have [httpie](https://httpie.io/) installed.
  * You have the seed data loaded.
 
-First, authenticate as the `admin_sa` user account (who's part of the `org1` organization) and obtain an authentication token:
+Request a list of releases:
 
 ~~~bash
-http POST localhost:3001/v1/auth/login service_account_name=admin_sa password=123456 organization_id=org1
-~~~
-
-This prints something like:
-
-~~~
-HTTP/1.1 200 OK
-Content-Length: 253
-Content-Type: application/json; charset=utf-8
-Date: Tue, 05 Jan 2021 11:56:21 GMT
-
-{
-    "code": 200,
-    "expire": "2021-02-17T04:56:21+01:00",
-    "token": "<SOME TOKEN>"
-}
-~~~
-
-Copy the token and put it in a shell variable, like this:
-
-~~~bash
-AUTH_TOKEN='<SOME TOKEN>'
-~~~
-
-Now you can request a list of releases:
-
-~~~bash
-http localhost:3001/v1/releases Authorization:"Bearer $AUTH_TOKEN"
+http localhost:3001/v1/releases
 ~~~
 
 ~~~

@@ -45,9 +45,10 @@ func (ctx Context) installUnauthenticatedRoutes(rg *gin.RouterGroup, jwtAuthMidd
 }
 
 func (ctx Context) installAuthenticationMiddlewares(rg *gin.RouterGroup, jwtAuthMiddleware *jwt.GinJWTMiddleware, orgMemberLookupMiddleware gin.HandlerFunc) {
-	if !ctx.UseTestAuthentication {
-		rg.Use(jwtAuthMiddleware.MiddlewareFunc())
-	}
+	// TODO: uncomment this once we have proper user management
+	// if !ctx.UseTestAuthentication {
+	// 	rg.Use(jwtAuthMiddleware.MiddlewareFunc())
+	// }
 	rg.Use(orgMemberLookupMiddleware)
 }
 

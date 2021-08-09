@@ -20,9 +20,6 @@ const THEME = createMuiTheme({
 
 const AXIOS = axios.create({
   baseURL: getBaseURL(),
-  headers: {
-    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NDUxNzI1MjIsIm9taWQiOiJhZG1pbl9zYSIsIm9tdCI6InNhIiwib3JnaWQiOiJvcmcxIiwib3JpZ19pYXQiOjE2MTM2MzY1MjJ9.3RyBxg5VPVNTl9N5htrjOxeYMUdTlJHRGuvu87zYm1g'
-  }
 });
 
 const SWR_OPTIONS = {

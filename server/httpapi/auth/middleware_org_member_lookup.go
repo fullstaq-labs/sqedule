@@ -122,5 +122,10 @@ func getOrgMemberFromJwtClaims(ginctx *gin.Context) (string, dbmodels.Organizati
 	if ok {
 		return orgID, dbmodels.OrganizationMemberType(orgMemberType), orgMemberID, true
 	}
-	return "", "", "", false
+
+	// TODO: remove this once we have proper user management
+
+	return "default", dbmodels.UserType, "nonexistant@default.org", true
+
+	//return "", "", "", false
 }
