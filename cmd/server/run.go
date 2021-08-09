@@ -87,7 +87,7 @@ var runCmd = &cobra.Command{
 
 func runCmd_createDefaultOrg(viper *viper.Viper, db *gorm.DB, logger gormlogger.Interface) error {
 	// When removing this function, don't forget to also update the corresponding code in
-	// - server/httpapi/auth/middleware_org_member_lookup.go, getOrgMemberFromJwtClaims()
+	// - server/httpapi/auth/middleware_org_member_lookup.go, run()
 	// - server/httpapi/router.go, installAuthenticationMiddlewares()
 	var org dbmodels.Organization
 
@@ -115,7 +115,7 @@ func runCmd_createDefaultOrg(viper *viper.Viper, db *gorm.DB, logger gormlogger.
 				Organization:   org,
 			},
 			Role:         organizationmemberrole.Admin,
-			PasswordHash: "",
+			PasswordHash: "$argon2id$v=19$m=16,t=2,p=1$WlBFUmxyMkJWakw4TUMxVw$NyRkqa3o0uaAHnp7XpjU5A", // 123456
 		},
 		Email:     "nonexistant@default.org",
 		FirstName: "Default",

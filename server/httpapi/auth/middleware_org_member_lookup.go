@@ -6,6 +6,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
+	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -67,13 +68,24 @@ func (m orgMemberLookupMiddleware) run(ginctx *gin.Context) {
 		return
 	}
 
-	orgID, orgMemberType, orgMemberID, ok := getOrgMemberFromJwtClaims(ginctx)
-	if !ok {
+	// orgID, orgMemberType, orgMemberID, ok := m.getOrgMemberFromJwtClaims(ginctx)
+	// if !ok {
+	// 	ginctx.Abort()
+	// 	ginctx.JSON(http.StatusUnauthorized,
+	// 		gin.H{"error": "authentication error: incomplete JWT token"})
+	// 	return
+	// }
+
+	orgMember, err = m.lookupDefaultOrgMember()
+	if err != nil {
 		ginctx.Abort()
 		ginctx.JSON(http.StatusUnauthorized,
-			gin.H{"error": "authentication error: incomplete JWT token"})
+			gin.H{"error": "authentication error: " + err.Error()})
 		return
 	}
+	orgID := orgMember.GetOrganizationID()
+	orgMemberType := orgMember.Type()
+	orgMemberID := orgMember.ID()
 
 	orgMember, err = dbmodels.FindOrganizationMember(m.Db, orgID, orgMemberType, orgMemberID)
 	if err != nil {
@@ -107,7 +119,7 @@ func (m orgMemberLookupMiddleware) lookupTestAuthenticatedOrgMember(ginctx *gin.
 	return dbmodels.FindOrganizationMember(m.Db, orgID, dbmodels.OrganizationMemberType(orgMemberType), orgMemberID)
 }
 
-func getOrgMemberFromJwtClaims(ginctx *gin.Context) (string, dbmodels.OrganizationMemberType, string, bool) {
+func (m orgMemberLookupMiddleware) getOrgMemberFromJwtClaims(ginctx *gin.Context) (string, dbmodels.OrganizationMemberType, string, bool) {
 	var orgID, orgMemberType, orgMemberID string
 	var ok bool
 	claims := jwt.ExtractClaims(ginctx)
@@ -122,10 +134,30 @@ func getOrgMemberFromJwtClaims(ginctx *gin.Context) (string, dbmodels.Organizati
 	if ok {
 		return orgID, dbmodels.OrganizationMemberType(orgMemberType), orgMemberID, true
 	}
+	return "", "", "", false
+}
 
-	// TODO: remove this once we have proper user management
+func (m orgMemberLookupMiddleware) lookupDefaultOrgMember() (dbmodels.IOrganizationMember, error) {
+	var user dbmodels.User
 
-	return "default", dbmodels.UserType, "nonexistant@default.org", true
+	tx := m.Db.Take(&user)
+	err := dbutils.CreateFindOperationError(tx)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("Error querying default user account: %w", tx.Error)
+	} else if err == nil {
+		return &user, nil
+	}
 
-	//return "", "", "", false
+	var sa dbmodels.ServiceAccount
+	tx = m.Db.Take(&sa)
+	err = dbutils.CreateFindOperationError(tx)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("No default user account or service account found")
+		} else {
+			return nil, fmt.Errorf("Error querying default service account: %w", tx.Error)
+		}
+	} else {
+		return &sa, nil
+	}
 }
