@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import SwipeableViews from 'react-swipeable-views';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatReviewStateString } from '../../common/utils';
+import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatAdjustmentStateString, formatBooleanAsIconWithLabel, formatBooleanAsIcon } from '../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../components/app_context';
 import { NavigationSection } from '../../components/navbar';
 import DataRefreshErrorSnackbar from '../../components/data_refresh_error_snackbar';
@@ -26,6 +26,7 @@ import Container from '@material-ui/core/Container';
 import { ColDef } from '@material-ui/data-grid';
 import { formatStateString as formatReleaseStateString } from '../releases';
 import styles from '../../common/tables.module.scss';
+import { pathToApprovalRuleset } from '../../common/paths';
 
 interface IProps {
   appContext: IAppContext;
@@ -52,7 +53,7 @@ export default function ApplicationPage(props: IProps) {
       `/v1/applications/${encodeURIComponent(id)}/releases?page=${releasesDataGridState.requestedPage}&per_page=${releasesDataGridState.requestedPageSize}` :
       null);
   const hasAllData = appData && releasesData;
-  const firstError = appError || releasesError;
+  const firstError = appError ?? releasesError;
   const isValidating = appDataIsValidating || releasesDataIsValidating;
 
   declarePageTitle(appContext, getPageTitle());
@@ -60,7 +61,11 @@ export default function ApplicationPage(props: IProps) {
 
   function getPageTitle() {
     if (appData) {
-      return `${appData.display_name} (${id})`;
+      if (appData.latest_approved_version) {
+        return `${appData.latest_approved_version.display_name} (${id})`;
+      } else {
+        return appData.id;
+      }
     } else {
       return '';
     }
@@ -197,21 +202,21 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
               <TableCell component="th" scope="row">Display name</TableCell>
               <TableCell>
                 <Link href={`/applications/${encodeURIComponent(data.id)}`}>
-                  <a>{data.display_name}</a>
+                  <a>{data.latest_approved_version?.display_name ?? data.id}</a>
                 </Link>
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Latest version</TableCell>
-              <TableCell>{data.version_number}</TableCell>
+              <TableCell>{data.latest_approved_version?.version_number ?? 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Enabled</TableCell>
-              <TableCell>{data.enabled ? '✅\xa0 Yes' : '❌\xa0 No'}</TableCell>
+              <TableCell>{formatBooleanAsIconWithLabel(data.latest_approved_version?.enabled) ?? 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell component="th" scope="row">Review state</TableCell>
-              <TableCell>{formatReviewStateString(data.review_state)}</TableCell>
+              <TableCell component="th" scope="row">Adjustment state</TableCell>
+              <TableCell>{formatAdjustmentStateString(data.latest_approved_version?.adjustment_state) || 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Created at</TableCell>
@@ -219,7 +224,7 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Updated at</TableCell>
-              <TableCell>{formatDateTimeString(data.updated_at as string)}</TableCell>
+              <TableCell>{formatDateTimeString(data.latest_approved_version?.updated_at) || 'N/A'}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -254,7 +259,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 150,
     valueGetter: ({ row }) => row.approval_ruleset.id,
     renderCell: ({ row }) => (
-      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.version_number)}`}>
+      <Link href={pathToApprovalRuleset(row.approval_ruleset)}>
         <a>{row.approval_ruleset.id}</a>
       </Link>
     ),
@@ -263,10 +268,10 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'display_name',
     headerName: 'Display name',
     width: 250,
-    valueGetter: ({ row }) => row.approval_ruleset.display_name,
-    renderCell: ({ row }) => (
-      <Link href={`/approval-rulesets/${encodeURIComponent(row.approval_ruleset.id)}/versions/${encodeURIComponent(row.approval_ruleset.version_number)}`}>
-        <a>{row.approval_ruleset.display_name}</a>
+    valueGetter: ({ row }) => row.approval_ruleset.display_name ?? row.approval_ruleset.id,
+    renderCell: ({ row, value }) => (
+      <Link href={pathToApprovalRuleset(row.approval_ruleset)}>
+        <a>{row.approval_ruleset.display_name ?? row.approval_ruleset.id}</a>
       </Link>
     ),
   },
@@ -274,35 +279,37 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'latest_version',
     headerName: 'Latest version',
     width: 130,
-    valueGetter: ({ row }) => row.approval_ruleset.version_number,
+    valueGetter: ({ row }) => row.approval_ruleset.latest_approved_version?.version_number,
+    valueFormatter: ({ value }) => value ?? 'N/A',
   },
   {
     field: 'enabled',
     headerName: 'Enabled',
     width: 120,
-    valueGetter: ({ row }) => row.approval_ruleset.enabled,
-    valueFormatter: ({ value }) => (value as boolean) ? '✅' : '❌',
+    valueGetter: ({ row }) => row.approval_ruleset.latest_approved_version?.enabled,
+    valueFormatter: ({ value }) => formatBooleanAsIcon(value as any) ?? 'N/A',
   },
   {
-    field: 'review_state',
-    headerName: 'Review state',
+    field: 'adjustment_state',
+    headerName: 'Adjustment state',
     width: 150,
-    valueGetter: ({ row }) => row.approval_ruleset.review_state,
-    valueFormatter: ({ value }) => formatReviewStateString(value as string),
+    valueGetter: ({ row }) => row.approval_ruleset.latest_approved_version?.adjustment_state,
+    valueFormatter: ({ value }) => formatAdjustmentStateString(value as any) ?? 'N/A',
   },
   {
     field: 'mode',
     headerName: 'Mode',
     width: 120,
-    valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
+    valueGetter: ({ row }) => row.latest_approved_version?.mode,
+    valueFormatter: ({ value }) => humanizeUnderscoreString(value as any) ?? 'N/A',
   },
   {
-    field: 'updated_at',
+    field: 'ruleset_updated_at',
     type: 'dateTime',
     width: 180,
-    headerName: 'Updated at',
-    valueGetter: ({ row }) => row.approval_ruleset.created_at,
-    valueFormatter: ({ value }) => formatDateTimeString(value as string),
+    headerName: 'Ruleset updated at',
+    valueGetter: ({ row }) => row.approval_ruleset.latest_approved_version?.updated_at,
+    valueFormatter: ({ value }) => formatDateTimeString(value as any) ?? 'N/A',
   },
 ];
 
@@ -399,7 +406,7 @@ const RELEASE_COLUMNS: ColDef[] = [
     type: 'dateTime',
     width: 180,
     headerName: 'Finalized at',
-    valueFormatter: ({ value }) => value ? formatDateTimeString(value as string) : 'N/A',
+    valueFormatter: ({ value }) => formatDateTimeString(value as any) ?? 'N/A',
   },
 ];
 

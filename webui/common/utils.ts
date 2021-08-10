@@ -22,8 +22,12 @@ export function formatDateTime(date: Date): string {
  * This string strives to be readable and unambiguous across different cultures,
  * which is we use a ISO8601-like format.
  */
-export function formatDateTimeString(dateStr: string): string {
-  return formatDateTime(new Date(dateStr));
+export function formatDateTimeString(dateStr: string | undefined | null): string | undefined {
+  if (isNullish(dateStr)) {
+    return undefined;
+  } else {
+    return formatDateTime(new Date(dateStr as string));
+  }
 }
 
 /**
@@ -37,8 +41,12 @@ export function capitalizeFirstLetter(str: string): string {
  * Given an identifier in underscore format, such as "in_progress",
  * turns it into a human-friendly format such as "In progress".
  */
-export function humanizeUnderscoreString(str: string): string {
-  return capitalizeFirstLetter(str.replace('_', ' '));
+export function humanizeUnderscoreString(str: string | undefined | null): string | undefined {
+  if (isNullish(str)) {
+    return undefined;
+  } else {
+    return capitalizeFirstLetter((str as string).replace('_', ' '));
+  }
 }
 
 /**
@@ -90,8 +98,12 @@ export function paginateArray<T>(ary: Array<T>, page: number, perPage: number): 
   return ary.slice(startIndex, startIndex + perPage + 1);
 }
 
-export function formatReviewStateString(state: string) {
-  switch (state) {
+export function formatAdjustmentStateString(state: string | undefined | null): string | undefined {
+  if (isNullish(state)) {
+    return undefined;
+  }
+
+  switch (state as string) {
     case 'draft':
       return '🖋\xa0 Draft';
     case 'reviewing':
@@ -101,6 +113,26 @@ export function formatReviewStateString(state: string) {
     case 'rejected':
       return '❌\xa0 Rejected';
     default:
-      return humanizeUnderscoreString(state);
+      return humanizeUnderscoreString(state as string);
   }
+}
+
+export function formatBooleanAsIcon(val: boolean | undefined | null): string | undefined {
+  if (isNullish(val)) {
+    return undefined;
+  } else {
+    return (val as boolean) ? '✅' : '❌';
+  }
+}
+
+export function formatBooleanAsIconWithLabel(val: boolean | undefined | null): string | undefined {
+  if (isNullish(val)) {
+    return undefined;
+  } else {
+    return (val as boolean) ? '✅\xa0 Yes' : '❌\xa0 No';
+  }
+}
+
+export function isNullish(val: any): boolean {
+  return typeof(val) === 'undefined' || val === null;
 }

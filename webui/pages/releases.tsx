@@ -35,10 +35,10 @@ const COLUMNS: ColDef[] = [
     field: 'application_display_name',
     headerName: 'Application',
     width: 250,
-    valueGetter: ({ row }) => row.application.display_name,
+    valueGetter: ({ row }) => row.application.latest_approved_version?.display_name ?? row.application.id,
     renderCell: ({ row }) => (
       <Link href={`/applications/${encodeURIComponent(row.application.id)}`}>
-        <a>{row.application.display_name}</a>
+        <a>{row.application.latest_approved_version?.display_name ?? row.application.id}</a>
       </Link>
     ),
   },
@@ -60,7 +60,7 @@ const COLUMNS: ColDef[] = [
     type: 'dateTime',
     width: 180,
     headerName: 'Finalized at',
-    valueFormatter: ({ value }) => value ? formatDateTimeString(value as string) : 'N/A',
+    valueFormatter: ({ value }) => formatDateTimeString(value as any) ?? 'N/A',
   },
 ];
 

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import SwipeableViews from 'react-swipeable-views';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatReviewStateString } from '../../common/utils';
+import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatAdjustmentStateString, formatBooleanAsIconWithLabel, formatBooleanAsIcon } from '../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../components/app_context';
 import { NavigationSection } from '../../components/navbar';
 import DataRefreshErrorSnackbar from '../../components/data_refresh_error_snackbar';
@@ -59,7 +59,11 @@ export default function ApprovalRulesetPage(props: IProps) {
 
   function getPageTitle() {
     if (data) {
-      return `${data.display_name} (${id})`;
+      if (data.latest_approved_version) {
+        return `${data.latest_approved_version.display_name} (${id})`;
+      } else {
+        return id;
+      }
     } else {
       return '';
     }
@@ -199,25 +203,25 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
               <TableCell component="th" scope="row">Display name</TableCell>
               <TableCell>
                 <Link href={`/approval-rulesets/${encodeURIComponent(data.id)}`}>
-                  <a>{data.display_name}</a>
+                  <a>{data.latest_approved_version?.display_name ?? data.id}</a>
                 </Link>
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Description</TableCell>
-              <TableCell>{data.description || 'N/A'}</TableCell>
+              <TableCell>{data.latest_approved_version?.description || 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Latest version</TableCell>
-              <TableCell>{data.version_number}</TableCell>
+              <TableCell>{data.latest_approved_version?.version_number ?? 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Enabled</TableCell>
-              <TableCell>{data.enabled ? '✅\xa0 Yes' : '❌\xa0 No'}</TableCell>
+              <TableCell>{formatBooleanAsIconWithLabel(data.latest_approved_version?.enabled) || 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell component="th" scope="row">Review state</TableCell>
-              <TableCell>{formatReviewStateString(data.review_state)}</TableCell>
+              <TableCell component="th" scope="row">Adjustment state</TableCell>
+              <TableCell>{formatAdjustmentStateString(data.latest_approved_version?.adjustment_state) ?? 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Created at</TableCell>
@@ -225,7 +229,7 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Updated at</TableCell>
-              <TableCell>{formatDateTimeString(data.updated_at as string)}</TableCell>
+              <TableCell>{formatDateTimeString(data.latest_approved_version?.updated_at as any) ?? 'N/A'}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -263,8 +267,8 @@ function RulesTabContents(props: IRulesTabContentsProps) {
   const { data } = props;
 
   if (data) {
-    const rules = data.approval_rules.map(renderApprovalRule)
-    return <Paper><List>{rules}</List></Paper>;
+    const rules = data.latest_approved_version?.approval_rules ?? [];
+    return <Paper><List>{rules.map(renderApprovalRule)}</List></Paper>;
   }
 
   if (props.error) {
@@ -313,7 +317,7 @@ function humanizeApprovalRuleType(type: string): string {
     case "manual":
       return "Manual approval";
     default:
-      return humanizeUnderscoreString(type);
+      return humanizeUnderscoreString(type) as string;
   }
 }
 
@@ -379,10 +383,10 @@ const APPLICATION_APPROVAL_RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'display_name',
     headerName: 'Display name',
     width: 250,
-    valueGetter: ({ row }) => row.application.display_name,
+    valueGetter: ({ row }) => row.application.latest_approved_version?.display_name ?? row.application.id,
     renderCell: ({ row }) => (
       <Link href={`/applications/${encodeURIComponent(row.application.id)}`}>
-        <a>{row.application.display_name}</a>
+        <a>{row.application.latest_approved_version?.display_name ?? row.application.id}</a>
       </Link>
     ),
   },
@@ -390,35 +394,37 @@ const APPLICATION_APPROVAL_RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'latest_version',
     headerName: 'Latest version',
     width: 130,
-    valueGetter: ({ row }) => row.application.version_number,
+    valueGetter: ({ row }) => row.application.latest_approved_version?.version_number,
+    valueFormatter: ({ value }) => value ?? 'N/A',
   },
   {
     field: 'mode',
     headerName: 'Mode',
     width: 120,
-    valueFormatter: ({ value }) => humanizeUnderscoreString(value as string),
+    valueGetter: ({ row }) => row.latest_approved_version?.mode,
+    valueFormatter: ({ value }) => humanizeUnderscoreString(value as any) ?? 'N/A',
   },
   {
     field: 'enabled',
     headerName: 'Enabled',
     width: 120,
-    valueGetter: ({ row }) => row.application.enabled,
-    valueFormatter: ({ value }) => (value as boolean) ? '✅' : '❌',
+    valueGetter: ({ row }) => row.application.latest_approved_version?.enabled,
+    valueFormatter: ({ value }) => formatBooleanAsIcon(value as any) ?? 'N/A',
   },
   {
-    field: 'review_state',
-    headerName: 'Review state',
-    width: 150,
-    valueGetter: ({ row }) => row.application.review_state,
-    valueFormatter: ({ value }) => formatReviewStateString(value as string),
+    field: 'adjustment_state',
+    headerName: 'Binding adjustment state',
+    width: 200,
+    valueGetter: ({ row }) => row.latest_approved_version?.adjustment_state,
+    valueFormatter: ({ value }) => formatAdjustmentStateString(value as any) ?? 'N/A',
   },
   {
     field: 'updated_at',
     type: 'dateTime',
     width: 180,
-    headerName: 'Updated at',
-    valueGetter: ({ row }) => row.application.created_at,
-    valueFormatter: ({ value }) => formatDateTimeString(value as string),
+    headerName: 'Application updated at',
+    valueGetter: ({ row }) => row.application.latest_approved_version?.updated_at,
+    valueFormatter: ({ value }) => formatDateTimeString(value as any) ?? 'N/A',
   },
 ];
 
@@ -502,10 +508,10 @@ const RELEASE_APPROVAL_RULESET_BINDING_COLUMNS: ColDef[] = [
     field: 'application',
     headerName: 'Application',
     width: 250,
-    valueGetter: ({ row }) => row.release.application.display_name,
+    valueGetter: ({ row }) => row.release.application.latest_approved_version?.display_name ?? row.release.application.id,
     renderCell: ({ row }) => (
       <Link href={`/applications/${encodeURIComponent(row.release.application.id)}`}>
-        <a>{row.release.application.display_name}</a>
+        <a>{row.release.application.latest_approved_version?.display_name ?? row.release.application.id}</a>
       </Link>
     ),
   },
@@ -536,7 +542,7 @@ const RELEASE_APPROVAL_RULESET_BINDING_COLUMNS: ColDef[] = [
     width: 180,
     headerName: 'Finalized at',
     valueGetter: ({ row }) => row.release.finalized_at,
-    valueFormatter: ({ value }) => value ? formatDateTimeString(value as string) : 'N/A',
+    valueFormatter: ({ value }) => formatDateTimeString(value as any) ?? 'N/A',
   },
 ];
 
@@ -550,13 +556,14 @@ interface IReleasesTabContentsProps {
 
 function ReleasesTabContents(props: IReleasesTabContentsProps) {
   const { dataGridState, data } = props;
+  const rawBindings = data?.latest_approved_version?.release_approval_ruleset_bindings;
 
   function addID(binding: any) {
     return { id: binding.release.id, ...binding };
   }
 
-  if (data) {
-    if (data.release_approval_ruleset_bindings.length == 0 && dataGridState.requestedPage == 1) {
+  if (rawBindings) {
+    if (rawBindings.length == 0 && dataGridState.requestedPage == 1) {
       return (
         <Container maxWidth="md">
           <Box px={2} py={2} textAlign="center">
@@ -569,7 +576,7 @@ function ReleasesTabContents(props: IReleasesTabContentsProps) {
     }
 
     const bindings =
-      paginateArray(data.release_approval_ruleset_bindings, dataGridState.requestedPage, dataGridState.requestedPageSize).
+      paginateArray(rawBindings, dataGridState.requestedPage, dataGridState.requestedPageSize).
       map(addID);
 
     return (

@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import Link from 'next/link';
-import { formatDateTimeString, formatReviewStateString } from '../common/utils';
+import { formatDateTimeString, formatAdjustmentStateString, formatBooleanAsIcon } from '../common/utils';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import { NavigationSection } from '../components/navbar';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
@@ -32,9 +32,10 @@ const COLUMNS: ColDef[] = [
     field: 'display_name',
     headerName: 'Display name',
     width: 250,
+    valueGetter: ({ row }) => row.latest_approved_version?.display_name ?? row._orig_id,
     renderCell: ({ row }) => (
       <Link href={`/approval-rulesets/${encodeURIComponent(row._orig_id)}`}>
-        <a>{row.display_name}</a>
+        <a>{row.latest_approved_version?.display_name ?? row._orig_id}</a>
       </Link>
     ),
   },
@@ -42,19 +43,22 @@ const COLUMNS: ColDef[] = [
     field: 'latest_version',
     headerName: 'Latest version',
     width: 130,
-    valueGetter: ({ row }) => row.version_number,
+    valueGetter: ({ row }) => row.latest_approved_version?.version_number,
+    valueFormatter: ({ value }) => value ?? 'N/A',
   },
   {
     field: 'enabled',
     headerName: 'Enabled',
     width: 110,
-    valueFormatter: ({ value }) => (value as boolean) ? '✅' : '❌',
+    valueGetter: ({ row }) => row.latest_approved_version?.enabled,
+    valueFormatter: ({ value }) => formatBooleanAsIcon(value as any) ?? 'N/A',
   },
   {
-    field: 'review_state',
-    headerName: 'Review state',
+    field: 'adjustment_state',
+    headerName: 'Adjustment state',
     width: 150,
-    valueFormatter: ({ value }) => formatReviewStateString(value as string),
+    valueGetter: ({ row }) => row.latest_approved_version?.adjustment_state,
+    valueFormatter: ({ value }) => formatAdjustmentStateString(value as any) ?? 'N/A',
   },
   {
     field: 'num_bound_applications',
@@ -67,6 +71,7 @@ const COLUMNS: ColDef[] = [
     headerName: 'Releases bound',
     type: 'number',
     width: 140,
+    valueGetter: ({ row }) => row.latest_approved_version?.num_bound_releases,
   },
   {
     field: 'created_at',
@@ -80,7 +85,8 @@ const COLUMNS: ColDef[] = [
     type: 'dateTime',
     width: 180,
     headerName: 'Updated at',
-    valueFormatter: ({ value }) => formatDateTimeString(value as string),
+    valueGetter: ({ row }) => row.latest_approved_version?.updated_at,
+    valueFormatter: ({ value }) => formatDateTimeString(value as any) ?? 'N/A',
   },
 ];
 
