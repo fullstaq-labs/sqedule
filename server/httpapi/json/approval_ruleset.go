@@ -28,11 +28,11 @@ type ApprovalRulesetWithLatestApprovedVersion struct {
 
 type ApprovalRulesetVersion struct {
 	ReviewableVersionBase
-	DisplayName        string          `json:"display_name"`
-	Description        string          `json:"description"`
-	GloballyApplicable bool            `json:"globally_applicable"`
-	Enabled            bool            `json:"enabled"`
-	ApprovalRules      *[]ApprovalRule `json:"approval_rules,omitempty"`
+	DisplayName        string              `json:"display_name"`
+	Description        string              `json:"description"`
+	GloballyApplicable bool                `json:"globally_applicable"`
+	Enabled            bool                `json:"enabled"`
+	ApprovalRules      *[]ApprovalRuleEnum `json:"approval_rules,omitempty"`
 
 	NumBoundReleases               *uint                                                  `json:"num_bound_releases,omitempty"`
 	ReleaseApprovalRulesetBindings *[]ReleaseApprovalRulesetBindingWithReleaseAssociation `json:"release_approval_ruleset_bindings,omitempty"`
@@ -79,24 +79,27 @@ func (version *ApprovalRulesetVersion) PopulateFromDbmodelsReleaseApprovalRulese
 func (version *ApprovalRulesetVersion) PopulateFromDbmodelsApprovalRulesetContents(contents dbmodels.ApprovalRulesetContents) {
 	var ruleTypesProcessed uint = 0
 
-	version.ApprovalRules = &[]ApprovalRule{}
+	version.ApprovalRules = &[]ApprovalRuleEnum{}
 
 	ruleTypesProcessed++
 	for _, rule := range contents.HTTPApiApprovalRules {
-		ruleJSON := ApprovalRule{Type: dbmodels.HTTPApiApprovalRuleType, HTTPApiApprovalRule: rule}
-		*version.ApprovalRules = append(*version.ApprovalRules, ruleJSON)
+		ruleJSON := CreateHTTPApiApprovalRule(rule)
+		enumJSON := ApprovalRuleEnum{HTTPApiApprovalRule: &ruleJSON}
+		*version.ApprovalRules = append(*version.ApprovalRules, enumJSON)
 	}
 
 	ruleTypesProcessed++
 	for _, rule := range contents.ScheduleApprovalRules {
-		ruleJSON := ApprovalRule{Type: dbmodels.ScheduleApprovalRuleType, ScheduleApprovalRule: rule}
-		*version.ApprovalRules = append(*version.ApprovalRules, ruleJSON)
+		ruleJSON := CreateScheduleApprovalRule(rule)
+		enumJSON := ApprovalRuleEnum{ScheduleApprovalRule: &ruleJSON}
+		*version.ApprovalRules = append(*version.ApprovalRules, enumJSON)
 	}
 
 	ruleTypesProcessed++
 	for _, rule := range contents.ManualApprovalRules {
-		ruleJSON := ApprovalRule{Type: dbmodels.ManualApprovalRuleType, ManualApprovalRule: rule}
-		*version.ApprovalRules = append(*version.ApprovalRules, ruleJSON)
+		ruleJSON := CreateManualApprovalRule(rule)
+		enumJSON := ApprovalRuleEnum{ManualApprovalRule: &ruleJSON}
+		*version.ApprovalRules = append(*version.ApprovalRules, enumJSON)
 	}
 
 	if ruleTypesProcessed != dbmodels.NumApprovalRuleTypes {
