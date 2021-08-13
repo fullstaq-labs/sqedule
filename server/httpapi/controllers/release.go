@@ -260,6 +260,79 @@ func (ctx Context) GetRelease(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, output)
 }
 
+func (ctx Context) GetReleaseEvents(ginctx *gin.Context) {
+	// Fetch authentication, parse input, fetch related objects
+
+	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
+	orgID := orgMember.GetOrganizationID()
+	applicationID := ginctx.Param("application_id")
+
+	releaseID, err := strconv.ParseUint(ginctx.Param("id"), 10, 64)
+	if err != nil {
+		ginctx.JSON(http.StatusBadRequest,
+			gin.H{"error": "Error parsing 'id' parameter as an integer: " + err.Error()})
+		return
+	}
+
+	release, err := dbmodels.FindRelease(ctx.Db, orgID, applicationID, releaseID)
+	if err != nil {
+		respondWithDbQueryError("release", err, ginctx)
+		return
+	}
+
+	// Check authorization
+
+	authorizer := authz.ReleaseAuthorizer{}
+	if !authz.AuthorizeSingularAction(authorizer, orgMember, authz.ActionReadRelease, release) {
+		respondWithUnauthorizedError(ginctx)
+		return
+	}
+
+	// Query database
+
+	events, err := dbmodels.FindReleaseEvents(ctx.Db, orgID, applicationID, release.ID)
+	if err != nil {
+		respondWithDbQueryError("release events", err, ginctx)
+		return
+	}
+
+	err = dbmodels.LoadReleaseRuleProcessedEventsApprovalRuleOutcomes(ctx.Db, orgID,
+		dbmodels.MakeReleaseRuleProcessedEventsPointerArray(events.ReleaseRuleProcessedEvents))
+	if err != nil {
+		respondWithDbQueryError("approval rule outcomes", err, ginctx)
+		return
+	}
+
+	// Generate response
+
+	var typesProcessed uint = 0
+	outputList := make([]json.ReleaseEventEnum, 0, events.NumEvents())
+
+	typesProcessed++
+	for _, event := range events.ReleaseCreatedEvents {
+		eventJSON := json.CreateReleaseCreatedEvent(event)
+		outputList = append(outputList, json.ReleaseEventEnum{ReleaseCreatedEvent: &eventJSON})
+	}
+
+	typesProcessed++
+	for _, event := range events.ReleaseRuleProcessedEvents {
+		eventJSON := json.CreateReleaseRuleProcessedEvent(event)
+		outputList = append(outputList, json.ReleaseEventEnum{ReleaseRuleProcessedEvent: &eventJSON})
+	}
+
+	typesProcessed++
+	for _, event := range events.ReleaseCancelledEvents {
+		eventJSON := json.CreateReleaseCancelledEvent(event)
+		outputList = append(outputList, json.ReleaseEventEnum{ReleaseCancelledEvent: &eventJSON})
+	}
+
+	if typesProcessed != dbmodels.NumReleaseEventTypes {
+		panic("Bug: code does not cover all release event types")
+	}
+
+	ginctx.JSON(http.StatusOK, gin.H{"items": outputList})
+}
+
 func (ctx Context) UpdateRelease(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 

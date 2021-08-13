@@ -11,6 +11,14 @@ import (
 // ******** Types, constants & variables ********
 //
 
+type ApprovalRuleOutcomeType string
+
+const (
+	HTTPApiApprovalRuleOutcomeType  ApprovalRuleOutcomeType = "http_api"
+	ScheduleApprovalRuleOutcomeType ApprovalRuleOutcomeType = "schedule"
+	ManualApprovalRuleOutcomeType   ApprovalRuleOutcomeType = "manual"
+)
+
 type ApprovalRuleOutcome struct {
 	BaseModel
 	ID                          uint64                    `gorm:"primaryKey; autoIncrement; not null"`
@@ -46,7 +54,7 @@ type ManualApprovalRuleOutcome struct {
 // ******** Find/load functions ********
 //
 
-func FindAllScheduleApprovalRuleOutcomes(db *gorm.DB, organizationID string, releaseID uint64) ([]ScheduleApprovalRuleOutcome, error) {
+func FindScheduleApprovalRuleOutcomes(db *gorm.DB, organizationID string, releaseID uint64) ([]ScheduleApprovalRuleOutcome, error) {
 	var result []ScheduleApprovalRuleOutcome
 
 	tx := db.

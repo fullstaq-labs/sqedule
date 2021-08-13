@@ -13,7 +13,7 @@ import (
 )
 
 func (engine Engine) fetchScheduleRulePreviousOutcomes() (map[uint64]bool, error) {
-	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(engine.Db, engine.OrganizationID, engine.ReleaseBackgroundJob.ReleaseID)
+	outcomes, err := dbmodels.FindScheduleApprovalRuleOutcomes(engine.Db, engine.OrganizationID, engine.ReleaseBackgroundJob.ReleaseID)
 	if err != nil {
 		return nil, err
 	}

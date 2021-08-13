@@ -231,7 +231,7 @@ func DeleteApplicationAdjustmentsForProposal(db *gorm.DB, organizationID string,
 // ******** Other functions ********
 //
 
-// MakeApplicationsPointerArray returns a `[]Application` into a `[]*Application`.
+// MakeApplicationsPointerArray turns a `[]Application` into a `[]*Application`.
 func MakeApplicationsPointerArray(apps []Application) []*Application {
 	result := make([]*Application, 0, len(apps))
 	for i := range apps {

@@ -272,7 +272,7 @@ func TestProcessScheduleRulesRerunSuccess(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.release.ID)
+	outcomes, err := dbmodels.FindScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.release.ID)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -338,7 +338,7 @@ func TestProcessScheduleRulesRerunFail(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	outcomes, err := dbmodels.FindAllScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.release.ID)
+	outcomes, err := dbmodels.FindScheduleApprovalRuleOutcomes(ctx.db, ctx.org.ID, ctx.release.ID)
 	if !assert.NoError(t, err) {
 		return
 	}

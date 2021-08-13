@@ -15,7 +15,6 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// CreateMockOrganization ...
 func CreateMockOrganization(db *gorm.DB, customizeFunc func(org *Organization)) (Organization, error) {
 	result := Organization{
 		ID:          "org1",
@@ -28,7 +27,6 @@ func CreateMockOrganization(db *gorm.DB, customizeFunc func(org *Organization)) 
 	return result, tx.Error
 }
 
-// CreateMockServiceAccountWithAdminRole ...
 func CreateMockServiceAccountWithAdminRole(db *gorm.DB, organization Organization,
 	customizeFunc func(sa *ServiceAccount)) (ServiceAccount, error) {
 
@@ -133,7 +131,6 @@ func CreateMockApplicationAdjustment(db *gorm.DB, version ApplicationVersion, nu
 	return adjustment, nil
 }
 
-// CreateMockReleaseWithInProgressState ...
 func CreateMockReleaseWithInProgressState(db *gorm.DB, organization Organization, application Application,
 	customizeFunc func(release *Release)) (Release, error) {
 
@@ -152,6 +149,65 @@ func CreateMockReleaseWithInProgressState(db *gorm.DB, organization Organization
 	}
 	tx := db.Omit(clause.Associations).Create(&result)
 	return result, tx.Error
+}
+
+func CreateMockReleaseCreatedEvent(db *gorm.DB, release Release, customizeFunc func(event *ReleaseCreatedEvent)) (ReleaseCreatedEvent, error) {
+	result := ReleaseCreatedEvent{
+		ReleaseEvent: ReleaseEvent{
+			BaseModel:     release.BaseModel,
+			ReleaseID:     release.ID,
+			ApplicationID: release.ApplicationID,
+			Release:       release,
+		},
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	tx := db.Omit(clause.Associations).Create(&result)
+	if tx.Error != nil {
+		return ReleaseCreatedEvent{}, tx.Error
+	}
+	return result, nil
+}
+
+func CreateMockReleaseCancelledEvent(db *gorm.DB, release Release, customizeFunc func(event *ReleaseCancelledEvent)) (ReleaseCancelledEvent, error) {
+	result := ReleaseCancelledEvent{
+		ReleaseEvent: ReleaseEvent{
+			BaseModel:     release.BaseModel,
+			ReleaseID:     release.ID,
+			ApplicationID: release.ApplicationID,
+			Release:       release,
+		},
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	tx := db.Omit(clause.Associations).Create(&result)
+	if tx.Error != nil {
+		return ReleaseCancelledEvent{}, tx.Error
+	}
+	return result, nil
+}
+
+func CreateMockReleaseRuleProcessedEvent(db *gorm.DB, release Release, state releasestate.State, customizeFunc func(event *ReleaseRuleProcessedEvent)) (ReleaseRuleProcessedEvent, error) {
+	result := ReleaseRuleProcessedEvent{
+		ReleaseEvent: ReleaseEvent{
+			BaseModel:     release.BaseModel,
+			ReleaseID:     release.ID,
+			ApplicationID: release.ApplicationID,
+			Release:       release,
+		},
+		ResultState:  state,
+		IgnoredError: false,
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	tx := db.Omit(clause.Associations).Create(&result)
+	if tx.Error != nil {
+		return ReleaseRuleProcessedEvent{}, tx.Error
+	}
+	return result, nil
 }
 
 func CreateMockApprovalRulesetWith1Version(db *gorm.DB, organization Organization, id string, customizeFunc func(adjustment *ApprovalRulesetAdjustment)) (ApprovalRuleset, error) {
@@ -396,7 +452,6 @@ func CreateMockReleaseRulesetBindingWithEnforcingMode(db *gorm.DB, organization 
 	return result, nil
 }
 
-// CreateMockReleaseBackgroundJob ...
 func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app Application, release Release, customizeFunc func(job *ReleaseBackgroundJob)) (ReleaseBackgroundJob, error) {
 	result := ReleaseBackgroundJob{
 		BaseModel: BaseModel{
@@ -418,7 +473,6 @@ func CreateMockReleaseBackgroundJob(db *gorm.DB, organization Organization, app 
 	return result, nil
 }
 
-// CreateMockScheduleApprovalRuleWholeDay ...
 func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organization, rulesetVersionID uint64,
 	rulesetAdjustment ApprovalRulesetAdjustment, customizeFunc func(rule *ScheduleApprovalRule)) (ScheduleApprovalRule, error) {
 
@@ -442,6 +496,27 @@ func CreateMockScheduleApprovalRuleWholeDay(db *gorm.DB, organization Organizati
 	tx := db.Omit(clause.Associations).Create(&result)
 	if tx.Error != nil {
 		return ScheduleApprovalRule{}, tx.Error
+	}
+	return result, nil
+}
+
+func CreateMockScheduleApprovalRuleOutcome(db *gorm.DB, event ReleaseRuleProcessedEvent, rule ScheduleApprovalRule, success bool, customizeFunc func(outcome *ScheduleApprovalRuleOutcome)) (ScheduleApprovalRuleOutcome, error) {
+	result := ScheduleApprovalRuleOutcome{
+		ApprovalRuleOutcome: ApprovalRuleOutcome{
+			BaseModel:                   event.BaseModel,
+			ReleaseRuleProcessedEventID: event.ID,
+			ReleaseRuleProcessedEvent:   event,
+			Success:                     success,
+		},
+		ScheduleApprovalRuleID: rule.ID,
+		ScheduleApprovalRule:   rule,
+	}
+	if customizeFunc != nil {
+		customizeFunc(&result)
+	}
+	tx := db.Omit(clause.Associations).Create(&result)
+	if tx.Error != nil {
+		return ScheduleApprovalRuleOutcome{}, tx.Error
 	}
 	return result, nil
 }

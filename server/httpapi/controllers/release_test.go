@@ -282,7 +282,7 @@ var _ = Describe("release API", func() {
 		})
 	})
 
-	Describe("GET /releases/:id", func() {
+	Describe("GET /applications/:app_id/releases/:id", func() {
 		var app dbmodels.Application
 		var release dbmodels.Release
 		var body gin.H
@@ -337,6 +337,110 @@ var _ = Describe("release API", func() {
 			approvalRuleset := binding["approval_ruleset"].(map[string]interface{})
 			approvalRulesetVersion := approvalRuleset["latest_approved_version"]
 			Expect(approvalRulesetVersion).To(HaveKeyWithValue("display_name", "Ruleset"))
+		})
+	})
+
+	Describe("GET /applications/:app_id/releases/:id/events", func() {
+		var app dbmodels.Application
+		var release dbmodels.Release
+		var event1, event2 dbmodels.ReleaseRuleProcessedEvent
+		var rule1, rule2 dbmodels.ScheduleApprovalRule
+		var outcome1, outcome2 dbmodels.ScheduleApprovalRuleOutcome
+		var body gin.H
+
+		BeforeEach(func() {
+			ctx, err = SetupHTTPTestContext(func(ctx *HTTPTestContext, tx *gorm.DB) error {
+				app, err = dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				release, err = dbmodels.CreateMockReleaseWithInProgressState(tx, ctx.Org, app, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
+				Expect(err).ToNot(HaveOccurred())
+				rule1, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org, ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+				rule2, err = dbmodels.CreateMockScheduleApprovalRuleWholeDay(tx, ctx.Org, ruleset.Version.ID, *ruleset.Version.Adjustment, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockReleaseCreatedEvent(tx, release, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				event1, err = dbmodels.CreateMockReleaseRuleProcessedEvent(tx, release, releasestate.InProgress,
+					func(event *dbmodels.ReleaseRuleProcessedEvent) {
+						event.CreatedAt = time.Now().Add(-2 * time.Minute)
+					})
+				Expect(err).ToNot(HaveOccurred())
+				outcome1, err = dbmodels.CreateMockScheduleApprovalRuleOutcome(tx, event1, rule1, true, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				event2, err = dbmodels.CreateMockReleaseRuleProcessedEvent(tx, release, releasestate.Cancelled,
+					func(event *dbmodels.ReleaseRuleProcessedEvent) {
+						event.CreatedAt = time.Now().Add(-1 * time.Minute)
+					})
+				Expect(err).ToNot(HaveOccurred())
+				outcome2, err = dbmodels.CreateMockScheduleApprovalRuleOutcome(tx, event2, rule2, false, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = dbmodels.CreateMockReleaseCancelledEvent(tx, release, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/applications/%s/releases/%d/events", app.ID, release.ID), nil)
+			Expect(err).ToNot(HaveOccurred())
+			ctx.ServeHTTP(req)
+
+			Expect(ctx.Recorder.Code).To(Equal(200))
+			body, err = ctx.BodyJSON()
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("outputs events", func() {
+			Expect(body).To(HaveKeyWithValue("items", HaveLen(4)))
+			items := body["items"].([]interface{})
+
+			createdEvent := items[0].(map[string]interface{})
+			Expect(createdEvent).To(HaveKeyWithValue("type", "created"))
+			Expect(createdEvent).To(HaveKey("id"))
+
+			event1JSON := items[1].(map[string]interface{})
+			Expect(event1JSON).To(HaveKeyWithValue("type", "rule_processed"))
+			Expect(event1JSON).To(HaveKeyWithValue("id", BeNumerically("==", event1.ID)))
+			Expect(event1JSON).To(HaveKeyWithValue("result_state", "in_progress"))
+			Expect(event1JSON).To(HaveKeyWithValue("ignored_error", BeFalse()))
+			Expect(event1JSON).To(HaveKeyWithValue("approval_rule_outcome", Not(BeNil())))
+			outcome1JSON := event1JSON["approval_rule_outcome"].(map[string]interface{})
+			Expect(outcome1JSON).To(HaveKeyWithValue("type", "schedule"))
+			Expect(outcome1JSON).To(HaveKeyWithValue("id", BeNumerically("==", outcome1.ID)))
+			Expect(outcome1JSON).To(HaveKeyWithValue("success", BeTrue()))
+			Expect(outcome1JSON).To(HaveKeyWithValue("rule", Not(BeNil())))
+			rule1JSON := outcome1JSON["rule"].(map[string]interface{})
+			Expect(rule1JSON).To(HaveKeyWithValue("id", BeNumerically("==", rule1.ID)))
+			Expect(rule1JSON).To(HaveKeyWithValue("begin_time", rule1.BeginTime.String))
+			Expect(rule1JSON).To(HaveKeyWithValue("end_time", rule1.EndTime.String))
+
+			event2JSON := items[2].(map[string]interface{})
+			Expect(event2JSON).To(HaveKeyWithValue("type", "rule_processed"))
+			Expect(event2JSON).To(HaveKeyWithValue("id", BeNumerically("==", event2.ID)))
+			Expect(event2JSON).To(HaveKeyWithValue("result_state", "cancelled"))
+			Expect(event2JSON).To(HaveKeyWithValue("ignored_error", BeFalse()))
+			Expect(event2JSON).To(HaveKeyWithValue("approval_rule_outcome", Not(BeNil())))
+			outcome2JSON := event2JSON["approval_rule_outcome"].(map[string]interface{})
+			Expect(outcome2JSON).To(HaveKeyWithValue("type", "schedule"))
+			Expect(outcome2JSON).To(HaveKeyWithValue("id", BeNumerically("==", outcome2.ID)))
+			Expect(outcome2JSON).To(HaveKeyWithValue("success", BeFalse()))
+			Expect(outcome2JSON).To(HaveKeyWithValue("rule", Not(BeNil())))
+			rule2JSON := outcome2JSON["rule"].(map[string]interface{})
+			Expect(rule2JSON).To(HaveKeyWithValue("id", BeNumerically("==", rule2.ID)))
+			Expect(rule2JSON).To(HaveKeyWithValue("begin_time", rule2.BeginTime.String))
+			Expect(rule2JSON).To(HaveKeyWithValue("end_time", rule2.EndTime.String))
+
+			cancelledEvent := items[3].(map[string]interface{})
+			Expect(cancelledEvent).To(HaveKeyWithValue("type", "cancelled"))
+			Expect(cancelledEvent).To(HaveKey("id"))
 		})
 	})
 })
