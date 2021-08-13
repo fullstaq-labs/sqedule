@@ -4,7 +4,17 @@
     z-index: inherit !important;
 }
 
+.neutral {
+    color: white;
+    background: #cccccc;
+}
+
 .success {
     color: white;
     background: rgb(76, 175, 80);
+}
+
+.error {
+    color: white;
+    background: #bb0000;
 }

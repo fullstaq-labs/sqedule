@@ -259,11 +259,18 @@ DO $$
 DECLARE
     n_releases INT;
     n_releases_finished INT;
+    only_afternoon_version_id BIGINT;
 BEGIN
     n_releases := 120;
     n_releases_finished := 118;
 
     IF (SELECT COUNT(*) FROM releases WHERE organization_id = 'org1' AND application_id = 'app1' LIMIT 1) = 0 THEN
+        SELECT id INTO only_afternoon_version_id FROM approval_ruleset_versions
+            WHERE organization_id = 'org1'
+            AND approval_ruleset_id = 'only afternoon'
+            AND version_number = 1
+            LIMIT 1;
+
         -- Create n_releases_finished releases that are finished
         INSERT INTO releases (organization_id, application_id, state, metadata, created_at, updated_at, finalized_at)
         SELECT
@@ -292,6 +299,16 @@ BEGIN
             NOW() - (INTERVAL '1 day' * series) AS created_at,
             'approved' AS result_state,
             true AS ignored_error
+        FROM generate_series(1, n_releases_finished) series;
+
+        INSERT INTO schedule_approval_rule_outcomes (organization_id, release_rule_processed_event_id, success, created_at, schedule_approval_rule_id)
+        SELECT
+            'org1' AS organization_id,
+            (SELECT id FROM release_rule_processed_events OFFSET series - 1 LIMIT 1) AS release_rule_processed_event_id,
+            true AS success,
+            NOW() - (INTERVAL '1 day' * series) + (INTERVAL '1 second') AS created_at,
+            (SELECT id FROM schedule_approval_rules WHERE approval_ruleset_version_id = only_afternoon_version_id AND approval_ruleset_adjustment_number = 1 LIMIT 1)
+                AS schedule_approval_rule_id
         FROM generate_series(1, n_releases_finished) series;
 
 

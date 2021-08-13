@@ -32,8 +32,12 @@ import Divider from '@material-ui/core/Divider';
 import Badge from '@material-ui/core/Badge';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import CheckIcon from '@material-ui/icons/Check';
+import CancelIcon from '@material-ui/icons/Cancel';
+import CloudIcon from '@material-ui/icons/Cloud';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
+import GavelIcon from '@material-ui/icons/Gavel';
+//import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Container from '@material-ui/core/Container';
 import { ColDef } from '@material-ui/data-grid';
 import styles from '../../../common/tables.module.scss';
@@ -53,22 +57,26 @@ export default function ReleasePage(props: IProps) {
   const approvalRulesetsDataGridState = useDataGrid();
 
   const router = useRouter();
-  const applicationId = router.query.application_id as string;
-  const hasApplicationId = typeof applicationId !== 'undefined';
+  const applicationID = router.query.application_id as string;
+  const hasApplicationID = typeof applicationID !== 'undefined';
   const id = router.query.id as string;
-  const hasId = typeof id !== 'undefined';
+  const hasID = typeof id !== 'undefined';
 
   const { data: appData, error: appError, isValidating: appDataIsValidating, mutate: appDataMutate } =
-    useSWR(hasApplicationId ?
-      `/v1/applications/${encodeURIComponent(applicationId)}` :
+    useSWR(hasApplicationID ?
+      `/v1/applications/${encodeURIComponent(applicationID)}` :
       null);
   const { data: releaseData, error: releaseError, isValidating: releaseDataIsValidating, mutate: releaseDataMutate } =
-    useSWR((hasApplicationId && hasId) ?
-      `/v1/applications/${encodeURIComponent(applicationId)}/releases/${encodeURIComponent(id)}` :
+    useSWR((hasApplicationID && hasID) ?
+      `/v1/applications/${encodeURIComponent(applicationID)}/releases/${encodeURIComponent(id)}` :
       null);
-  const hasAllData = appData && releaseData;
-  const firstError = appError || releaseError;
-  const isValidating = appDataIsValidating || releaseDataIsValidating;
+  const { data: eventsData, error: eventsError, isValidating: eventsDataIsValidating, mutate: eventsDataMutate } =
+    useSWR(hasApplicationID && hasID ?
+      `/v1/applications/${encodeURIComponent(applicationID)}/releases/${encodeURIComponent(id)}/events` :
+      null);
+  const hasAllData = appData && releaseData && eventsData;
+  const firstError = appError || releaseError || eventsError;
+  const isValidating = appDataIsValidating || releaseDataIsValidating || eventsDataIsValidating;
 
   declarePageTitle(appContext, getPageTitle());
   declareValidatingFetchedData(appContext, isValidating);
@@ -140,9 +148,9 @@ export default function ReleasePage(props: IProps) {
         </TabPanel>
         <TabPanel value={tabIndex} index={1} id="events">
           <EventsTabContents
-            data={releaseData}
-            error={releaseError}
-            mutate={releaseDataMutate}
+            data={eventsData}
+            error={eventsError}
+            mutate={eventsDataMutate}
             />
         </TabPanel>
       </SwipeableViews>
@@ -338,7 +346,7 @@ interface IApprovalRulesetsTabContentsProps {
 }
 
 function ApprovalRulesetsTabContents(props: IApprovalRulesetsTabContentsProps) {
-  const { dataGridState, data } = props;
+  const { dataGridState, data, error, mutate } = props;
 
   function addID(rulesetBinding: any) {
     return { id: rulesetBinding.approval_ruleset.id, ...rulesetBinding };
@@ -372,8 +380,8 @@ function ApprovalRulesetsTabContents(props: IApprovalRulesetsTabContentsProps) {
     );
   }
 
-  if (props.error) {
-    return <DataLoadErrorScreen error={props.error} onReload={props.mutate} />;
+  if (error) {
+    return <DataLoadErrorScreen error={error} onReload={mutate} />;
   }
 
   return (
@@ -391,57 +399,192 @@ function ApprovalRulesetsTabContents(props: IApprovalRulesetsTabContentsProps) {
 }
 
 
-function EventsTabContents(_props: any) {
+interface IEventsTabContentsProps {
+  data: any;
+  error: any;
+  mutate: () => void;
+}
+
+function EventsTabContents(props: IEventsTabContentsProps) {
+  const { data, error, mutate } = props;
+
+  if (data) {
+    var listItems: Array<JSX.Element> = [];
+    data.items.forEach((event, i: number) => {
+      var itemContent: JSX.Element | undefined;
+
+      switch (event.type) {
+      case 'created':
+        itemContent = <ReleaseCreatedEvent event={event} />;
+        break;
+      case 'cancelled':
+        itemContent = <ReleaseCancelledEvent event={event} />;
+        break;
+      case 'rule_processed':
+        itemContent = <ReleaseRuleProcessedEvent event={event} />;
+        break;
+      }
+
+      if (typeof itemContent !== 'undefined') {
+        if (i > 0) {
+          listItems.push(<Divider variant="inset" component="li" />);
+        }
+        listItems.push(<ListItem alignItems="flex-start">{itemContent as JSX.Element}</ListItem>);
+      }
+    });
+
+    return (
+      <Paper>
+        <List>
+          {listItems}
+        </List>
+      </Paper>
+    );
+  }
+
+  if (error) {
+    return <DataLoadErrorScreen error={error} onReload={mutate} />;
+  }
+
   return (
-    <Paper>
-      <List>
-        <ListItem alignItems="flex-start">
-          <ListItemAvatar><AddCircleOutlineIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
-          <ListItemText
-            primary={<Typography variant="h6">Release created</Typography>}
-            secondary="2021-03-29 11:00:01" />
-        </ListItem>
-        <Divider variant="inset" component="li" />
-        <ListItem alignItems="flex-start">
-          <ListItemAvatar><AccessTimeIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
-          <ListItemText
-            primary={<Typography variant="h6"><TextWithBadge text="Schedule approval rule processed" status="success" /></Typography>}
-            secondary={
-              <>
-                <ul className={eventStyles.details_list}>
-                  <li>Processed at: 2021-03-29 11:00:01</li>
-                  <li>Ruleset: <Link href="/approval-rulesets/only%20afternoon">only afternoon</Link></li>
-                </ul>
-                <Button size="small" endIcon={<ExpandMoreIcon />}>View rule details</Button>
-              </>
-            } />
-        </ListItem>
-        <Divider variant="inset" component="li" />
-        <ListItem alignItems="flex-start">
-          <ListItemAvatar><CheckIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
-          <ListItemText
-            primary={<Typography variant="h6"><TextWithBadge text="Release finalized" status="success" /></Typography>}
-            secondary="2021-03-29 11:00:02" />
-        </ListItem>
-      </List>
+    <Paper style={{ flexGrow: 1 }}>
+      <Box mx={2} my={2}>
+        <Container maxWidth="md">
+          <Skeleton />
+          <Skeleton />
+          <Skeleton />
+          <Skeleton />
+        </Container>
+      </Box>
     </Paper>
   );
 }
 
-interface ITextWithBadgeProps {
-  text: string;
-  status: 'success';
-}
-
-function TextWithBadge(props) {
-  const { text, status } = props;
+function ReleaseCreatedEvent(props: any): JSX.Element {
   return (
     <>
-      {text}
+      <ListItemAvatar><AddCircleOutlineIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
+      <ListItemText
+        primary={<Typography variant="h6">Release created</Typography>}
+        secondary={formatDateTimeString(props.event.created_at)} />
+    </>
+  );
+}
+
+function ReleaseCancelledEvent(props: any): JSX.Element {
+  return (
+    <>
+      <ListItemAvatar><CancelIcon style={{ fontSize: '2.8rem' }} /></ListItemAvatar>
+      <ListItemText
+        primary={<Typography variant="h6"><TextWithBadge text="Release cancelled" badgeText="error" badgeType="error" /></Typography>}
+        secondary={formatDateTimeString(props.event.created_at)} />
+    </>
+  );
+}
+
+function ReleaseRuleProcessedEvent(props: any): JSX.Element {
+  const { event } = props;
+
+  return (
+    <>
+      <ListItemAvatar><ReleaseRuleProcessedIcon eventType={event.type} /></ListItemAvatar>
+      <ListItemText
+        primary={<Typography variant="h6"><ReleaseRuleProcessedHeadline event={event} /></Typography>}
+        secondary={
+          <>
+            <ul className={eventStyles.details_list}>
+              <li>Processed at: {formatDateTimeString(event.created_at)}</li>
+              {/* <li>Ruleset: <Link href="/approval-rulesets/only%20afternoon">only afternoon</Link></li> */}
+            </ul>
+            {/* <Button size="small" endIcon={<ExpandMoreIcon />}>View rule details</Button> */}
+          </>
+        } />
+    </>
+  );
+}
+
+function ReleaseRuleProcessedIcon(props: any): JSX.Element {
+  var Icon: any;
+  switch (props.eventType) {
+    case 'http_api':
+      Icon = CloudIcon;
+      break;
+    case 'schedule':
+      Icon = AccessTimeIcon;
+      break;
+    case 'manual':
+      Icon = ThumbsUpDownIcon;
+      break;
+    default:
+      Icon = GavelIcon;
+      break;
+  }
+  return (<Icon style={{ fontSize: '2.8rem' }} />);
+}
+
+function ReleaseRuleProcessedHeadline(props: any): JSX.Element {
+  var typeName: string;
+  var badgeType: BadgeType;
+
+  switch (props.event.approval_rule_outcome.type) {
+    case 'http_api':
+      typeName = 'HTTP API';
+      break;
+    case 'schedule':
+      typeName = 'Schedule';
+      break;
+    case 'manual':
+      typeName = 'Manual';
+      break;
+    default:
+      typeName = humanizeUnderscoreString(props.event.type) as string;
+      break;
+  }
+
+  switch (props.event.result_state) {
+  case 'in_progress':
+    badgeType = 'neutral';
+    break;
+  case 'cancelled':
+    badgeType = 'error';
+    break;
+  case 'approved':
+    badgeType = 'success';
+    break;
+  case 'rejected':
+    badgeType = 'error';
+    break;
+  default:
+    badgeType = 'neutral';
+    break;
+  }
+
+  return (
+    <TextWithBadge
+      text={`${typeName} approval rule processed`}
+      badgeText={humanizeUnderscoreString(props.event.result_state) as string}
+      badgeType={badgeType}
+      />
+  );
+}
+
+
+type BadgeType = 'neutral' | 'success' | 'error';
+
+interface ITextWithBadgeProps {
+  text: string;
+  badgeText: string;
+  badgeType: BadgeType;
+}
+
+function TextWithBadge(props: ITextWithBadgeProps): JSX.Element {
+  return (
+    <>
+      {props.text}
       {' '}
       <Badge
-        badgeContent={status}
-        classes={{ badge: `${badgeStyles.text_only} ${badgeStyles[status]}` }}
+        badgeContent={props.badgeText}
+        classes={{ badge: `${badgeStyles.text_only} ${badgeStyles[props.badgeType]}` }}
         />
     </>
   );
