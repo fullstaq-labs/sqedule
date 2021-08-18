@@ -249,6 +249,10 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
               <TableCell>{releaseData.source_identity || 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
+              <TableCell component="th" scope="row">Metadata</TableCell>
+              <TableCell>{renderMetadata(releaseData.metadata)}</TableCell>
+            </TableRow>
+            <TableRow>
               <TableCell component="th" scope="row">Comments</TableCell>
               <TableCell>{releaseData.comments || 'N/A'}</TableCell>
             </TableRow>
@@ -275,6 +279,14 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
       </Box>
     </Paper>
   );
+}
+
+function renderMetadata(metadata: object): string | JSX.Element {
+  if (Object.keys(metadata).length == 0) {
+    return 'N/A';
+  } else {
+    return <pre style={{ margin: 0 }}>{JSON.stringify(metadata, null, 4)}</pre>;
+  }
 }
 
 
