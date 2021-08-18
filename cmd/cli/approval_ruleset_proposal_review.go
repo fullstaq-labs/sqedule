@@ -95,7 +95,7 @@ func init() {
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("approval-ruleset-id", "", "Approval ruleset ID (required)")
-	flags.String("id", "", "Proposal ID (required)")
+	flags.String("approval-ruleset-id", "", "approval ruleset ID (required)")
+	flags.String("id", "", "proposal ID (required)")
 	flags.String("action", "", "'approve' or 'reject'")
 }

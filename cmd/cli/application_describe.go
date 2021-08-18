@@ -72,5 +72,5 @@ func init() {
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("id", "", "Application ID (required)")
+	flags.String("id", "", "application ID (required)")
 }

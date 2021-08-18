@@ -72,5 +72,5 @@ func init() {
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("id", "", "Approval ruleset ID (required)")
+	flags.String("id", "", "approval ruleset ID (required)")
 }

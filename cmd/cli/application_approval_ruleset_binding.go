@@ -17,9 +17,9 @@ var applicationApprovalRulesetBindingCmd = &cobra.Command{
 }
 
 func defineApplicationApprovalRulesetBindingCreateOrUpdateFlags(flags *pflag.FlagSet) {
-	flags.String("mode", "enforcing", "Binding mode; 'enforcing' or 'permissive'")
+	flags.String("mode", "enforcing", "binding mode; 'enforcing' or 'permissive'")
 	flags.String("proposal-state", "draft", "'draft', 'final' or 'abandon'")
-	flags.Bool("enabled", true, "Whether to enable this ruleset")
+	flags.Bool("enabled", true, "whether to enable this application ruleset binding")
 }
 
 func applicationApprovalRulesetBindingCreateOrUpdateCmd_createVersionInput(viper *viper.Viper, creating bool) json.ApplicationApprovalRulesetBindingVersionInput {

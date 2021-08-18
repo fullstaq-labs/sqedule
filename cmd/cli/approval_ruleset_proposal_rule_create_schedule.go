@@ -96,12 +96,12 @@ func init() {
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("approval-ruleset-id", "", "Approval ruleset ID (required)")
-	flags.String("proposal-id", "", "Proposal ID (required)")
-	flags.Bool("enabled", true, "Whether to enable this rule")
-	flags.String("begin-time", "", "Schedule begin time")
-	flags.String("end-time", "", "Schedule end time")
-	flags.String("days-of-week", "", "Schedule days of week")
-	flags.String("days-of-month", "", "Schedule days of month")
-	flags.String("months-of-year", "", "Schedule months of year")
+	flags.String("approval-ruleset-id", "", "approval ruleset ID (required)")
+	flags.String("proposal-id", "", "proposal ID (required)")
+	flags.Bool("enabled", true, "whether to enable this rule")
+	flags.String("begin-time", "", "schedule begin time")
+	flags.String("end-time", "", "schedule end time")
+	flags.String("days-of-week", "", "schedule days of week")
+	flags.String("days-of-month", "", "schedule days of month")
+	flags.String("months-of-year", "", "schedule months of year")
 }

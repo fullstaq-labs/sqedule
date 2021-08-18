@@ -92,6 +92,6 @@ func init() {
 
 	cli.DefineServerFlags(flags)
 
-	flags.String("id", "", "A machine-friendly identifier (required)")
+	flags.String("id", "", "a machine-friendly identifier (required)")
 	defineApprovalRulesetCreateOrUpdateFlags(flags, true)
 }

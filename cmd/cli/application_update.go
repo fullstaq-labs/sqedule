@@ -89,5 +89,5 @@ func init() {
 	cli.DefineServerFlags(flags)
 
 	flags.String("id", "", "ID of application to update (required)")
-	flags.String("set-id", "", "Change application ID")
+	flags.String("set-id", "", "change application ID")
 }

@@ -76,5 +76,5 @@ func init() {
 
 	flags.String("application-id", "", "ID of the bound application (required)")
 	flags.String("approval-ruleset-id", "", "ID of the bound application approval ruleset (required)")
-	flags.String("id", "", "Proposal ID (required)")
+	flags.String("id", "", "proposal ID (required)")
 }

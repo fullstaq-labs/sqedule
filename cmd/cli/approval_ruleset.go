@@ -21,10 +21,10 @@ func defineApprovalRulesetCreateOrUpdateFlags(flags *pflag.FlagSet, creating boo
 		requiredAtCreationIndicator = " (required)"
 	}
 
-	flags.String("display-name", "", "Human-friendly display name"+requiredAtCreationIndicator)
+	flags.String("display-name", "", "human-friendly display name"+requiredAtCreationIndicator)
 	flags.String("description", "", "")
 	flags.String("proposal-state", "draft", "'draft', 'final' or 'abandon'")
-	flags.Bool("enabled", true, "Whether to enable this ruleset")
+	flags.Bool("enabled", true, "whether to enable this approval ruleset")
 }
 
 func approvalRulesetCreateOrUpdateCmd_createVersionInput(viper *viper.Viper) json.ApprovalRulesetVersionInput {
