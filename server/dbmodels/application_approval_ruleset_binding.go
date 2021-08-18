@@ -82,18 +82,19 @@ func (binding ApplicationApprovalRulesetBinding) NewDraftVersion() (*Application
 }
 
 func (binding ApplicationApprovalRulesetBinding) CheckNewProposalsRequireReview(action ReviewableAction, newMode approvalrulesetbindingmode.Mode) bool {
-	switch action {
-	case ReviewableActionCreate:
-		return newMode == approvalrulesetbindingmode.Enforcing
-	case ReviewableActionUpdate:
-		if binding.Version == nil {
-			return newMode == approvalrulesetbindingmode.Enforcing
-		} else {
-			return binding.Version.Adjustment.Mode != newMode
-		}
-	default:
-		panic("Unsupported action " + action)
-	}
+	return false
+	// switch action {
+	// case ReviewableActionCreate:
+	// 	return newMode == approvalrulesetbindingmode.Enforcing
+	// case ReviewableActionUpdate:
+	// 	if binding.Version == nil {
+	// 		return newMode == approvalrulesetbindingmode.Enforcing
+	// 	} else {
+	// 		return binding.Version.Adjustment.Mode != newMode
+	// 	}
+	// default:
+	// 	panic("Unsupported action " + action)
+	// }
 }
 
 //

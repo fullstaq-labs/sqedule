@@ -166,14 +166,15 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 }
 
 func (ruleset ApprovalRuleset) CheckNewProposalsRequireReview(action ReviewableAction, hasBoundApplications bool, rulesChanged bool) bool {
-	switch action {
-	case ReviewableActionCreate:
-		return false
-	case ReviewableActionUpdate:
-		return hasBoundApplications && rulesChanged
-	default:
-		panic("Unsupported action " + action)
-	}
+	return false
+	// switch action {
+	// case ReviewableActionCreate:
+	// 	return false
+	// case ReviewableActionUpdate:
+	// 	return hasBoundApplications && rulesChanged
+	// default:
+	// 	panic("Unsupported action " + action)
+	// }
 }
 
 //
