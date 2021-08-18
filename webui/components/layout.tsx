@@ -70,7 +70,7 @@ export default function Layout(props: IProps) {
               }
 
               <Typography variant="h6" noWrap style={{flexGrow: 1}}>{title}</Typography>
-              <Button color="inherit">Login</Button>
+              {/* <Button color="inherit">Login</Button> */}
             </Toolbar>
           </AppBar>
 

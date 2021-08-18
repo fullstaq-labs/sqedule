@@ -84,12 +84,12 @@ export default function Navbar(props: IProps) {
       <Divider />
 
       <List component="nav">
-        <Link href="/user">
+        {/* <Link href="/user">
           <ListItem button>
             <ListItemIcon><AccountBoxIcon /></ListItemIcon>
             <ListItemText primary={`${user.full_name}'s profile`} />
           </ListItem>
-        </Link>
+        </Link> */}
         <Link href="/">
           <ListItem button selected={navigationSection == NavigationSection.Dashboard}>
             <ListItemIcon><HomeIcon /></ListItemIcon>
@@ -119,15 +119,15 @@ export default function Navbar(props: IProps) {
             <ListItemText primary="Approval rulesets" />
           </ListItem>
         </Link>
-        <Link href="/manual-approvals">
+        {/* <Link href="/manual-approvals">
           <ListItem button selected={navigationSection == NavigationSection.ManualApprovals}>
             <ListItemIcon><ThumbsUpDownIcon /></ListItemIcon>
             <ListItemText primary="Manual approvals" />
           </ListItem>
-        </Link>
+        </Link> */}
       </List>
 
-      <Divider />
+      {/* <Divider />
 
       <List component="nav">
         <Link href="/organization">
@@ -148,7 +148,7 @@ export default function Navbar(props: IProps) {
             <ListItemText primary="Logout" />
           </ListItem>
         </Link>
-      </List>
+      </List> */}
     </Drawer>
   )
 }
