@@ -17,14 +17,8 @@ var rootFlags struct {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sqedule-cli",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:           "sqedule",
+	Short:         "Sqedule client CLI",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
@@ -41,9 +35,9 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "Config file (default ~/.config/sqedule-cli/config.yml)")
+	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "config file (default ~/.config/sqedule-cli/config.yml)")
 
-	rootCmd.PersistentFlags().Bool("debug", false, "Show API requests/responses")
+	rootCmd.PersistentFlags().Bool("debug", false, "show API requests/responses")
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 }
 
