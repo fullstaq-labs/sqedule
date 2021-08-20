@@ -12,16 +12,12 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/dbutils/gormigrate"
 	"github.com/fullstaq-labs/sqedule/server/httpapi"
+	"github.com/fullstaq-labs/sqedule/server/webuiassetsserving"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
-)
-
-const (
-	runDefaultBind = "localhost"
-	runDefaultPort = 3001
 )
 
 // runCmd represents the 'run' command
@@ -77,6 +73,17 @@ var runCmd = &cobra.Command{
 		err = ctx.SetupRouter(engine, logger)
 		if err != nil {
 			return fmt.Errorf("Error setting up router: %w", err)
+		}
+
+		if webuiassetsserving.Enabled {
+			err = webuiassetsserving.Intialize()
+			if err != nil {
+				return fmt.Errorf("Error initializing serving of web UI assets: %w", err)
+			}
+			err = webuiassetsserving.SetupRouter(engine)
+			if err != nil {
+				return fmt.Errorf("Error installing routes for serving web UI assets: %w", err)
+			}
 		}
 
 		err = approvalrulesprocessing.ProcessAllPendingReleasesInBackground(ctx.Db)
@@ -145,8 +152,8 @@ func init() {
 
 	defineDatabaseConnectionFlags(cmd)
 
-	flags.String("bind", runDefaultBind, "IP to listen on")
-	flags.Int("port", runDefaultPort, "port to listen on")
+	flags.String("bind", "localhost", "IP to listen on")
+	flags.Int("port", 3001, "port to listen on")
 	flags.String("cors-origin", "", "CORS origin to allow")
 	flags.Bool("auto-db-migrate", true, "automatically migrate database schema")
 	flags.Bool("dev", false, "run in development mode")

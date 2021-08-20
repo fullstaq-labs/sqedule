@@ -2,21 +2,24 @@ version: '3.5'
 
 services:
   postgres:
+    networks:
+      - sqedule
     container_name: postgres_container
     image: postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       PGDATA: /data/postgres
     volumes:
-       - postgres:/data/postgres
+      - postgres:/data/postgres
     ports:
       - "5432:5432"
+    restart: unless-stopped
+
+  pgadmin:
     networks:
       - sqedule
-    restart: unless-stopped
-  
-  pgadmin:
     container_name: pgadmin_container
     image: dpage/pgadmin4
     environment:
@@ -24,14 +27,10 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
-       - pgadmin:/root/.pgadmin
+      - pgadmin:/root/.pgadmin
     ports:
       - "${PGADMIN_PORT:-5050}:80"
-    networks:
-      - sqedule
     restart: unless-stopped
-
-    
 
 networks:
   sqedule:

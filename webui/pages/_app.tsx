@@ -9,7 +9,7 @@ import { IUser } from '../common/user';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import blue from '@material-ui/core/colors/blue';
-import { useIsomorphicLayoutEffect, getBaseURL } from '../common/utils';
+import { useIsomorphicLayoutEffect, getApiServerBaseURL } from '../common/utils';
 import '../common/global.css';
 
 const THEME = createMuiTheme({
@@ -19,7 +19,7 @@ const THEME = createMuiTheme({
 });
 
 const AXIOS = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: getApiServerBaseURL(),
 });
 
 const SWR_OPTIONS = {

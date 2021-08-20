@@ -1,6 +1,4 @@
 node_modules
 build
-.next
-.dockerignore
-.env
-Dockerfile
+out
+.*

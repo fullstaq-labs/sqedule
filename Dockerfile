@@ -1,28 +1,43 @@
-# Start from the latest golang base image
-FROM golang:1.16.3 as builder
+FROM node:15.14.0-alpine3.10 AS frontend-builder
 
-# Add Maintainer Info
-LABEL maintainer="Fullstaq"
-
-# Set the Current Working Directory inside the container
+RUN mkdir /app
 WORKDIR /app
 
-# Copy go mod, sum and main files
-COPY . ./
+COPY webui/package.json .
+COPY webui/package-lock.json .
+RUN npm install
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+COPY webui .
+RUN npx next build
+RUN npx next export
+
+
+###############
+
+FROM golang:1.16 AS server-builder
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
 RUN go mod download
 
-# Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -o sqedule-server -ldflags '-w -s' -a -installsuffix cgo ./cmd/server
+COPY cli cli
+COPY cmd cmd
+COPY lib lib
+COPY server server
+RUN CGO_ENABLED=0 GOOS=linux go build -tags production -o sqedule-server -ldflags '-w -s' -a -installsuffix cgo ./cmd/server
 
-######## Start a new stage from scratch #######
-FROM alpine:latest
 
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/sqedule .
+###############
 
-# Expose port 3001 (not required)
+FROM scratch
+
+LABEL maintainer="Fullstaq"
+
+COPY --from=frontend-builder /app/out webui-assets
+COPY --from=server-builder /app/sqedule-server .
+
 EXPOSE 3001
 
 # Using entrypoint so we can use commands in docker compose. Rather than using CMD

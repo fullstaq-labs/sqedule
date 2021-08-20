@@ -9,9 +9,10 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       PGDATA: /data/postgres
     volumes:
-       - postgres:/data/postgres
+      - postgres:/data/postgres
     ports:
       - "5432:5432"
     restart: unless-stopped
@@ -26,20 +27,29 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
-       - pgadmin:/root/.pgadmin
+      - pgadmin:/root/.pgadmin
     ports:
       - "${PGADMIN_PORT:-5050}:80"
     restart: unless-stopped
 
-  sqedule-web:
+  sqedule-webui:
     networks:
       - sqedule
-    container_name: sqedule-web
+    container_name: sqedule-webui
     environment:
-      - REACT_APP_API_HOST=http://sqedule-server:3001
-    depends_on:
-      - sqedule-server
-    image: webui:latest
+      - NEXT_PUBLIC_API_SERVER_BASE_URL=http://localhost:3001
+    image: node:15.14.0-alpine3.10
+    command:
+      - /bin/sh
+      - '-c'
+      - |
+        set -ex
+        cd /app
+        npm install
+        exec npm run dev
+    volumes:
+      - ../webui:/app:delegated
+      - webui:/app/node_modules
     ports:
       - 3000:3000
     restart: unless-stopped
@@ -51,9 +61,9 @@ services:
       - postgres
     container_name: sqedule-server
     image: sqedule-server:latest
-    command: run --bind "" --db-type ${DB_TYPE} --db-connection 'dbname=${DB_NAME} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=postgres port=${POSTGRES_PORT}' --dev
+    command: run --bind "" --db-type postgresql --db-connection 'dbname=${POSTGRES_USER:-postgres} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD:-changeme} host=postgres port=${POSTGRES_PORT:-5432}' --dev
     ports:
-      - 3001:3001
+      - "3001:3001"
     restart: unless-stopped
 
 networks:
@@ -63,3 +73,4 @@ networks:
 volumes:
     postgres:
     pgadmin:
+    webui:

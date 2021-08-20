@@ -84,12 +84,16 @@ export const useIsomorphicLayoutEffect =
   ? useLayoutEffect
   : useEffect;
 
-export function getBaseURL(): string {
+export function getApiServerBaseURL(): string {
   if (typeof window === 'undefined') {
-    return 'http://localhost:3001';
-  } else {
+    return '';
+  } else if (typeof process.env.NEXT_PUBLIC_API_SERVER_BASE_URL !== 'undefined') {
+    return process.env.NEXT_PUBLIC_API_SERVER_BASE_URL;
+  } else if (process.env.NODE_ENV == 'development') {
     var hostWithoutIP = window.location.host.split(':')[0];
     return `${window.location.protocol}//${hostWithoutIP}:3001`;
+  } else {
+    return `${window.location.protocol}//${window.location.host}`;
   }
 }
 
