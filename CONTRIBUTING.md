@@ -26,10 +26,10 @@ npm install
 Create a PostgreSQL database, for example `sqedule_dev`. Then create the necessary database tables:
 
 ~~~bash
-go run ./cmd/server db migrate --db-type postgresql --db-connection 'dbname=sqedule_dev'
+./devtools/server db migrate --db-type postgresql --db-connection 'dbname=sqedule_dev'
 ~~~
 
-The argument passed to `--db-connection` is a string describing how to connect to your database. Run `go run ./cmd/sqedule-server db help` to learn more about the format.
+The argument passed to `--db-connection` is a string describing how to connect to your database. Run `./devtools/server db help` to learn more about the format.
 
 ### Seed data
 
@@ -46,7 +46,7 @@ psql -d sqedule_dev -f devtools/db-seed.sql
 The database migration command is idempotent, and only performs migrations that haven't already been run. If you wish to reset your database schema and data from scratch, then pass `--reset` to the database migration command, like this:
 
 ~~~bash
-go run ./cmd/server db migrate --db-type postgresql --db-connection 'dbname=sqedule_dev' --reset
+./devtools/server -tags dev db migrate --db-type postgresql --db-connection 'dbname=sqedule_dev' --reset
 ~~~
 
 You should reload the seed data after having done such a reset.
@@ -54,7 +54,7 @@ You should reload the seed data after having done such a reset.
 ## Running the API server
 
 ~~~bash
-go run ./cmd/server run --db-type postgresql --db-connection dbname=sqedule_dev --dev
+./devtools/server -tags dev run --db-type postgresql --db-connection dbname=sqedule_dev --dev
 ~~~
 
 The API server listens on http://localhost:3001 by default.
