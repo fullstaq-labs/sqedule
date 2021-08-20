@@ -8,5 +8,6 @@ import (
 type Context struct {
 	Db                    *gorm.DB
 	UseTestAuthentication bool
+	DevelopmentMode       bool
 	CorsOrigin            string
 }

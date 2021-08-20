@@ -64,13 +64,17 @@ var runCmd = &cobra.Command{
 			return err
 		}
 
+		if !viper.GetBool("dev") {
+			gin.SetMode(gin.ReleaseMode)
+		}
 		engine := gin.Default()
 		ctx := httpapi.Context{
-			Db:         db,
-			CorsOrigin: viper.GetString("cors-origin"),
+			Db:              db,
+			DevelopmentMode: viper.GetBool("dev"),
+			CorsOrigin:      viper.GetString("cors-origin"),
 		}
 
-		err = ctx.SetupRouter(engine)
+		err = ctx.SetupRouter(engine, logger)
 		if err != nil {
 			return fmt.Errorf("Error setting up router: %w", err)
 		}
@@ -145,4 +149,5 @@ func init() {
 	flags.Int("port", runDefaultPort, "port to listen on")
 	flags.String("cors-origin", "", "CORS origin to allow")
 	flags.Bool("auto-db-migrate", true, "automatically migrate database schema")
+	flags.Bool("dev", false, "run in development mode")
 }

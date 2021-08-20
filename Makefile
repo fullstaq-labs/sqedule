@@ -61,7 +61,7 @@ web-start: ## Start web UI
 
 .PHONY: local-server-start
 local-server-start: ## Start server
-	@go run ./cmd/server server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)'
+	@go run ./cmd/server server --db-type $(DB_TYPE) --db-connection 'dbname=$(DB_NAME) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(POSTGRES_HOST) port=$(POSTGRES_PORT)' --dev
 
 .PHONY: local-start-all
 start-all: ## Start the webUI and Server

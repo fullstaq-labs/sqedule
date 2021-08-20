@@ -8,16 +8,19 @@ import (
 	"github.com/fullstaq-labs/sqedule/server/httpapi/controllers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	gormlogger "gorm.io/gorm/logger"
 )
 
-func (ctx Context) SetupRouter(engine *gin.Engine) error {
+func (ctx Context) SetupRouter(engine *gin.Engine, logger gormlogger.Interface) error {
 	controllerCtx := controllers.NewContext(ctx.Db)
 	jwtAuthMiddleware, orgMemberLookupMiddleware, err := ctx.newAuthMiddlewares()
 	if err != nil {
 		return err
 	}
 
-	engine.Use(cors.New(ctx.createCorsConfig()))
+	if corsConfig, ok := ctx.createCorsConfig(logger); ok {
+		engine.Use(cors.New(corsConfig))
+	}
 
 	v1 := engine.Group("/v1")
 	ctx.installUnauthenticatedRoutes(v1, jwtAuthMiddleware)
