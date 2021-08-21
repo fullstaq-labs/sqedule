@@ -1,4 +1,4 @@
-FROM node:15.14.0-alpine3.10 AS frontend-builder
+FROM node:16-alpine AS frontend-builder
 
 RUN mkdir /app
 WORKDIR /app
