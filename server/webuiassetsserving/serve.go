@@ -15,11 +15,16 @@ import (
 var AssetsBasePath string
 var dynamicRouteParamSegment = regexp.MustCompile(`\[.+?\]`)
 
-func Intialize() error {
+func Intialize(assetsBasePath string) error {
 	var err error
 
-	AssetsBasePath, err = determineAssetsBasePath()
-	return err
+	if len(assetsBasePath) == 0 {
+		AssetsBasePath, err = determineDefaultAssetsBasePath()
+		return err
+	} else {
+		AssetsBasePath = assetsBasePath
+		return nil
+	}
 }
 
 func SetupRouter(engine *gin.Engine) error {
@@ -40,7 +45,7 @@ func SetupRouter(engine *gin.Engine) error {
 	})
 }
 
-func determineAssetsBasePath() (string, error) {
+func determineDefaultAssetsBasePath() (string, error) {
 	exePath, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("Error determining Sqedule executable's own path: %w", err)

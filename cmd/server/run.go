@@ -75,8 +75,8 @@ var runCmd = &cobra.Command{
 			return fmt.Errorf("Error setting up router: %w", err)
 		}
 
-		if webuiassetsserving.Enabled {
-			err = webuiassetsserving.Intialize()
+		if webuiassetsserving.Enabled || len(viper.GetString("webui-assets-path")) > 0 {
+			err = webuiassetsserving.Intialize(viper.GetString("webui-assets-path"))
 			if err != nil {
 				return fmt.Errorf("Error initializing serving of web UI assets: %w", err)
 			}
@@ -157,4 +157,5 @@ func init() {
 	flags.String("cors-origin", "", "CORS origin to allow")
 	flags.Bool("auto-db-migrate", true, "automatically migrate database schema")
 	flags.Bool("dev", false, "run in development mode")
+	flags.String("webui-assets-path", "", "serve web UI assets from the given path")
 }
