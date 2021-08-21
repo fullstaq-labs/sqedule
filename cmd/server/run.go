@@ -23,7 +23,7 @@ import (
 // runCmd represents the 'run' command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run the Sqedule API server",
+	Short: "Run the Sqedule HTTP server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		err := runCmd_checkConfig(viper.GetViper())
