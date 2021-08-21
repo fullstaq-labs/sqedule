@@ -6,7 +6,7 @@
 
 The Sqedule server requires PostgreSQL >= 13. Other databases may be supported in the future depending on user demand.
 
-You don't need to manually setup database schemas. The Sqedule server takes care of that automatically during startup.
+You don't need to manually setup database schemas. The Sqedule server [takes care of that automatically during startup](#database-schema-migration).
 
 ### Installing the binary (without containerization)
 
@@ -70,7 +70,7 @@ You don't need to manually setup database schemas. The Sqedule server takes care
     sudo systemctl start
     ~~~
 
-    > **Note**: you don't need to manually setup database schemas. The Sqedule server takes care of that automatically during startup.
+    > **Note**: you don't need to manually setup database schemas. The Sqedule server [takes care of that automatically during startup](#database-schema-migration).
 
     It listens on localhost port 3001 by default. Try it out, you should see the web interface HTML:
 
@@ -290,7 +290,7 @@ Database:
  * `db-type` (required) — The database type. Currently this can only be set to `postgresql`.
  * `db-connection` — Database connection string containing details such as location and credentials. The format is database-dependent. See [PostgreSQL connection string](#postgresql-connection-string).
  * `db-log-level` (default: `silent`) — Specifies the logging level for database activity messages. Must be one of: `error`, `warn`, `info` or `silent`.
- * `auto-db-migrate` (default: `true`) — Whether to automatically [migrate the database schema](database-schema-migration) during startup.
+ * `auto-db-migrate` (default: `true`) — Whether to automatically [migrate the database schema](#database-schema-migration) during startup.
 
 HTTP server:
 
@@ -311,7 +311,7 @@ Sqedule also reads from `PG*` environment variables, and (if a password is not p
 
 Please refer to the PostgreSQL documentation on:
 
- - [Supported options in the connection string](https://www.postgresql.org/docs/13/libpq-connect.html#LIBPQ-PARAMKEYWORDS).
+ - [Supported options in the connection string](https://www.postgresql.org/docs/13/libpq-connect.html#LIBPQ-PARAMKEYWORDS)
  - [The meaning of PG* environment variables](http://www.postgresql.org/docs/13/static/libpq-envars.html)
 
 Note that Sqedule only supports these environment variables:
@@ -342,7 +342,7 @@ Support for user accounts, and thus authentication, is planned for a future rele
 
 During startup, the Sqedule server checks whether the database schema is up-to-date. If not then it will automatically migrate the database schema to the latest version.
 
-Schema database migration is not concurrency-safe. This is the main reason why Sqedule currently [does not support running multiple concurrent instances](#multi-instance-safety).
+Schema database migration is not concurrency-safe. This is the main reason why Sqedule currently [does not support running multiple concurrent instances](#multi-instance-safety) in its default configuration.
 
 ### Manual database schema migration
 
