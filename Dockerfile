@@ -31,7 +31,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -tags production -o sqedule-server -ldflag
 
 ###############
 
-FROM scratch
+FROM alpine:3.14
 
 LABEL maintainer="Fullstaq"
 
