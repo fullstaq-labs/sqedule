@@ -38,12 +38,12 @@ Connection strings can be in DSN format or in URL format. Examples:
 
 Sqedule also reads from PG* environment variables, and (if a password is not provided) from the .pgpass file. Therefore, providing a connection string is optional.
 
-Please refer the PostgreSQL documentation on:
+Please refer to the PostgreSQL documentation on:
 
  - Supported options in the connection string:
-   https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+   https://www.postgresql.org/docs/13/libpq-connect.html#LIBPQ-PARAMKEYWORDS
  - Meaning of PG* environment variables:
-   http://www.postgresql.org/docs/11/static/libpq-envars.html
+   http://www.postgresql.org/docs/13/static/libpq-envars.html
 
 Note that Sqedule only supports these environment variables:
 
