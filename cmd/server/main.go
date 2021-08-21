@@ -41,7 +41,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	cobra.OnInitialize(initGlobalLogger)
 
-	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "config file (default $HOME/.sqedule.yaml)")
+	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "config file (default $HOME/.sqedule-server.yaml)")
 	rootFlags.logLevel = rootCmd.PersistentFlags().String("log-level", "info", "log level, one of: error,warn,info,silent")
 }
 
@@ -60,7 +60,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".sqedule" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".sqedule")
+		viper.SetConfigName(".sqedule-server")
 	}
 
 	viper.SetEnvPrefix("SQEDULE")
