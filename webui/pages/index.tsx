@@ -11,4 +11,4 @@ export default function DashboardPage(_props: IProps) {
 }
 
 DashboardPage.navigationSection = NavigationSection.Dashboard;
-DashboardPage.pageTitle = 'Home';
+DashboardPage.pageTitle = 'Dashboard';

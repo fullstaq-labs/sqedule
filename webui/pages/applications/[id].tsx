@@ -98,7 +98,7 @@ export default function ApplicationPage(props: IProps) {
         textColor="primary"
       >
         <Tab label="General" id="tab-general" aria-controls="tab-panel-general" />
-        <Tab label="Version history" id="version-history" aria-controls="tab-panel-version-history" />
+        {/* <Tab label="Version history" id="version-history" aria-controls="tab-panel-version-history" /> */}
         <Tab label="Approval rulesets" id="tab-approval-rulesets" arial-controls="tab-panel-approval-rulesets" />
         <Tab label="Releases" id="tab-releases" arial-controls="tab-panel-releases" />
       </Tabs>
@@ -118,8 +118,8 @@ export default function ApplicationPage(props: IProps) {
             mutate={appDataMutate}
             />
         </TabPanel>
-        <TabPanel value={tabIndex} index={1} id="version-history">
-        </TabPanel>
+        {/* <TabPanel value={tabIndex} index={1} id="version-history">
+        </TabPanel> */}
         <TabPanel value={tabIndex} index={2} id="approval-rulesets" style={{ flexGrow: 1 }}>
           <ApprovalRulesetsTabContents
             dataGridState={approvalRulesetsDataGridState}
