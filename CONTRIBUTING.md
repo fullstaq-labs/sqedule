@@ -29,7 +29,7 @@ Create a PostgreSQL database, for example `sqedule_dev`. Then create the necessa
 ./devtools/server db migrate --db-type postgresql --db-connection 'dbname=sqedule_dev'
 ~~~
 
-The argument passed to `--db-connection` is a string describing how to connect to your database. Run `./devtools/server db help` to learn more about the format.
+The argument passed to `--db-connection` is [a string describing how to connect to your database](https://fullstaq-labs.github.io/sqedule/server_guide/config/postgresql/).
 
 ### Seed data
 
