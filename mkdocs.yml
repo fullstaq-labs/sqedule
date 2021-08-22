@@ -3,6 +3,7 @@ site_url: https://fullstaq-labs.github.io/sqedule/
 
 repo_name: fullstaq-labs
 repo_url: https://github.com/fullstaq-labs/sqedule
+edit_uri: edit/main/docs/
 
 theme:
   name: material
