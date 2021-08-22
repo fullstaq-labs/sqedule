@@ -35,6 +35,9 @@ func NewApiRequest(config Config, state State) (*resty.Request, error) {
 		return nil, err
 	}
 
+	if len(config.BasicAuthUser) > 0 || len(config.BasicAuthPassword) > 0 {
+		r.SetBasicAuth(config.BasicAuthUser, config.BasicAuthPassword)
+	}
 	r.SetAuthToken(state.AuthToken)
 	return r, nil
 }

@@ -7,14 +7,18 @@ import (
 )
 
 type Config struct {
-	ServerBaseURL string //`mapstructure:"server-base-url"`
-	Debug         bool
+	ServerBaseURL     string
+	BasicAuthUser     string
+	BasicAuthPassword string
+	Debug             bool
 }
 
 func LoadConfigFromViper(viper *viper.Viper) Config {
 	return Config{
-		ServerBaseURL: viper.GetString("server-base-url"),
-		Debug:         viper.GetBool("debug"),
+		ServerBaseURL:     viper.GetString("server-base-url"),
+		BasicAuthUser:     viper.GetString("basic-auth-user"),
+		BasicAuthPassword: viper.GetString("basic-auth-password"),
+		Debug:             viper.GetBool("debug"),
 	}
 }
 
