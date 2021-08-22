@@ -68,7 +68,7 @@ sudo systemctl daemon-reload
 Start the Sqedule server:
 
 ~~~bash
-sudo systemctl start
+sudo systemctl start sqedule-server
 ~~~
 
 !!! note
