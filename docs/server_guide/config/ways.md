@@ -14,11 +14,11 @@ You can pass configuration from environment variables. This is recommended when 
 
 ## 3. CLI parameters
 
-You can pass configuration through CLI parameters when [running the Sqedule server](../concepts/server-exe.md).
+You can pass some configuration through CLI parameters when [running the Sqedule server](../concepts/server-exe.md). Which CLI parameters are accepted depends on the specific subcommand.
 
-    !!! warning "Caveat"
+!!! warning "Caveat"
 
-        There's a caveat with setting boolean options through CLI parameters. Learn more in [Configuration naming format](naming.md).
+    There's a caveat with setting boolean options through CLI parameters. Learn more in [Configuration naming format](naming.md).
 
 ## Precedence
 

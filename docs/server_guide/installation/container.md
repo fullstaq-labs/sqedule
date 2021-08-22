@@ -16,7 +16,7 @@ docker run --rm \
   ghcr.io/fullstaq-labs/sqedule-server
 ~~~
 
-Try it out, you should see [the web interface's](../../user_guide/web_interface.html) HTML:
+Try it out, you should see [the web interface's](../../user_guide/concepts/web-interface.md) HTML:
 
 ~~~bash
 curl localhost:3001
