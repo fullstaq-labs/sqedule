@@ -16,8 +16,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/cache@v2
         with:
-          python-version: 3.x
-      - run: pip install -r requirements-mkdocs.txt
-      - run: mkdocs gh-deploy --force
+          path: venv
+          key: docs-venv-${{ hashFiles('requirements-mkdocs.txt') }}
+      - name: Create virtual environment
+        run: python3 -m venv venv
+      - run: ./venv/bin/pip install -r requirements-mkdocs.txt
+      - run: ./venv/bin/mkdocs gh-deploy --force
