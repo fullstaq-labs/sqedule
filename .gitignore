@@ -4,4 +4,6 @@
 
 target
 node_modules
+site
 webui/out
+venv

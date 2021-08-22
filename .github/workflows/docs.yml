@@ -1,0 +1,23 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/docs.yml
+      - mkdocs.yml
+      - requirements.mkdocs.txt
+      - docs/**
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: pip install -r requirements-mkdocs.txt
+      - run: mkdocs gh-deploy --force

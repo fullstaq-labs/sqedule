@@ -1,0 +1,40 @@
+site_name: Sqedule
+site_url: https://fullstaq-labs.github.io/sqedule/
+
+repo_name: fullstaq-labs
+repo_url: https://github.com/fullstaq-labs/sqedule
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Server Guide:
+    - Introduction: server_guide/index.md
+    - Installation:
+      - Requirements: server_guide/installation/requirements.md
+      - With binary (no container): server_guide/installation/binary.md
+      - With container: server_guide/installation/container.md
+      - With Kubernetes: server_guide/installation/kubernetes.md
+    - Configuration:
+      - Ways to pass configuration: server_guide/config/ways.md
+      - Naming format: server_guide/config/naming.md
+      - Reference: server_guide/config/reference.md
+      - PostgreSQL connection string: server_guide/config/postgresql.md
+    - Concepts:
+      - The Sqedule server executable: server_guide/concepts/server-exe.md
+      - Security: server_guide/concepts/security.md
+      - Database schema migration: server_guide/concepts/database-schema-migration.md
+      - Multi-instance safety: server_guide/concepts/multi-instance-safety.md
+    - Tasks:
+      - Disabling automatic schema migration: server_guide/tasks/disabling-automatic-schema-migration.md
+      - Manually migrating the database schema: server_guide/tasks/manual-database-schema-migration.md
+      - Running multiple server instances: server_guide/tasks/multi-instance.md
