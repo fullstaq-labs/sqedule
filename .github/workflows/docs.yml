@@ -22,5 +22,5 @@ jobs:
           key: docs-venv-${{ hashFiles('requirements-mkdocs.txt') }}
       - name: Create virtual environment
         run: python3 -m venv venv
-      - run: ./venv/bin/pip install -r requirements-mkdocs.txt
+      - run: ./venv/bin/pip install -U -r requirements-mkdocs.txt
       - run: ./venv/bin/mkdocs gh-deploy --force
