@@ -11,8 +11,9 @@ import (
 
 // loginCmd represents the 'login' command
 var loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Logs into a Sqedule server",
+	Use:    "login",
+	Short:  "Logs into a Sqedule server",
+	Hidden: !cli.SupportLogin,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		return loginCmd_run(viper.GetViper())

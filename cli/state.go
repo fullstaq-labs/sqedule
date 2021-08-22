@@ -70,6 +70,9 @@ func StateFilePath() (string, error) {
 }
 
 func (state State) RequireAuthToken() error {
+	if !SupportLogin {
+		return nil
+	}
 	if len(state.AuthToken) == 0 {
 		return errors.New("Login required. Please run 'sqedule-cli login'")
 	} else if time.Now().After(state.AuthTokenExpirationTime) {

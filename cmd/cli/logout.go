@@ -8,11 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// logoutCmd represents the 'login' command
+// logoutCmd represents the 'logout' command
 var logoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "Discards the Sqedule authorization token",
-	RunE:  LogoutCmd_Run,
+	Use:    "logout",
+	Short:  "Discards the Sqedule authorization token",
+	Hidden: !cli.SupportLogin,
+	RunE:   LogoutCmd_Run,
 }
 
 func LogoutCmd_Run(cmd *cobra.Command, args []string) error {
