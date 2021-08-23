@@ -5,6 +5,9 @@ repo_name: fullstaq-labs
 repo_url: https://github.com/fullstaq-labs/sqedule
 edit_uri: edit/main/docs/
 
+extra:
+  latest_version: 0.1.0
+
 theme:
   name: material
   features:
@@ -12,14 +15,47 @@ theme:
     - navigation.sections
     - navigation.expand
 
+extra_css:
+  - extra.css
+
 markdown_extensions:
   - admonition
+  - attr_list
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+plugins:
+  - search
+  - macros
 
 nav:
+  - Home: index.md
+  - User Guide:
+    - Introduction: user_guide/index.md
+    - Help & support: user_guide/help_support.md
+    - Tutorials:
+      - 1 Release audit logging: user_guide/tutorials/release-logging.md
+      - 2 Release approval: user_guide/tutorials/approval.md
+    - Concepts:
+      - Applications & releases: user_guide/concepts/applications-releases.md
+      - Versioning, proposals & reviews: user_guide/concepts/versioning.md
+      - Approval rules: user_guide/concepts/approval-rules.md
+      - Web interface: user_guide/concepts/web-interface.md
+      - CLI: user_guide/concepts/cli.md
+      - API: user_guide/concepts/api.md
+    - Tasks:
+      - Installing the CLI: user_guide/tasks/install-cli.md
+      - Initial CLI setup: user_guide/tasks/initial-cli-setup.md
+    - References:
+      - API endpoints: user_guide/references/api-endpoints.md
+      - CLI configuration: user_guide/references/cli-config.md
   - Server Guide:
     - Introduction: server_guide/index.md
+    - Help & support: server_guide/help_support.md
     - Installation:
       - Requirements: server_guide/installation/requirements.md
       - With binary (no container): server_guide/installation/binary.md
@@ -39,3 +75,4 @@ nav:
       - Disabling automatic schema migration: server_guide/tasks/disabling-automatic-schema-migration.md
       - Manually migrating the database schema: server_guide/tasks/manual-database-schema-migration.md
       - Running multiple server instances: server_guide/tasks/multi-instance.md
+  - About Fullstaq: fullstaq.md

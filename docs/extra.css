@@ -1,0 +1,11 @@
+@media (max-width: 450px) {
+    .home-btnlist-2 {
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 676px) {
+    .home-btnlist-3 {
+        margin-top: 0.5rem;
+    }
+}

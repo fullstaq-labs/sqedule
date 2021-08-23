@@ -1,6 +1,12 @@
-# Sqedule — a release auditing & approval platform
+# Welcome to the Sqedule docs
 
-Sqedule is an application release auditing & approval platform.
+[:fontawesome-brands-github: Github](https://github.com/fullstaq-labs/sqedule){ .md-button .home-btnlist .home-btnlist-1 }
+[:fontawesome-solid-user: Read User Guide ](user_guide/index.md){ .md-button .md-button--primary .home-btnlist .home-btnlist-2 }
+[:fontawesome-solid-server: Read Server Guide](server_guide/index.md){ .md-button .md-button--primary .home-btnlist .home-btnlist-3 }
+
+## What is Sqedule?
+
+[Sqedule](https://github.com/fullstaq-labs/sqedule) is an application release auditing & approval platform.
 
  - **Auditing**: Sqedule allows teams to have a central audit log of all released applications and their versions. This provides valuable information when troubleshooting complex application architectures that may involve many microservices or components.
  - **Approval**: Sqedule helps organizations that traditionally used formal (ITSM-based) change & release management processes, and are transitioning to adopt more DevOps-style continuous release processes.
@@ -21,17 +27,7 @@ The transition of a formal (ITSM based) change & release management process towa
 
 With Sqedule we are trying to bridge the gap between ITIL-style change/release management and CI/CD/DevOps processes, by automating the change approval processes centrally and allowing change & release managers to collaborate smoothly.
 
-## Installation
+## Next up
 
- - [Installing the Sqedule server](https://fullstaq-labs.github.io/sqedule/server_guide/)
- - [Installing the Sqedule CLI](https://fullstaq-labs.github.io/sqedule/user_guide/tasks/install-cli/)
-
-## Documentation
-
- - [Sqedule user guide](https://fullstaq-labs.github.io/sqedule/user_guide/)
- - [Sqedule server guide](https://fullstaq-labs.github.io/sqedule/server_guide/)
-
-## Development & contribution
-
- * [Development & contribution guide](CONTRIBUTING.md) — helps you get started.
- * [Development documentation](devdocs/README.md) — documents design, architecture, processes and more.
+ * [Read the User Guide](user_guide/index.md) to learn how to use Sqedule.
+ * [Read the Server Guide](server_guide/index.md) to learn how to setup and administer a Sqedule server.
