@@ -15,7 +15,7 @@ import (
 // applicationApprovalRulesetBindingCreateCmd represents the 'application-approval-ruleset-binding create' command
 var applicationApprovalRulesetBindingCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create an application application approval ruleset binding binding",
+	Short: "Create an application application approval ruleset binding",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		return applicationApprovalRulesetBindingCreateCmd_run(viper.GetViper(), mocking.RealPrinter{})
