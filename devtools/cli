@@ -1,3 +1,5 @@
 #!/bin/sh
 set -ex
+SQEDULE_SERVER_BASE_URL=http://localhost:3001
+export SQEDULE_SERVER_BASE_URL
 exec go run ./cmd/cli "$@"
