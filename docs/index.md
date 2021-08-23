@@ -27,6 +27,12 @@ The transition of a formal (ITSM based) change & release management process towa
 
 With Sqedule we are trying to bridge the gap between ITIL-style change/release management and CI/CD/DevOps processes, by automating the change approval processes centrally and allowing change & release managers to collaborate smoothly.
 
+## Made with ❤️ by Fullstaq
+
+[![Fullstaq logo](logo-fullstaq.svg)](fullstaq.md)
+
+Sqedule is made by Fullstaq. [Learn more](fullstaq.md).
+
 ## Next up
 
  * [Read the User Guide](user_guide/index.md) to learn how to use Sqedule.
