@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { formatDateTimeString, formatProposalStateString, formatBooleanAsIcon } from '../common/utils';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import { NavigationSection } from '../components/navbar';
+import SecondaryToolbar from '../components/secondary_toolbar';
+import CodeBlock from '../components/code_block';
+import CodeSpan from '../components/code_span';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
 import DataLoadErrorScreen from '../components/data_load_error_screen';
 import { DataGrid, useDataGrid } from '../components/data_grid';
@@ -10,6 +14,12 @@ import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import AddCircleIcon from '@material-ui/icons/AddCircle';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { ColDef } from '@material-ui/data-grid';
 
@@ -81,26 +91,44 @@ export default function ApplicationsPage(props: IProps) {
   const { appContext } = props;
   const dataGridState = useDataGrid();
   const { data, error, isValidating, mutate } = useSWR(`/v1/applications?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);
+  const [creationDialogOpened, setCreationDialogOpened] = useState(false);
+
+  function handleCreationDialogClose() {
+    setCreationDialogOpened(false);
+  }
 
   declareValidatingFetchedData(appContext, isValidating);
 
   if (data) {
     if (data.items.length == 0 && dataGridState.requestedPage == 1) {
       return (
-        <Container maxWidth="md">
-          <Box px={2} py={2} textAlign="center">
-            <Typography variant="h5" color="textSecondary">
-              There are no applications.
-            </Typography>
-          </Box>
-        </Container>
+        <>
+          <Container maxWidth="md">
+            <Box px={2} py={2} textAlign="center">
+              <Typography variant="h5" color="textSecondary">
+                <p>There are no applications.</p>
+              </Typography>
+              <Button size="large" variant="contained" color="primary" startIcon={ <AddCircleIcon/> } onClick={() => setCreationDialogOpened(true)}>Create</Button>
+            </Box>
+          </Container>
+
+          <Dialog
+            onClose={handleCreationDialogClose}
+            aria-labelledby="creation-dialog-title"
+            aria-describedby="creation-dialog-description"
+            open={creationDialogOpened}
+          >
+            <CreationDialogContents onClose={handleCreationDialogClose} />
+          </Dialog>
+        </>
       );
     }
 
     return (
       <>
         <DataRefreshErrorSnackbar error={error} refreshing={isValidating} onReload={mutate} />
-        <Box mx={2} my={2} style={{ display: 'flex', flexGrow: 1 }}>
+        <SecondaryToolbar><SecondaryToolbarContents/></SecondaryToolbar>
+        <Box mx={2} my={2} style={{ display: 'flex', flexGrow: 1, flexDirection: 'column' }}>
           <Paper style={{ display: 'flex', flexGrow: 1 }}>
             <DataGrid
               rows={data.items}
@@ -135,3 +163,57 @@ export default function ApplicationsPage(props: IProps) {
 
 ApplicationsPage.navigationSection = NavigationSection.Applications;
 ApplicationsPage.pageTitle = 'Applications';
+
+function SecondaryToolbarContents(): JSX.Element {
+  const [creationDialogOpened, setCreationDialogOpened] = useState(false);
+
+  function handleCreationDialogClose() {
+    setCreationDialogOpened(false);
+  }
+
+  return (
+    <>
+      <Button color="primary" startIcon={ <AddCircleIcon/> } onClick={() => setCreationDialogOpened(true)}>Create</Button>
+
+      <Dialog
+        onClose={handleCreationDialogClose}
+        aria-labelledby="creation-dialog-title"
+        aria-describedby="creation-dialog-description"
+        open={creationDialogOpened}
+      >
+        <CreationDialogContents onClose={handleCreationDialogClose} />
+      </Dialog>
+    </>
+  );
+}
+
+function CreationDialogContents(props: any): JSX.Element {
+  return (
+    <>
+      <DialogTitle id="creation-dialog-title">Create application</DialogTitle>
+      <DialogContent id="creation-dialog-description">
+        <Typography variant="body1">
+          <p style={{ marginTop: 0 }}>
+            <a href="https://docs.sqedule.io/user_guide/tasks/install-cli/" target="_blank">Install the CLI</a>
+            {' '}
+            and
+            {' '}
+            <a href="https://docs.sqedule.io/user_guide/tasks/initial-cli-setup/" target="_blank">set it up</a>. Then run:
+          </p>
+          <CodeBlock>
+            sqedule application create \{"\n"}
+            {' '} --id {'<STRING>'} \{"\n"}
+            {' '} --display-name {'<STRING>'} \{"\n"}
+            {' '} --proposal-state final
+          </CodeBlock>
+          <p style={{ marginBottom: 0 }}>
+            To learn about all possible options, run <CodeSpan>sqedule application create --help</CodeSpan>
+          </p>
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={props.onClose} color="primary">Close</Button>
+      </DialogActions>
+    </>
+  );
+}
