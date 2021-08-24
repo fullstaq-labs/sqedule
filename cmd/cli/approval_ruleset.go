@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstateinput"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -30,7 +30,7 @@ func defineApprovalRulesetCreateOrUpdateFlags(flags *pflag.FlagSet, creating boo
 func approvalRulesetCreateOrUpdateCmd_createVersionInput(viper *viper.Viper) json.ApprovalRulesetVersionInput {
 	return json.ApprovalRulesetVersionInput{
 		ReviewableVersionInputBase: json.ReviewableVersionInputBase{
-			ProposalState: proposalstate.State(viper.GetString("proposal-state")),
+			ProposalState: proposalstateinput.Input(viper.GetString("proposal-state")),
 		},
 		DisplayName: cli.GetViperStringIfSet(viper, "display-name"),
 		Description: cli.GetViperStringIfSet(viper, "description"),

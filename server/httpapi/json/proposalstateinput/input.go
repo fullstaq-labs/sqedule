@@ -1,4 +1,4 @@
-package proposalstate
+package proposalstateinput
 
 import (
 	"bytes"
@@ -6,23 +6,23 @@ import (
 	"errors"
 )
 
-type State string
+type Input string
 
 const (
-	Unset   State = ""
-	Draft   State = "draft"
-	Final   State = "final"
-	Abandon State = "abandon"
+	Unset   Input = ""
+	Draft   Input = "draft"
+	Final   Input = "final"
+	Abandon Input = "abandon"
 )
 
-func (s State) MarshalJSON() ([]byte, error) {
+func (s Input) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(string(s))
 	buffer.WriteString(`"`)
 	return buffer.Bytes(), nil
 }
 
-func (s *State) UnmarshalJSON(b []byte) error {
+func (s *Input) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -41,11 +41,11 @@ func (s *State) UnmarshalJSON(b []byte) error {
 	case "abandon":
 		*s = Abandon
 	default:
-		return errors.New("Unknown proposal state")
+		return errors.New("Unknown proposal state input")
 	}
 	return nil
 }
 
-func (s State) IsEffectivelyDraft() bool {
+func (s Input) IsEffectivelyDraft() bool {
 	return s == Unset || s == Draft
 }

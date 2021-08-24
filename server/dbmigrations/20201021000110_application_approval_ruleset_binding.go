@@ -43,7 +43,7 @@ var migration20201021000110 = gormigrate.Migration{
 
 		type ReviewableAdjustmentBase struct {
 			AdjustmentNumber uint32 `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
-			ReviewState      string `gorm:"type:review_state; not null"`
+			ProposalState    string `gorm:"type:proposal_state; not null"`
 			ReviewComments   sql.NullString
 			CreatedAt        time.Time `gorm:"not null"`
 		}

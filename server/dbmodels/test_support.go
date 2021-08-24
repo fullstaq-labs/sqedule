@@ -8,8 +8,8 @@ import (
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/organizationmemberrole"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/releasestate"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -115,7 +115,7 @@ func CreateMockApplicationAdjustment(db *gorm.DB, version ApplicationVersion, nu
 		BaseModel: version.BaseModel,
 		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
 			AdjustmentNumber: number,
-			ReviewState:      reviewstate.Approved,
+			ProposalState:    proposalstate.Approved,
 		},
 		ApplicationVersionID: version.ID,
 		ApplicationVersion:   version,
@@ -271,7 +271,7 @@ func CreateMockApprovalRulesetAdjustment(db *gorm.DB, version ApprovalRulesetVer
 		BaseModel: version.BaseModel,
 		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
 			AdjustmentNumber: number,
-			ReviewState:      reviewstate.Approved,
+			ProposalState:    proposalstate.Approved,
 		},
 		ApprovalRulesetVersionID: version.ID,
 		ApprovalRulesetVersion:   version,
@@ -370,7 +370,7 @@ func CreateMockApplicationApprovalRulesetBindingAdjustment(db *gorm.DB, version 
 		ApplicationApprovalRulesetBindingVersion:   version,
 		ReviewableAdjustmentBase: ReviewableAdjustmentBase{
 			AdjustmentNumber: number,
-			ReviewState:      reviewstate.Approved,
+			ProposalState:    proposalstate.Approved,
 		},
 		Enabled: lib.NewBoolPtr(true),
 		Mode:    approvalrulesetbindingmode.Enforcing,

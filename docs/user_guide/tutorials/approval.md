@@ -60,7 +60,7 @@ The CLI confirms that creating this ruleset was successful:
     "id": "only_afternoon",
     "updated_at": "2021-08-22T17:17:48.14245+02:00",
     "version": {
-        "adjustment_state": "draft",
+        "proposal_state": "draft",
         "approval_rules": [],
         "approved_at": null,
         "created_at": "2021-08-22T17:17:48.148982+02:00",
@@ -169,7 +169,7 @@ The CLI confirms that finalization is successful (`version.state` is `approved`)
     "id": "only_afternoon",
     "updated_at": "2021-08-22T17:17:48.14245+02:00",
     "version": {
-        "adjustment_state": "approved",
+        "proposal_state": "approved",
         "approval_rules": [
             {
                 "begin_time": "12:00",
@@ -235,7 +235,7 @@ The CLI confirms that the binding is created and that its version is finalized:
         "created_at": "2021-08-22T14:44:14.115866+02:00",
         "id": "shopping_cart_service",
         "latest_approved_version": {
-            "adjustment_state": "approved",
+            "proposal_state": "approved",
             "approved_at": "2021-08-22T14:44:14.115686+02:00",
             "created_at": "2021-08-22T14:44:14.11635+02:00",
             "display_name": "Shopping Cart Service",
@@ -251,7 +251,7 @@ The CLI confirms that the binding is created and that its version is finalized:
         "created_at": "2021-08-22T17:17:48.14245+02:00",
         "id": "only_afternoon",
         "latest_approved_version": {
-            "adjustment_state": "approved",
+            "proposal_state": "approved",
             "approved_at": "2021-08-22T17:29:24.235901+02:00",
             "created_at": "2021-08-22T17:17:48.148982+02:00",
             "description": "",
@@ -268,7 +268,7 @@ The CLI confirms that the binding is created and that its version is finalized:
     "created_at": "2021-08-22T20:13:44.264493+02:00",
     "updated_at": "2021-08-22T20:13:44.264493+02:00",
     "version": {
-        "adjustment_state": "approved",
+        "proposal_state": "approved",
         "approved_at": "2021-08-22T20:13:44.264346+02:00",
         "created_at": "2021-08-22T20:13:44.267858+02:00",
         "id": 7,

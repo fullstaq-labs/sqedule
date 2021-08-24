@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/gomega"
@@ -126,11 +126,11 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
-		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("proposal_state", "draft"))
 		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
-		tx := hctx.Db.Where("review_state = 'draft'").Take(adjustment.Interface())
+		tx := hctx.Db.Where("proposal_state = 'draft'").Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 	})
 
@@ -142,11 +142,11 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
-		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("proposal_state", "draft"))
 		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
-		tx := hctx.Db.Where("review_state = 'draft'").Take(adjustment.Interface())
+		tx := hctx.Db.Where("proposal_state = 'draft'").Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 	})
 
@@ -158,11 +158,11 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
-		Expect(version).To(HaveKeyWithValue("adjustment_state", "abandoned"))
+		Expect(version).To(HaveKeyWithValue("proposal_state", "abandoned"))
 		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
-		tx := hctx.Db.Where("review_state = 'abandoned'").Take(adjustment.Interface())
+		tx := hctx.Db.Where("proposal_state = 'abandoned'").Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 	})
 
@@ -178,7 +178,7 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 		))
 		if versionJSON["version_state"] == "proposal" {
 			Expect(versionJSON).To(HaveKeyWithValue("version_number", BeNil()))
-			Expect(versionJSON).To(HaveKeyWithValue("adjustment_state", Or(
+			Expect(versionJSON).To(HaveKeyWithValue("proposal_state", Or(
 				Equal("draft"),
 				Equal("reviewing"),
 				Equal("rejected"),
@@ -187,18 +187,18 @@ func IncludeReviewableUpdateVersionedDataTest(options ReviewableUpdateVersionedD
 			Expect(versionJSON).To(HaveKeyWithValue("approved_at", BeNil()))
 
 			adjustment := reflect.New(options.AdjustmentType)
-			tx := hctx.Db.Where("review_state != 'approved'").Take(adjustment.Interface())
+			tx := hctx.Db.Where("proposal_state != 'approved'").Take(adjustment.Interface())
 			Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 		} else {
 			Expect(versionJSON).To(HaveKeyWithValue("version_number", BeNumerically("==", 2)))
-			Expect(versionJSON).To(HaveKeyWithValue("adjustment_state", "approved"))
+			Expect(versionJSON).To(HaveKeyWithValue("proposal_state", "approved"))
 			Expect(versionJSON).To(HaveKeyWithValue("approved_at", Not(BeNil())))
 
 			version, adjustment := options.GetLatestResourceVersionAndAdjustment()
 			Expect(version).ToNot(BeNil())
 			Expect(version.GetVersionNumber()).ToNot(BeNil())
 			Expect(*version.GetVersionNumber()).To(BeNumerically("==", 2))
-			Expect(adjustment.GetReviewState()).To(Equal(reviewstate.Approved))
+			Expect(adjustment.GetProposalState()).To(Equal(proposalstate.Approved))
 		}
 	})
 

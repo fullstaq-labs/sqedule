@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/lib"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstateinput"
 	"gorm.io/gorm"
 )
 
@@ -39,7 +39,7 @@ type IReviewableVersion interface {
 }
 
 type IReviewableAdjustment interface {
-	GetReviewState() reviewstate.State
+	GetProposalState() proposalstate.State
 	GetVersionID() interface{}
 	AssociateWithVersion(version IReviewableVersion)
 }
@@ -57,8 +57,8 @@ type ReviewableVersionBase struct {
 }
 
 type ReviewableAdjustmentBase struct {
-	AdjustmentNumber uint32            `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
-	ReviewState      reviewstate.State `gorm:"type:review_state; not null"`
+	AdjustmentNumber uint32              `gorm:"type:int; primaryKey; not null; check:(adjustment_number > 0)"`
+	ProposalState    proposalstate.State `gorm:"type:proposal_state; not null"`
 	ReviewComments   sql.NullString
 	CreatedAt        time.Time `gorm:"not null"`
 }
@@ -75,8 +75,8 @@ func (version ReviewableVersionBase) GetVersionNumber() *uint32 {
 // ******** ReviewableAdjustmentBase methods ********
 //
 
-func (adjustment ReviewableAdjustmentBase) GetReviewState() reviewstate.State {
-	return adjustment.ReviewState
+func (adjustment ReviewableAdjustmentBase) GetProposalState() proposalstate.State {
+	return adjustment.ProposalState
 }
 
 //
@@ -250,28 +250,28 @@ func FinalizeReviewableProposal(version *ReviewableVersionBase, adjustment *Revi
 }
 
 func markProposalAsReviewing(adjustment *ReviewableAdjustmentBase) {
-	adjustment.ReviewState = reviewstate.Reviewing
+	adjustment.ProposalState = proposalstate.Reviewing
 }
 
 func markProposalAsApproved(version *ReviewableVersionBase, versionNumber uint32, adjustment *ReviewableAdjustmentBase) {
-	adjustment.ReviewState = reviewstate.Approved
+	adjustment.ProposalState = proposalstate.Approved
 	version.VersionNumber = &versionNumber
 	version.ApprovedAt = sql.NullTime{Time: time.Now(), Valid: true}
 }
 
-// SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState sets an Adjustment's ReviewState to an appropriate value,
+// SetReviewableAdjustmentProposalStateFromProposalStateInput sets an Adjustment's ProposalState to an appropriate value,
 // based on a ProposalState given by a client. It is to be used inside PATCH API routes.
 //
 // Precondition: `state` is not `Final`.
-func SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(adjustment *ReviewableAdjustmentBase, state proposalstate.State) {
-	switch state {
-	case proposalstate.Unset, proposalstate.Draft:
-		adjustment.ReviewState = reviewstate.Draft
-	case proposalstate.Final:
-		panic("Not allowed to call this function on a proposalstate of 'Final'")
-	case proposalstate.Abandon:
-		adjustment.ReviewState = reviewstate.Abandoned
+func SetReviewableAdjustmentProposalStateFromProposalStateInput(adjustment *ReviewableAdjustmentBase, input proposalstateinput.Input) {
+	switch input {
+	case proposalstateinput.Unset, proposalstateinput.Draft:
+		adjustment.ProposalState = proposalstate.Draft
+	case proposalstateinput.Final:
+		panic("Not allowed to call this function on a proposalstateinput of 'Final'")
+	case proposalstateinput.Abandon:
+		adjustment.ProposalState = proposalstate.Abandoned
 	default:
-		panic("Unsupported proposal state '" + string(state) + "'")
+		panic("Unsupported proposal state '" + string(input) + "'")
 	}
 }

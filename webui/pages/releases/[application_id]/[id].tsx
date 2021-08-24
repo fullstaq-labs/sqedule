@@ -4,7 +4,7 @@ import SwipeableViews from 'react-swipeable-views';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { formatStateString } from '../../releases';
-import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatAdjustmentStateString, formatBooleanAsIcon } from '../../../common/utils';
+import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatProposalStateString, formatBooleanAsIcon } from '../../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../../components/app_context';
 import { NavigationSection } from '../../../components/navbar';
 import DataRefreshErrorSnackbar from '../../../components/data_refresh_error_snackbar';
@@ -334,11 +334,11 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     valueFormatter: ({ value }) => formatBooleanAsIcon(value as any) ?? 'N/A',
   },
   {
-    field: 'adjustment_state',
-    headerName: 'Adjustment state',
+    field: 'proposal_state',
+    headerName: 'Proposal state',
     width: 150,
-    valueGetter: ({ row }) => row.approval_ruleset.latest_approved_version?.adjustment_state,
-    valueFormatter: ({ value }) => formatAdjustmentStateString(value as any) ?? 'N/A',
+    valueGetter: ({ row }) => row.approval_ruleset.latest_approved_version?.proposal_state,
+    valueFormatter: ({ value }) => formatProposalStateString(value as any) ?? 'N/A',
   },
   {
     field: 'ruleset_updated_at',

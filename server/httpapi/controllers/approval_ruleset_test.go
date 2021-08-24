@@ -9,7 +9,7 @@ import (
 
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -501,7 +501,7 @@ var _ = Describe("approval-ruleset API", func() {
 					Expect(err).ToNot(HaveOccurred())
 					_, err = dbmodels.CreateMockApprovalRulesetAdjustment(tx, proposal, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-							adjustment.ReviewState = reviewstate.Draft
+							adjustment.ProposalState = proposalstate.Draft
 						})
 					Expect(err).ToNot(HaveOccurred())
 				}
@@ -655,7 +655,7 @@ var _ = Describe("approval-ruleset API", func() {
 					Expect(err).ToNot(HaveOccurred())
 					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, proposal, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-							adjustment.ReviewState = reviewstate.Draft
+							adjustment.ProposalState = proposalstate.Draft
 						})
 					Expect(err).ToNot(HaveOccurred())
 
@@ -713,7 +713,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 					adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockVersion, 1,
 						func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-							adjustment.ReviewState = reviewstate.Draft
+							adjustment.ProposalState = proposalstate.Draft
 						})
 					Expect(err).ToNot(HaveOccurred())
 
@@ -789,7 +789,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		Setup := func(hasApprovedVersion bool, proposal1ReviewState reviewstate.State) {
+		Setup := func(hasApprovedVersion bool, proposal1State proposalstate.State) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				if hasApprovedVersion {
 					mockRuleset, err = dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
@@ -812,7 +812,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal1, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = proposal1ReviewState
+						adjustment.ProposalState = proposal1State
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal1.Adjustment = &proposal1Adjustment
@@ -822,7 +822,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 				proposal2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal2, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = reviewstate.Reviewing
+						adjustment.ProposalState = proposalstate.Reviewing
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal2.Adjustment = &proposal2Adjustment
@@ -877,7 +877,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs application bindings", func() {
-			Setup(true, reviewstate.Draft)
+			Setup(true, proposalstate.Draft)
 
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				app, err := dbmodels.CreateMockApplicationWith1Version(tx, ctx.Org, nil, nil)
@@ -905,7 +905,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs the updated approval rules", func() {
-			Setup(true, reviewstate.Draft)
+			Setup(true, proposalstate.Draft)
 			body := includedTestCtx.MakeRequest(false, false, "", 200)
 
 			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
@@ -918,7 +918,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("creates new ApprovalRule objects rather than modifying existing ones in-place", func() {
-			Setup(true, reviewstate.Draft)
+			Setup(true, proposalstate.Draft)
 			includedTestCtx.MakeRequest(false, false, "", 200)
 
 			var count int64
@@ -928,7 +928,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("copies the previous adjustment's approval rules if no new approval rules are given", func() {
-			Setup(true, reviewstate.Draft)
+			Setup(true, proposalstate.Draft)
 			rule, err := dbmodels.CreateMockScheduleApprovalRuleWholeDay(ctx.Db, ctx.Org,
 				mockProposal1.ID, *mockProposal1.Adjustment, nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -952,7 +952,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 	})
 
-	Describe("PUT /approval-rulesets/:id/proposals/:version_id/review-state", func() {
+	Describe("PUT /approval-rulesets/:id/proposals/:version_id/state", func() {
 		var mockVersion dbmodels.ApprovalRulesetVersion
 		var mockProposal1, mockProposal2 dbmodels.ApprovalRulesetVersion
 
@@ -961,7 +961,7 @@ var _ = Describe("approval-ruleset API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		Setup := func(reviewState reviewstate.State) {
+		Setup := func(proposalState proposalstate.State) {
 			err = ctx.Db.Transaction(func(tx *gorm.DB) error {
 				ruleset, err := dbmodels.CreateMockApprovalRulesetWith1Version(tx, ctx.Org, "ruleset1", nil)
 				Expect(err).ToNot(HaveOccurred())
@@ -972,7 +972,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 				proposal1Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal1, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = reviewState
+						adjustment.ProposalState = proposalState
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal1.Adjustment = &proposal1Adjustment
@@ -986,7 +986,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 				proposal2Adjustment, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal2, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = reviewState
+						adjustment.ProposalState = proposalState
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal2.Adjustment = &proposal2Adjustment
@@ -1005,10 +1005,10 @@ var _ = Describe("approval-ruleset API", func() {
 		includedTestCtx := IncludeReviewableReviewProposalTest(ReviewableReviewProposalTestOptions{
 			HTTPTestCtx: &ctx,
 			GetProposalPath: func() string {
-				return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d/review-state", mockProposal1.ID)
+				return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d/state", mockProposal1.ID)
 			},
 			GetApprovedVersionPath: func() string {
-				return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d/review-state", mockVersion.ID)
+				return fmt.Sprintf("/v1/approval-rulesets/ruleset1/proposals/%d/state", mockVersion.ID)
 			},
 			Setup:                      Setup,
 			ResourceTypeNameInResponse: "approval ruleset proposal",
@@ -1040,7 +1040,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs application bindings", func() {
-			Setup(reviewstate.Reviewing)
+			Setup(proposalstate.Reviewing)
 			body := includedTestCtx.MakeRequest(false, "approved", 200)
 
 			Expect(body).To(HaveKeyWithValue("application_approval_ruleset_bindings", HaveLen(1)))
@@ -1056,7 +1056,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("outputs approval rules", func() {
-			Setup(reviewstate.Reviewing)
+			Setup(proposalstate.Reviewing)
 			body := includedTestCtx.MakeRequest(false, "approved", 200)
 
 			Expect(body).To(HaveKeyWithValue("version", Not(BeNil())))
@@ -1067,7 +1067,7 @@ var _ = Describe("approval-ruleset API", func() {
 		})
 
 		It("creates copies of ApprovalRule objects", func() {
-			Setup(reviewstate.Reviewing)
+			Setup(proposalstate.Reviewing)
 			includedTestCtx.MakeRequest(false, "approved", 200)
 
 			var count int64
@@ -1096,7 +1096,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 				adjustment1, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 1,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = reviewstate.Draft
+						adjustment.ProposalState = proposalstate.Draft
 					})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -1111,7 +1111,7 @@ var _ = Describe("approval-ruleset API", func() {
 
 				adjustment2, err := dbmodels.CreateMockApprovalRulesetAdjustment(tx, mockProposal, 2,
 					func(adjustment *dbmodels.ApprovalRulesetAdjustment) {
-						adjustment.ReviewState = reviewstate.Draft
+						adjustment.ProposalState = proposalstate.Draft
 					})
 				Expect(err).ToNot(HaveOccurred())
 				mockProposal.Adjustment = &adjustment2

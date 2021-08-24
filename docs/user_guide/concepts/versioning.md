@@ -2,8 +2,10 @@
 
 Many resources in Sqedule are **versioned**. This has several reasons:
 
- * Versioning allows preserving an audit trail of changes.
- * Versioning prevents data modifications from interfering with on-going, long-running processes. Such processes use the data versions from when the processes begun, not the latest versions.
+ - **History** — so that you can always revert back to a previous version in case something goes wrong.
+ - **Auditing** — logging all changes so that you know why something changed, and who were responsible.
+ - **Reviewing** — don't activate changes until they are reviewed.
+ - **Concurrency management** — preventing data modifications from interfering with on-going, long-running processes. Such processes use the data versions from when the processes begun, not the latest versions.
 
     For example, [approval rulesets](approval-rules.md) are versioned. But when Sqedule starts evaluating rules on a [release](applications-releases.md) (which can take a while), concurrent modifications on rulesets have no effect on the rule evaluation process: Sqedule evaluates against the ruleset versions that existed when the release was created.
 
@@ -35,7 +37,7 @@ To understand the relationship between the versioning concept and the [JSON API]
     "created_at": "2021-08-22T14:44:14.115866+02:00",  // (1)
     "updated_at": "2021-08-22T14:44:14.115866+02:00",  // (1)
     "latest_approved_version": {            // (2)
-        "adjustment_state": "approved",     // (3)
+        "proposal_state": "approved",       // (3)
         "approved_at": "2021-08-22T14:44:14.115686+02:00",
         "created_at": "2021-08-22T14:44:14.11635+02:00",
         "display_name": "Shopping Cart Service",  // (4)

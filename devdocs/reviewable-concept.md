@@ -5,6 +5,7 @@ The Reviewable concept is an approach that covers:
  - **Versioning**: recording all past versions of a resources.
  - **Auditing**: finding out why a resource changed, and who were responsible.
  - **Reviewing**: new changes are reviewed before they take effect.
+ - **Concurrency management** — preventing data modifications from interfering with on-going, long-running processes. Such processes use the data versions from when the processes begun, not the latest versions.
 
 These aspects are important for many resource types. You don't want ruleset changes to take effect until the change management board has reviewed them. If a production incident occurred, you want to be able to find out which change contributed to that problem, and why that change was made.
 
@@ -21,6 +22,8 @@ Reviewable resources are _versioned_. One does not modify the contents of a revi
 Only the latest approved version of a resource has effect on the system. All older versions exist only for the purpose of historical analysis.
 
 Creating a version is a process that happens in multiple steps. It may involve multiple revisions of the content, as well as reviews and approvals. We call each step in the creation of a version, an _adjustment_. By tracking all adjustments, we know who collaborated in the creation of a version and how they made decisions.
+
+Adjustments are internal records and are not directly exposed to users.
 
 ## Terminology
 

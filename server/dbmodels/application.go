@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/fullstaq-labs/sqedule/lib"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 )
@@ -65,7 +65,7 @@ func (app Application) NewDraftVersion() (*ApplicationVersion, *ApplicationAdjus
 	adjustment.ApplicationVersionID = 0
 	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
 		AdjustmentNumber: 1,
-		ReviewState:      reviewstate.Draft,
+		ProposalState:    proposalstate.Draft,
 	}
 
 	return version, &adjustment
@@ -85,7 +85,7 @@ func (adjustment ApplicationAdjustment) NewAdjustment() ApplicationAdjustment {
 	result := adjustment
 	result.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
 		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
-		ReviewState:      reviewstate.Draft,
+		ProposalState:    proposalstate.Draft,
 	}
 	result.Enabled = lib.CopyBoolPtr(adjustment.Enabled)
 	return result

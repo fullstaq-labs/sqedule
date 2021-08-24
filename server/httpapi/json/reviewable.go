@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstateinput"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstateinput"
 )
 
 //
@@ -18,22 +18,22 @@ type ReviewableBase struct {
 }
 
 type ReviewableVersionBase struct {
-	ID              uint64     `json:"id"`
-	VersionState    string     `json:"version_state"`
-	VersionNumber   *uint32    `json:"version_number"`
-	AdjustmentState string     `json:"adjustment_state"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
-	ApprovedAt      *time.Time `json:"approved_at"`
+	ID            uint64     `json:"id"`
+	VersionState  string     `json:"version_state"`
+	VersionNumber *uint32    `json:"version_number"`
+	ProposalState string     `json:"proposal_state"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	ApprovedAt    *time.Time `json:"approved_at"`
 }
 
 type ReviewableVersionInputBase struct {
-	ProposalState proposalstate.State `json:"proposal_state"`
-	Comments      *string             `json:"comments"`
+	ProposalState proposalstateinput.Input `json:"proposal_state"`
+	Comments      *string                  `json:"comments"`
 }
 
-type ReviewableReviewStateInput struct {
-	State reviewstate.Input `json:"state"`
+type ReviewableProposalStateInput struct {
+	State reviewstateinput.Input `json:"state"`
 }
 
 //
@@ -55,12 +55,12 @@ func createReviewableVersionBase(versionBase dbmodels.ReviewableVersionBase, lat
 		versionState = "approved"
 	}
 	return ReviewableVersionBase{
-		ID:              versionBase.ID,
-		VersionState:    versionState,
-		VersionNumber:   versionBase.VersionNumber,
-		AdjustmentState: string(latestAdjustmentBase.ReviewState),
-		CreatedAt:       versionBase.CreatedAt,
-		UpdatedAt:       latestAdjustmentBase.CreatedAt,
-		ApprovedAt:      getSqlTimeContentsOrNil(versionBase.ApprovedAt),
+		ID:            versionBase.ID,
+		VersionState:  versionState,
+		VersionNumber: versionBase.VersionNumber,
+		ProposalState: string(latestAdjustmentBase.ProposalState),
+		CreatedAt:     versionBase.CreatedAt,
+		UpdatedAt:     latestAdjustmentBase.CreatedAt,
+		ApprovedAt:    getSqlTimeContentsOrNil(versionBase.ApprovedAt),
 	}
 }

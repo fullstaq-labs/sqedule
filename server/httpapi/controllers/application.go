@@ -9,12 +9,12 @@ import (
 	"github.com/fullstaq-labs/sqedule/lib"
 	"github.com/fullstaq-labs/sqedule/server/authz"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/auth"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
-	reviewstateinput "github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstateinput"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstateinput"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -43,7 +43,7 @@ func (ctx Context) CreateApplication(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: 'version' field must be set"})
 		return
 	}
-	if !input.Version.ProposalState.IsEffectivelyDraft() && input.Version.ProposalState != proposalstate.Final {
+	if !input.Version.ProposalState.IsEffectivelyDraft() && input.Version.ProposalState != proposalstateinput.Final {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: version.proposal_state must be either draft or final ('" +
 			input.Version.ProposalState + "' given)"})
 		return
@@ -67,7 +67,7 @@ func (ctx Context) CreateApplication(ginctx *gin.Context) {
 	app.Version = version
 	json.PatchApplication(&app, input)
 	json.PatchApplicationAdjustment(orgID, adjustment, *input.Version)
-	if input.Version.ProposalState == proposalstate.Final {
+	if input.Version.ProposalState == proposalstateinput.Final {
 		dbmodels.FinalizeReviewableProposal(&version.ReviewableVersionBase,
 			&adjustment.ReviewableAdjustmentBase, 0,
 			app.CheckNewProposalsRequireReview(dbmodels.ReviewableActionCreate))
@@ -289,13 +289,13 @@ func (ctx Context) UpdateApplication(ginctx *gin.Context) {
 			newVersion, newAdjustment := app.NewDraftVersion()
 			json.PatchApplicationAdjustment(orgID, newAdjustment, *input.Version)
 
-			if input.Version.ProposalState == proposalstate.Final {
+			if input.Version.ProposalState == proposalstateinput.Final {
 				dbmodels.FinalizeReviewableProposal(&newVersion.ReviewableVersionBase,
 					&newAdjustment.ReviewableAdjustmentBase,
 					latestApprovedVersionNumber,
 					app.CheckNewProposalsRequireReview(dbmodels.ReviewableActionUpdate))
 			} else {
-				dbmodels.SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(&newAdjustment.ReviewableAdjustmentBase,
+				dbmodels.SetReviewableAdjustmentProposalStateFromProposalStateInput(&newAdjustment.ReviewableAdjustmentBase,
 					input.Version.ProposalState)
 			}
 			if err = tx.Omit(clause.Associations).Create(newVersion).Error; err != nil {
@@ -593,7 +593,7 @@ func (ctx Context) UpdateApplicationProposal(ginctx *gin.Context) {
 		return
 	}
 
-	if proposal.Adjustment.ReviewState == reviewstate.Reviewing && input.ProposalState == proposalstate.Final {
+	if proposal.Adjustment.ProposalState == proposalstate.Reviewing && input.ProposalState == proposalstateinput.Final {
 		ginctx.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Cannot finalize a proposal which is already being reviewed"})
 		return
 	}
@@ -606,7 +606,7 @@ func (ctx Context) UpdateApplicationProposal(ginctx *gin.Context) {
 		newAdjustment := proposal.Adjustment.NewAdjustment()
 		json.PatchApplicationAdjustment(orgID, &newAdjustment, input)
 
-		if input.ProposalState == proposalstate.Final {
+		if input.ProposalState == proposalstateinput.Final {
 			proposalUpdate := proposal
 			dbmodels.FinalizeReviewableProposal(&proposalUpdate.ReviewableVersionBase,
 				&newAdjustment.ReviewableAdjustmentBase,
@@ -616,7 +616,7 @@ func (ctx Context) UpdateApplicationProposal(ginctx *gin.Context) {
 				return err
 			}
 		} else {
-			dbmodels.SetReviewableAdjustmentReviewStateFromUnfinalizedProposalState(&newAdjustment.ReviewableAdjustmentBase,
+			dbmodels.SetReviewableAdjustmentProposalStateFromProposalStateInput(&newAdjustment.ReviewableAdjustmentBase,
 				input.ProposalState)
 		}
 
@@ -635,16 +635,16 @@ func (ctx Context) UpdateApplicationProposal(ginctx *gin.Context) {
 
 		proposal.Adjustment = &newAdjustment
 
-		if newAdjustment.ReviewState == reviewstate.Approved {
+		if newAdjustment.ProposalState == proposalstate.Approved {
 			// Ensure no other proposals are in the Reviewing state
 
 			for _, proposal := range otherProposals {
-				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+				if proposal.Adjustment.ProposalState != proposalstate.Reviewing {
 					continue
 				}
 
 				newAdjustment := proposal.Adjustment.NewAdjustment()
-				newAdjustment.ReviewState = reviewstate.Draft
+				newAdjustment.ProposalState = proposalstate.Draft
 				err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
 				if err != nil {
 					return err
@@ -673,7 +673,7 @@ func (ctx Context) UpdateApplicationProposal(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, output)
 }
 
-func (ctx Context) UpdateApplicationProposalReviewState(ginctx *gin.Context) {
+func (ctx Context) UpdateApplicationProposalState(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
@@ -692,7 +692,7 @@ func (ctx Context) UpdateApplicationProposalReviewState(ginctx *gin.Context) {
 		return
 	}
 
-	var input json.ReviewableReviewStateInput
+	var input json.ReviewableProposalStateInput
 	if err := ginctx.ShouldBindJSON(&input); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
@@ -764,7 +764,7 @@ func (ctx Context) UpdateApplicationProposalReviewState(ginctx *gin.Context) {
 		return
 	}
 
-	if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+	if proposal.Adjustment.ProposalState != proposalstate.Reviewing {
 		ginctx.JSON(http.StatusUnprocessableEntity, gin.H{"error": "This proposal is not awaiting review"})
 		return
 	}
@@ -778,11 +778,11 @@ func (ctx Context) UpdateApplicationProposalReviewState(ginctx *gin.Context) {
 		newAdjustment := proposal.Adjustment.NewAdjustment()
 
 		if input.State == reviewstateinput.Approved {
-			newAdjustment.ReviewState = reviewstate.Approved
+			newAdjustment.ProposalState = proposalstate.Approved
 			proposalUpdate.ApprovedAt = sql.NullTime{Time: time.Now(), Valid: true}
 			proposalUpdate.VersionNumber = lib.NewUint32Ptr(latestApprovedVersionNumber + 1)
 		} else {
-			newAdjustment.ReviewState = reviewstate.Rejected
+			newAdjustment.ProposalState = proposalstate.Rejected
 		}
 
 		if err = tx.Omit(clause.Associations).Model(proposal).Updates(proposalUpdate).Error; err != nil {
@@ -806,12 +806,12 @@ func (ctx Context) UpdateApplicationProposalReviewState(ginctx *gin.Context) {
 			// Ensure no other proposals are in the Reviewing state
 
 			for _, proposal := range otherProposals {
-				if proposal.Adjustment.ReviewState != reviewstate.Reviewing {
+				if proposal.Adjustment.ProposalState != proposalstate.Reviewing {
 					continue
 				}
 
 				newAdjustment := proposal.Adjustment.NewAdjustment()
-				newAdjustment.ReviewState = reviewstate.Draft
+				newAdjustment.ProposalState = proposalstate.Draft
 				err = tx.Omit(clause.Associations).Create(&newAdjustment).Error
 				if err != nil {
 					return err

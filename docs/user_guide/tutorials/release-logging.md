@@ -122,7 +122,7 @@ The CLI tells you that the operation is successful, and outputs the properties o
     "id": "shopping_cart_service",
     "updated_at": "2021-08-22T14:44:14.115866+02:00",
     "version": {
-        "adjustment_state": "approved",
+        "proposal_state": "approved",
         "approved_at": "2021-08-22T14:44:14.115686+02:00",
         "created_at": "2021-08-22T14:44:14.11635+02:00",
         "display_name": "Shopping Cart Service",
@@ -156,7 +156,7 @@ The CLI outputs the properties of the application:
     "created_at": "2021-08-22T14:44:14.115866+02:00",
     "id": "shopping_cart_service",
     "latest_approved_version": {
-        "adjustment_state": "approved",
+        "proposal_state": "approved",
         "approved_at": "2021-08-22T14:44:14.115686+02:00",
         "created_at": "2021-08-22T14:44:14.11635+02:00",
         "display_name": "Shopping Cart Service",

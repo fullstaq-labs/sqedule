@@ -102,7 +102,7 @@ export function paginateArray<T>(ary: Array<T>, page: number, perPage: number): 
   return ary.slice(startIndex, startIndex + perPage + 1);
 }
 
-export function formatAdjustmentStateString(state: string | undefined | null): string | undefined {
+export function formatProposalStateString(state: string | undefined | null): string | undefined {
   if (isNullish(state)) {
     return undefined;
   }

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import SwipeableViews from 'react-swipeable-views';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatAdjustmentStateString, formatBooleanAsIconWithLabel, formatBooleanAsIcon } from '../../common/utils';
+import { formatDateTimeString, humanizeUnderscoreString, paginateArray, formatProposalStateString, formatBooleanAsIconWithLabel, formatBooleanAsIcon } from '../../common/utils';
 import { IAppContext, declarePageTitle, declareValidatingFetchedData } from '../../components/app_context';
 import { NavigationSection } from '../../components/navbar';
 import DataRefreshErrorSnackbar from '../../components/data_refresh_error_snackbar';
@@ -220,8 +220,8 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
               <TableCell>{formatBooleanAsIconWithLabel(data.latest_approved_version?.enabled) || 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell component="th" scope="row">Adjustment state</TableCell>
-              <TableCell>{formatAdjustmentStateString(data.latest_approved_version?.adjustment_state) ?? 'N/A'}</TableCell>
+              <TableCell component="th" scope="row">Proposal state</TableCell>
+              <TableCell>{formatProposalStateString(data.latest_approved_version?.proposal_state) ?? 'N/A'}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">Created at</TableCell>
@@ -412,11 +412,11 @@ const APPLICATION_APPROVAL_RULESET_BINDING_COLUMNS: ColDef[] = [
     valueFormatter: ({ value }) => formatBooleanAsIcon(value as any) ?? 'N/A',
   },
   {
-    field: 'adjustment_state',
-    headerName: 'Binding adjustment state',
+    field: 'proposal_state',
+    headerName: 'Binding proposal state',
     width: 200,
-    valueGetter: ({ row }) => row.latest_approved_version?.adjustment_state,
-    valueFormatter: ({ value }) => formatAdjustmentStateString(value as any) ?? 'N/A',
+    valueGetter: ({ row }) => row.latest_approved_version?.proposal_state,
+    valueFormatter: ({ value }) => formatProposalStateString(value as any) ?? 'N/A',
   },
   {
     field: 'updated_at',

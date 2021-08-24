@@ -4,9 +4,9 @@ import (
 	"reflect"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstateinput"
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/gomega"
 )
@@ -99,13 +99,13 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
-		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("proposal_state", "draft"))
 		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx := hctx.Db.Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
-		Expect(adjustment.Interface().(dbmodels.IReviewableAdjustment).GetReviewState()).To(Equal(reviewstate.Draft))
+		Expect(adjustment.Interface().(dbmodels.IReviewableAdjustment).GetProposalState()).To(Equal(proposalstate.Draft))
 	})
 
 	It("creates a draft proposal if proposal_state is draft", func() {
@@ -115,13 +115,13 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		version := body["version"].(map[string]interface{})
 		Expect(version).To(HaveKeyWithValue("version_state", "proposal"))
 		Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
-		Expect(version).To(HaveKeyWithValue("adjustment_state", "draft"))
+		Expect(version).To(HaveKeyWithValue("proposal_state", "draft"))
 		Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 		adjustment := reflect.New(options.AdjustmentType)
 		tx := hctx.Db.Take(adjustment.Interface())
 		Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
-		Expect(adjustment.Interface().(dbmodels.IReviewableAdjustment).GetReviewState()).To(Equal(reviewstate.Draft))
+		Expect(adjustment.Interface().(dbmodels.IReviewableAdjustment).GetProposalState()).To(Equal(proposalstate.Draft))
 	})
 
 	It("submits the version for approval if proposal_state is final", func() {
@@ -135,7 +135,7 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 		))
 		if version["version_state"] == "proposal" {
 			Expect(version).To(HaveKeyWithValue("version_number", BeNil()))
-			Expect(version).To(HaveKeyWithValue("adjustment_state", Or(
+			Expect(version).To(HaveKeyWithValue("proposal_state", Or(
 				Equal("draft"),
 				Equal("reviewing"),
 				Equal("rejected"),
@@ -144,18 +144,18 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 			Expect(version).To(HaveKeyWithValue("approved_at", BeNil()))
 
 			adjustment := reflect.New(options.AdjustmentType)
-			tx := hctx.Db.Where("review_state != 'approved'").Take(adjustment.Interface())
+			tx := hctx.Db.Where("proposal_state != 'approved'").Take(adjustment.Interface())
 			Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
 		} else {
 			Expect(version).To(HaveKeyWithValue("version_number", BeNumerically("==", 1)))
-			Expect(version).To(HaveKeyWithValue("adjustment_state", "approved"))
+			Expect(version).To(HaveKeyWithValue("proposal_state", "approved"))
 			Expect(version).To(HaveKeyWithValue("approved_at", Not(BeNil())))
 
 			adjustment := reflect.New(options.AdjustmentType)
 			tx := hctx.Db.Take(adjustment.Interface())
 			Expect(dbutils.CreateFindOperationError(tx)).ToNot(HaveOccurred())
-			Expect(adjustment.Interface().(dbmodels.IReviewableAdjustment).GetReviewState()).To(
-				SatisfyAny(Equal(reviewstate.Reviewing), Equal(reviewstate.Approved)))
+			Expect(adjustment.Interface().(dbmodels.IReviewableAdjustment).GetProposalState()).To(
+				SatisfyAny(Equal(proposalstate.Reviewing), Equal(proposalstate.Approved)))
 		}
 	})
 
@@ -177,7 +177,7 @@ func IncludeReviewableCreateTest(options ReviewableCreateTestOptions) *Reviewabl
 	})
 
 	It("rejects proposal_state values other than unset, draft and final", func() {
-		body := rctx.MakeRequest(string(proposalstate.Abandon), 400)
+		body := rctx.MakeRequest(string(proposalstateinput.Abandon), 400)
 		Expect(body).To(HaveKeyWithValue("error", ContainSubstring("version.proposal_state must be either draft or final ('abandon' given)")))
 	})
 

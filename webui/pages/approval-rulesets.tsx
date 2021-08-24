@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import Link from 'next/link';
-import { formatDateTimeString, formatAdjustmentStateString, formatBooleanAsIcon } from '../common/utils';
+import { formatDateTimeString, formatProposalStateString, formatBooleanAsIcon } from '../common/utils';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import { NavigationSection } from '../components/navbar';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
@@ -54,11 +54,11 @@ const COLUMNS: ColDef[] = [
     valueFormatter: ({ value }) => formatBooleanAsIcon(value as any) ?? 'N/A',
   },
   {
-    field: 'adjustment_state',
-    headerName: 'Adjustment state',
+    field: 'proposal_state',
+    headerName: 'Proposal state',
     width: 150,
-    valueGetter: ({ row }) => row.latest_approved_version?.adjustment_state,
-    valueFormatter: ({ value }) => formatAdjustmentStateString(value as any) ?? 'N/A',
+    valueGetter: ({ row }) => row.latest_approved_version?.proposal_state,
+    valueFormatter: ({ value }) => formatProposalStateString(value as any) ?? 'N/A',
   },
   {
     field: 'num_bound_applications',

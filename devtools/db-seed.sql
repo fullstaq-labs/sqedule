@@ -39,7 +39,7 @@ INSERT INTO application_versions (organization_id, application_id, version_numbe
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_adjustments (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name) VALUES (
+INSERT INTO application_adjustments (organization_id, application_version_id, adjustment_number, proposal_state, created_at, display_name) VALUES (
     'org1',
     (SELECT id FROM application_versions WHERE organization_id = 'org1' AND application_id = 'app1' AND version_number = 1 LIMIT 1),
     1,
@@ -61,7 +61,7 @@ INSERT INTO application_versions (organization_id, application_id, version_numbe
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_adjustments (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name) VALUES (
+INSERT INTO application_adjustments (organization_id, application_version_id, adjustment_number, proposal_state, created_at, display_name) VALUES (
     'org1',
     (SELECT id FROM application_versions WHERE organization_id = 'org1' AND application_id = 'app2' AND version_number = 1 LIMIT 1),
     1,
@@ -85,7 +85,7 @@ INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, ver
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_adjustments (organization_id, approval_ruleset_version_id, adjustment_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
+INSERT INTO approval_ruleset_adjustments (organization_id, approval_ruleset_version_id, adjustment_number, proposal_state, created_at, display_name, description, globally_applicable) VALUES (
     'org1',
     (SELECT id FROM approval_ruleset_versions
         WHERE organization_id = 'org1'
@@ -135,7 +135,7 @@ INSERT INTO approval_ruleset_versions (organization_id, approval_ruleset_id, ver
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO approval_ruleset_adjustments (organization_id, approval_ruleset_version_id, adjustment_number, review_state, created_at, display_name, description, globally_applicable) VALUES (
+INSERT INTO approval_ruleset_adjustments (organization_id, approval_ruleset_version_id, adjustment_number, proposal_state, created_at, display_name, description, globally_applicable) VALUES (
     'org1',
     (SELECT id FROM approval_ruleset_versions
         WHERE organization_id = 'org1'
@@ -187,7 +187,7 @@ INSERT INTO application_approval_ruleset_binding_versions (organization_id, appl
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, review_state, created_at, mode) VALUES (
+INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, proposal_state, created_at, mode) VALUES (
     'org1',
     (SELECT id FROM application_approval_ruleset_binding_versions
         WHERE organization_id = 'org1' AND application_id = 'app1'
@@ -214,7 +214,7 @@ INSERT INTO application_approval_ruleset_binding_versions (organization_id, appl
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, review_state, created_at, mode) VALUES (
+INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, proposal_state, created_at, mode) VALUES (
     'org1',
     (SELECT id FROM application_approval_ruleset_binding_versions
         WHERE organization_id = 'org1' AND application_id = 'app2'
@@ -241,7 +241,7 @@ INSERT INTO application_approval_ruleset_binding_versions (organization_id, appl
     NOW(),
     NOW()
 ) ON CONFLICT DO NOTHING;
-INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, review_state, created_at, mode) VALUES (
+INSERT INTO application_approval_ruleset_binding_adjustments (organization_id, application_approval_ruleset_binding_version_id, adjustment_number, proposal_state, created_at, mode) VALUES (
     'org1',
     (SELECT id FROM application_approval_ruleset_binding_versions
         WHERE organization_id = 'org1' AND application_id = 'app2'
@@ -416,12 +416,12 @@ BEGIN
 
         -- For each version, create (n_adjustments - 1) adjustments that are not yet approved
         INSERT INTO application_adjustments
-            (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name)
+            (organization_id, application_version_id, adjustment_number, proposal_state, created_at, display_name)
         SELECT
             'org2' AS organization_id,
             versions.id AS application_version_id,
             adjustment_nums AS adjustment_number,
-            'draft' AS review_state,
+            'draft' AS proposal_state,
             NOW() AS created_at,
             'Draft ' || adjustment_nums AS display_name
         FROM generate_series(1, n_apps) app_nums,
@@ -435,12 +435,12 @@ BEGIN
 
         -- For each version, create 1 adjustment that is approved
         INSERT INTO application_adjustments
-            (organization_id, application_version_id, adjustment_number, review_state, created_at, display_name)
+            (organization_id, application_version_id, adjustment_number, proposal_state, created_at, display_name)
         SELECT
             'org2' AS organization_id,
             versions.id AS application_version_id,
             n_adjustments AS adjustment_number,
-            'approved' AS review_state,
+            'approved' AS proposal_state,
             NOW() AS created_at,
             'Final'
         FROM generate_series(1, n_apps) app_nums,

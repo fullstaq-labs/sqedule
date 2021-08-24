@@ -4,7 +4,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels/approvalrulesetbindingmode"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/proposalstateinput"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -35,7 +35,7 @@ func applicationApprovalRulesetBindingCreateOrUpdateCmd_createVersionInput(viper
 
 	return json.ApplicationApprovalRulesetBindingVersionInput{
 		ReviewableVersionInputBase: json.ReviewableVersionInputBase{
-			ProposalState: proposalstate.State(viper.GetString("proposal-state")),
+			ProposalState: proposalstateinput.Input(viper.GetString("proposal-state")),
 		},
 		Mode:    mode,
 		Enabled: cli.GetViperBoolIfSet(viper, "enabled"),

@@ -8,7 +8,7 @@ import (
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/lib/mocking"
 	"github.com/fullstaq-labs/sqedule/server/httpapi/json"
-	"github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/httpapi/json/reviewstateinput"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -44,7 +44,7 @@ func approvalRulesetProposalReviewCmd_run(viper *viper.Viper, printer mocking.IP
 	resp, err := req.
 		SetBody(approvalRulesetProposalReviewCmd_createBody(viper)).
 		SetResult(&result).
-		Put(fmt.Sprintf("/approval-rulesets/%s/proposals/%s/review-state",
+		Put(fmt.Sprintf("/approval-rulesets/%s/proposals/%s/state",
 			url.PathEscape(viper.GetString("approval-ruleset-id")),
 			url.PathEscape(viper.GetString("id"))))
 	if err != nil {
@@ -71,19 +71,19 @@ func approvalRulesetProposalReviewCmd_checkConfig(viper *viper.Viper) error {
 	})
 }
 
-func approvalRulesetProposalReviewCmd_createBody(viper *viper.Viper) json.ReviewableReviewStateInput {
-	var state reviewstate.Input
+func approvalRulesetProposalReviewCmd_createBody(viper *viper.Viper) json.ReviewableProposalStateInput {
+	var state reviewstateinput.Input
 
 	switch viper.GetString("action") {
 	case "approve":
-		state = reviewstate.Approved
+		state = reviewstateinput.Approved
 	case "reject":
-		state = reviewstate.Rejected
+		state = reviewstateinput.Rejected
 	default:
 		panic("Unsupported action parameter '" + viper.GetString("action") + "'")
 	}
 
-	return json.ReviewableReviewStateInput{
+	return json.ReviewableProposalStateInput{
 		State: state,
 	}
 }

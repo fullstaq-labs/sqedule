@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/fullstaq-labs/sqedule/lib"
-	"github.com/fullstaq-labs/sqedule/server/dbmodels/reviewstate"
+	"github.com/fullstaq-labs/sqedule/server/dbmodels/proposalstate"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -159,7 +159,7 @@ func (ruleset ApprovalRuleset) NewDraftVersion() (*ApprovalRulesetVersion, *Appr
 	adjustment.ApprovalRulesetVersionID = 0
 	adjustment.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
 		AdjustmentNumber: 1,
-		ReviewState:      reviewstate.Draft,
+		ProposalState:    proposalstate.Draft,
 	}
 
 	return version, &adjustment
@@ -199,7 +199,7 @@ func (adjustment ApprovalRulesetAdjustment) NewAdjustment() ApprovalRulesetAdjus
 	result := adjustment
 	result.ReviewableAdjustmentBase = ReviewableAdjustmentBase{
 		AdjustmentNumber: adjustment.AdjustmentNumber + 1,
-		ReviewState:      reviewstate.Draft,
+		ProposalState:    proposalstate.Draft,
 	}
 	result.Enabled = lib.CopyBoolPtr(adjustment.Enabled)
 	result.Rules = adjustment.Rules.CopyAsUnsaved()

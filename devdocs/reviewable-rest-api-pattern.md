@@ -51,7 +51,7 @@ The response is a `ResourceWithVersion`:
         "id": 123456,
         "version_state": "proposal" | "approved",
         "version_number": 1 | null,
-        "adjustment_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
+        "proposal_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
         "created_at": "2021-05-25T18:00:00+02:00",
         "updated_at": "2021-05-25T18:00:00+02:00",
         "approved_at": "2021-05-25T18:00:00+02:00" | null,
@@ -178,7 +178,7 @@ The response is a `ResourceWithVersion`:
         "id": 123456,
         "version_state": "proposal" | "approved",
         "version_number": 1 | null,
-        "adjustment_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
+        "proposal_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
         "created_at": "2021-05-25T18:00:00+02:00",
         "updated_at": "2021-05-25T18:00:00+02:00",
         "approved_at": "2021-05-25T18:00:00+02:00" | null,
@@ -206,7 +206,7 @@ Retrieves all approved versions of a resource, and their associated latest adjus
             "id": 123456,
             "version_state": "approved",
             "version_number": 1234,
-            "adjustment_state": "approved",
+            "proposal_state": "approved",
             "created_at": "2021-05-25T18:00:00+02:00",
             "updated_at": "2021-05-25T18:00:00+02:00",
             "approved_at": "2021-05-25T18:00:00+02:00",
@@ -235,7 +235,7 @@ The response is a `ResourceWithVersion`:
         "id": 123456,
         "version_state": "approved",
         "version_number": 1234,
-        "adjustment_state": "approved",
+        "proposal_state": "approved",
         "created_at": "2021-05-25T18:00:00+02:00",
         "updated_at": "2021-05-25T18:00:00+02:00",
         "approved_at": "2021-05-25T18:00:00+02:00",
@@ -259,7 +259,7 @@ Retrieves all proposals for a given resource.
             "id": 123456,
             "version_state": "proposal",
             "version_number": null,
-            "adjustment_state": "draft" | "reviewing" | "rejected" | "abandoned",
+            "proposal_state": "draft" | "reviewing" | "rejected" | "abandoned",
             "created_at": "2021-05-25T18:00:00+02:00",
             "updated_at": "2021-05-25T18:00:00+02:00",
             "approved_at": null,
@@ -288,7 +288,7 @@ The response is a ResourceWithVersion:
         "id": 123456,
         "version_state": "proposal",
         "version_number": null,
-        "adjustment_state": "draft" | "reviewing" | "rejected" | "abandoned",
+        "proposal_state": "draft" | "reviewing" | "rejected" | "abandoned",
         "created_at": "2021-05-25T18:00:00+02:00",
         "updated_at": "2021-05-25T18:00:00+02:00",
         "approved_at": null,
@@ -338,7 +338,7 @@ The response is a `ResourceWithVersion`:
         "id": 123456,
         "version_state": "proposal" | "approved",
         "version_number": 123456 | null,
-        "adjustment_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
+        "proposal_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
         "created_at": "2021-05-25T18:00:00+02:00",
         "updated_at": "2021-05-25T18:00:00+02:00",
         "approved_at": "2021-05-25T18:00:00+02:00" | null,
@@ -358,7 +358,7 @@ Adjustment is not allowed in the proposal's current state.
 }
 ~~~
 
-### PUT /resources/:id/proposals/:version_id/review-state
+### PUT /resources/:id/proposals/:version_id/state
 
 Approves or reject a proposal's latest adjustment. This only works if it's in the "awaiting approval" state.
 
@@ -386,7 +386,7 @@ The response is a `ResourceWithVersion`:
         "id": 123456,
         "version_state": "proposal" | "approved",
         "version_number": 123456 | null,
-        "adjustment_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
+        "proposal_state": "draft" | "reviewing" | "approved" | "rejected" | "abandoned",
         "created_at": "2021-05-25T18:00:00+02:00",
         "updated_at": "2021-05-25T18:00:00+02:00",
         "approved_at": "2021-05-25T18:00:00+02:00" | null,
