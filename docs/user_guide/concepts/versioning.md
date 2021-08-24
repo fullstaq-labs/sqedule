@@ -5,7 +5,7 @@ Many resources in Sqedule are **versioned**. This has several reasons:
  * Versioning allows preserving an audit trail of changes.
  * Versioning prevents data modifications from interfering with on-going, long-running processes. Such processes use the data versions from when the processes begun, not the latest versions.
 
-   For example, [approval rulesets](approval-rules.md) are versioned. But when Sqedule starts evaluating rules on a [release](applications-releases.md) (which can take a while), concurrent modifications on rulesets have no effect on the rule evaluation process: that process use the ruleset versions that existed when evaluation started.
+    For example, [approval rulesets](approval-rules.md) are versioned. But when Sqedule starts evaluating rules on a [release](applications-releases.md) (which can take a while), concurrent modifications on rulesets have no effect on the rule evaluation process: Sqedule evaluates against the ruleset versions that existed when the release was created.
 
 Versioned resources version _most_ of their data, but not all. For example, resource IDs are never versioned.
 
