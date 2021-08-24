@@ -74,7 +74,7 @@ export default function Layout(props: IProps) {
             </Toolbar>
           </AppBar>
 
-          <DataLoadSpinner active={loading} />
+          <DataLoadSpinner active={loading} position="absolute" />
 
           {children}
         </div>

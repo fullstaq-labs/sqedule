@@ -3,21 +3,34 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 
 interface IProps {
   active: boolean;
+  position: string | undefined;
 }
 
 // A spinner for indicating that data is being loaded. To avoid making the UI
 // look too busy, it only shows up after a short timeout.
 export default function DataLoadSpinner(props: IProps) {
-  const { active } = props;
+  const { active, position } = props;
   const [show, setShow] = useState(false);
   const timerRef = useRef<number>();
 
-  function getStyle(): object {
-    if (show) {
-      return {};
-    } else {
-      return { visibility: 'hidden' };
+  function getDivStyle(): object {
+    var result: any = {
+      position: 'relative',
+    };
+    if (!show) {
+      result.visibility = 'hidden';
     }
+    return result;
+  }
+
+  function getProgressStyle(): object {
+    var result: any = {
+      width: '100%',
+    };
+    if (position) {
+      result.position = position;
+    }
+    return result;
   }
 
   useEffect(function() {
@@ -38,5 +51,9 @@ export default function DataLoadSpinner(props: IProps) {
     }
   }, [active]);
 
-  return <LinearProgress style={getStyle()} />;
+  return (
+    <div style={getDivStyle()}>
+      <LinearProgress style={getProgressStyle()} />
+    </div>
+  );
 }
