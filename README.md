@@ -23,13 +23,13 @@ With Sqedule we are trying to bridge the gap between ITIL-style change/release m
 
 ## Installation
 
- - [Installing the Sqedule server](https://fullstaq-labs.github.io/sqedule/server_guide/)
- - [Installing the Sqedule CLI](https://fullstaq-labs.github.io/sqedule/user_guide/tasks/install-cli/)
+ - [Installing the Sqedule server](https://docs.sqedule.io/server_guide/)
+ - [Installing the Sqedule CLI](https://docs.sqedule.io/user_guide/tasks/install-cli/)
 
 ## Documentation
 
- - [Sqedule user guide](https://fullstaq-labs.github.io/sqedule/user_guide/)
- - [Sqedule server guide](https://fullstaq-labs.github.io/sqedule/server_guide/)
+ - [Sqedule user guide](https://docs.sqedule.io/user_guide/)
+ - [Sqedule server guide](https://docs.sqedule.io/server_guide/)
 
 ## Development & contribution
 
