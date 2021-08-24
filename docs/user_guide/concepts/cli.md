@@ -20,6 +20,7 @@ Available Commands:
   approval-ruleset                     Manage approval rulesets
   help                                 Help about any command
   release                              Manage releases
+  version                              Show CLI version
 
 Flags:
       --config string   config file (default ~/.config/sqedule-cli/config.yml)

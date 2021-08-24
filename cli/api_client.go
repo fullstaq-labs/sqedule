@@ -50,7 +50,7 @@ func NewApiRequestWithoutAuth(config Config) (*resty.Request, error) {
 
 	r := client.R()
 	r.SetError(&map[string]interface{}{})
-	r.SetHeader("User-Agent", "sqedule-cli")
+	r.SetHeader("User-Agent", "sqedule-cli/"+VersionString)
 	r.SetHeader("Accept", "application/json")
 	return r, nil
 }

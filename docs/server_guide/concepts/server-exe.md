@@ -52,6 +52,7 @@ Available Commands:
   db          Manage the database
   help        Help about any command
   run         Run the Sqedule API server
+  version     Show server version
 
 Flags:
       --config string      config file (default $HOME/.sqedule-server.yaml)
