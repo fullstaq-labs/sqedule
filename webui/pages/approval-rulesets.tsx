@@ -20,6 +20,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
+import MaterialLink from '@material-ui/core/Link';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { ColDef } from '@material-ui/data-grid';
 
@@ -208,11 +209,11 @@ function CreationDialogContents(props: any): JSX.Element {
         <Typography variant="body1">
           <h4 style={{ marginTop: 0 }}>Step 1: create</h4>
           <p>
-            <a href="https://docs.sqedule.io/user_guide/tasks/install-cli/" target="_blank">Install the CLI</a>
+            <MaterialLink href="https://docs.sqedule.io/user_guide/tasks/install-cli/" target="_blank" rel="noopener">Install the CLI</MaterialLink>
             {' '}
             and
             {' '}
-            <a href="https://docs.sqedule.io/user_guide/tasks/initial-cli-setup/" target="_blank">set it up</a>. Then run:
+            <MaterialLink href="https://docs.sqedule.io/user_guide/tasks/initial-cli-setup/" target="_blank" rel="noopener">set it up</MaterialLink>. Then run:
           </p>
           <CodeBlock>
             sqedule approval-ruleset create \{"\n"}
