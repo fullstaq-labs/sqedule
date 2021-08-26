@@ -23,7 +23,7 @@ func (ctx Context) SetupRouter(engine *gin.Engine, logger gormlogger.Interface) 
 	}
 
 	v1 := engine.Group("/v1")
-	ctx.installUnauthenticatedRoutes(v1, jwtAuthMiddleware)
+	ctx.installUnauthenticatedRoutes(v1, jwtAuthMiddleware, controllerCtx)
 
 	authenticatedGroup := v1.Group("/")
 	ctx.installAuthenticationMiddlewares(authenticatedGroup, jwtAuthMiddleware, orgMemberLookupMiddleware)
@@ -42,9 +42,10 @@ func (ctx Context) newAuthMiddlewares() (*jwt.GinJWTMiddleware, gin.HandlerFunc,
 	return jwtAuthMiddleware, orgMemberLookupMiddleware, nil
 }
 
-func (ctx Context) installUnauthenticatedRoutes(rg *gin.RouterGroup, jwtAuthMiddleware *jwt.GinJWTMiddleware) {
+func (ctx Context) installUnauthenticatedRoutes(rg *gin.RouterGroup, jwtAuthMiddleware *jwt.GinJWTMiddleware, controllerCtx controllers.Context) {
 	rg.POST("/auth/login", jwtAuthMiddleware.LoginHandler)
 	rg.POST("/auth/refresh-token", jwtAuthMiddleware.RefreshHandler)
+	controllerCtx.InstallUnauthenticatedRoutes(rg)
 }
 
 func (ctx Context) installAuthenticationMiddlewares(rg *gin.RouterGroup, jwtAuthMiddleware *jwt.GinJWTMiddleware, orgMemberLookupMiddleware gin.HandlerFunc) {
@@ -56,5 +57,5 @@ func (ctx Context) installAuthenticationMiddlewares(rg *gin.RouterGroup, jwtAuth
 }
 
 func (ctx Context) installAuthenticatedRoutes(rg *gin.RouterGroup, controllerCtx controllers.Context) {
-	controllerCtx.InstallRoutes(rg)
+	controllerCtx.InstallAuthenticatedRoutes(rg)
 }

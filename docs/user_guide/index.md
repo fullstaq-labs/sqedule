@@ -2,7 +2,7 @@
 
 This User Guide teaches you how to use [Sqedule](https://github.com/fullstaq-labs/sqedule). It assumes that you already have a Sqedule server installed (see the [Server Guide](../server_guide/index.md)).
 
-## Made with ❤️ by Fullstaq
+## Made with ❤️&nbsp; by Fullstaq
 
 [![Fullstaq logo](../logo-fullstaq.svg)](../fullstaq.md)
 

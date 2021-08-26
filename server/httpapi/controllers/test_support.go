@@ -76,7 +76,7 @@ func SetupHTTPTestContext(initializer func(ctx *HTTPTestContext, tx *gorm.DB) er
 	routingGroup.Use(orgMemberLookupMiddleware)
 
 	hctx.ControllerCtx = NewContext(hctx.Db)
-	hctx.ControllerCtx.InstallRoutes(routingGroup)
+	hctx.ControllerCtx.InstallAuthenticatedRoutes(routingGroup)
 
 	hctx.Recorder = httptest.NewRecorder()
 

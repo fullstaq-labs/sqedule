@@ -21,7 +21,8 @@ import BusinessIcon from '@material-ui/icons/Business';
 import AccountBoxIcon from '@material-ui/icons/AccountBox';
 import SettingsIcon from '@material-ui/icons/Settings';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import HelpIcon from '@material-ui/icons/Help';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import InfoIcon from '@material-ui/icons/Info';
 import { IUser } from '../common/user';
 import styles from './navbar.module.scss';
 
@@ -31,6 +32,7 @@ export enum NavigationSection {
   Releases = 'releases',
   ApprovalRulesets = 'approval-rulesets',
   ManualApprovals = 'manual-approvals',
+  About = 'about',
 }
 
 interface IProps {
@@ -152,10 +154,16 @@ export default function Navbar(props: IProps) {
         </Link> */}
         <MaterialLink href="https://docs.sqedule.io/user_guide/" color="textPrimary" underline="none" target="_blank" rel="noopener">
           <ListItem button>
-            <ListItemIcon><HelpIcon /></ListItemIcon>
+            <ListItemIcon><HelpOutlineIcon /></ListItemIcon>
             <ListItemText primary="Help" />
           </ListItem>
         </MaterialLink>
+        <Link href="/about">
+          <ListItem button selected={navigationSection == NavigationSection.About}>
+            <ListItemIcon><InfoIcon /></ListItemIcon>
+            <ListItemText primary="About" />
+          </ListItem>
+        </Link>
       </List>
     </Drawer>
   )

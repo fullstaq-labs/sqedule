@@ -6,7 +6,7 @@ The server is an HTTP server and [requires a database](installation/requirements
 
 Please review the navigation menu and select your favorite installation method.
 
-## Made with ❤️ by Fullstaq
+## Made with ❤️&nbsp; by Fullstaq
 
 [![Fullstaq logo](../logo-fullstaq.svg)](../fullstaq.md)
 

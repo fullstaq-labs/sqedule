@@ -2,7 +2,7 @@ package controllers
 
 import "github.com/gin-gonic/gin"
 
-func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
+func (ctx Context) InstallAuthenticatedRoutes(rg *gin.RouterGroup) {
 	// Organizations
 	rg.GET("organization", ctx.GetCurrentOrganization)
 	rg.PATCH("organization", ctx.UpdateCurrentOrganization)
@@ -56,4 +56,8 @@ func (ctx Context) InstallRoutes(rg *gin.RouterGroup) {
 	rg.PATCH("approval-rulesets/:id/proposals/:version_id", ctx.UpdateApprovalRulesetProposal)
 	rg.PUT("approval-rulesets/:id/proposals/:version_id/state", ctx.UpdateApprovalRulesetProposalState)
 	rg.DELETE("approval-rulesets/:id/proposals/:version_id", ctx.DeleteApprovalRulesetProposal)
+}
+
+func (ctx Context) InstallUnauthenticatedRoutes(rg *gin.RouterGroup) {
+	rg.GET("about", ctx.About)
 }

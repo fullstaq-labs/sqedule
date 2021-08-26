@@ -129,7 +129,7 @@ export default function ApplicationsPage(props: IProps) {
       <>
         <DataRefreshErrorSnackbar error={error} refreshing={isValidating} onReload={mutate} />
         <SecondaryToolbar><SecondaryToolbarContents/></SecondaryToolbar>
-        <Box mx={2} my={2} style={{ display: 'flex', flexGrow: 1, flexDirection: 'column' }}>
+        <Box mx={2} my={2} style={{ display: 'flex', flexGrow: 1 }}>
           <Paper style={{ display: 'flex', flexGrow: 1 }}>
             <DataGrid
               rows={data.items}
