@@ -9,6 +9,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
+import MaterialLink from '@material-ui/core/Link';
 import CloseIcon from '@material-ui/icons/Close';
 import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
 import HomeIcon from '@material-ui/icons/Home';
@@ -20,6 +21,7 @@ import BusinessIcon from '@material-ui/icons/Business';
 import AccountBoxIcon from '@material-ui/icons/AccountBox';
 import SettingsIcon from '@material-ui/icons/Settings';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+import HelpIcon from '@material-ui/icons/Help';
 import { IUser } from '../common/user';
 import styles from './navbar.module.scss';
 
@@ -127,10 +129,10 @@ export default function Navbar(props: IProps) {
         </Link> */}
       </List>
 
-      {/* <Divider />
+      <Divider />
 
       <List component="nav">
-        <Link href="/organization">
+        {/* <Link href="/organization">
           <ListItem button>
             <ListItemIcon><BusinessIcon /></ListItemIcon>
             <ListItemText primary="Organization" />
@@ -147,8 +149,14 @@ export default function Navbar(props: IProps) {
             <ListItemIcon><ExitToAppIcon /></ListItemIcon>
             <ListItemText primary="Logout" />
           </ListItem>
-        </Link>
-      </List> */}
+        </Link> */}
+        <MaterialLink href="https://docs.sqedule.io/user_guide/" color="textPrimary" underline="none" target="_blank" rel="noopener">
+          <ListItem button>
+            <ListItemIcon><HelpIcon /></ListItemIcon>
+            <ListItemText primary="Help" />
+          </ListItem>
+        </MaterialLink>
+      </List>
     </Drawer>
   )
 }
