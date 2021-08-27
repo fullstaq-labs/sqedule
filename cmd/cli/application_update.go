@@ -16,12 +16,14 @@ import (
 var applicationUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update an application's non-versioned properties",
+	// editorconfig-checker-disable
 	Long: `Update an application's non-versioned properties.
 
 To update its versioned properties (e.g. display name or rules):
 
  1. create a proposal first: ` + "`sqedule application proposal create`" + `
  2. then use ` + "`sqedule application proposal update`" + ` and ` + "`sqedule application proposal rule`",
+	// editorconfig-checker-enable
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {

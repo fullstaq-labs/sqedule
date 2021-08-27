@@ -24,9 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Download ec
+      - name: Download editorconfig-checker
         run: curl -O -L -C - https://github.com/editorconfig-checker/editorconfig-checker/releases/download/2.3.5/ec-linux-amd64.tar.gz
-      - name: Extract ec
+      - name: Extract editorconfig-checker
         run: tar xzf ec-linux-amd64.tar.gz
       - name: Check EditorConfig compliance
         run: ./bin/ec-linux-amd64

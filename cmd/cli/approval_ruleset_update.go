@@ -16,12 +16,14 @@ import (
 var approvalRulesetUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update an approval ruleset's non-versioned properties",
+	// editorconfig-checker-disable
 	Long: `Update an approval ruleset's non-versioned properties.
 
 To update its versioned properties (e.g. display name or rules):
 
  1. create a proposal first: ` + "`sqedule approval-ruleset proposal create`" + `
  2. then use ` + "`sqedule approval-ruleset proposal update`" + ` and ` + "`sqedule approval-ruleset proposal rule`",
+	// editorconfig-checker-enable
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
