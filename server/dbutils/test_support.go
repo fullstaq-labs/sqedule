@@ -3,6 +3,7 @@ package dbutils
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"sync/atomic"
 
@@ -65,11 +66,19 @@ func connectToTestDatabase() (*gorm.DB, error) {
 	var db *gorm.DB
 	var err error
 
+	dbType := os.Getenv("SQEDULE_DB_TYPE")
+	if len(dbType) == 0 {
+		dbType = "postgresql"
+	}
+	dbConn := os.Getenv("SQEDULE_DB_CONNECTION")
+	if len(dbConn) == 0 {
+		dbConn = "dbname=sqedule_test"
+	}
+
 	logger := gormlogger.Default.LogMode(gormlogger.Warn)
 	db, err = EstablishDatabaseConnection(
-		// TODO: make database parameters configurable
-		"postgresql",
-		"dbname=sqedule_test",
+		dbType,
+		dbConn,
 		&gorm.Config{
 			Logger: logger,
 		})

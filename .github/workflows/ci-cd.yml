@@ -1,0 +1,295 @@
+name: CI/CD
+
+on:
+  push:
+    paths-ignore:
+      - .github/workflows/docs.yml
+      - mkdocs.yml
+      - requirements.mkdocs.txt
+      - docs/**
+      - README.md
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a release? Set to true'
+        required: true
+
+env:
+  GO_VERSION: '^1.16.0'
+
+jobs:
+  lint_editorconfig:
+    name: Lint EditorConfig
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download ec
+        run: curl -O -L -C - https://github.com/editorconfig-checker/editorconfig-checker/releases/download/2.3.5/ec-linux-amd64.tar.gz
+      - name: Extract ec
+        run: tar xzf ec-linux-amd64.tar.gz
+      - name: Check EditorConfig compliance
+        run: ./bin/ec-linux-amd64
+
+  lint_go:
+    name: Lint Go
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42.0
+
+  test:
+    name: Test
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: bitnami/postgresql:13
+        env:
+          POSTGRESQL_DATABASE: sqedule
+          POSTGRESQL_USERNAME: sqedule
+          POSTGRESQL_PASSWORD: password
+          POSTGRESQL_FSYNC: off
+        options: >-
+          --health-cmd "pg_isready -d sqedule -U sqedule -p 5432"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      SQEDULE_DB_TYPE: postgresql
+      SQEDULE_DB_CONNECTION: dbname=sqedule host=localhost user=sqedule password=password
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: go mod download
+      - name: Load database schema
+        run: ./devtools/server db migrate
+      - run: go test -parallel=1 ./...
+
+  next_export:
+    name: Next.js export
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-webui-${{ hashFiles('webui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-webui-
+      - run: npm ci
+        working-directory: webui
+      - run: npx next build
+        working-directory: webui
+      - run: npx next export
+        working-directory: webui
+      - uses: actions/upload-artifact@v2
+        with:
+          name: next-export
+          path: webui/out
+
+  build_server_binary:
+    name: Build server binary
+    runs-on: ubuntu-20.04
+    needs: next_export
+    strategy:
+      matrix:
+        include:
+          - go_os: linux
+            go_arch: amd64
+            os: linux
+            arch: x86_64
+          - go_os: darwin
+            go_arch: amd64
+            os: macos
+            arch: x86_64
+          - go_os: darwin
+            go_arch: arm64
+            os: macos
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ matrix.go_os }}-${{ matrix.go_arch }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ matrix.go_os }}-${{ matrix.go_arch }}-go-
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Determine server version
+        id: determine_server_version
+        run: |
+          SERVER_VERSION=$(grep VersionString server/version.go | sed -E 's|.+"(.+)".*|\1|')
+          echo "::set-output name=version::$SERVER_VERSION"
+
+      - run: go mod download
+      - run: go build -tags production -o sqedule-server -ldflags '-w -s' -a -installsuffix cgo -trimpath ./cmd/server
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.go_os }}
+          GOARCH: ${{ matrix.go_arch }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: next-export
+          path: webui-assets
+      - name: Create package
+        run: |
+          set -e
+          mkdir sqedule-server-${{ steps.determine_server_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
+          mv sqedule-server webui-assets sqedule-server-${{ steps.determine_server_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}/
+          tar -cz sqedule-server-${{ steps.determine_server_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }} \
+          | gzip --best \
+          > sqedule-server-${{ steps.determine_server_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+      - uses: actions/upload-artifact@v2
+        with:
+          name: sqedule-server-${{ matrix.os }}-${{ matrix.arch }}
+          path: sqedule-server-${{ steps.determine_server_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+
+  build_cli_binary:
+    name: Build CLI binary
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - go_os: linux
+            go_arch: amd64
+            os: linux
+            arch: x86_64
+          - go_os: darwin
+            go_arch: amd64
+            os: macos
+            arch: x86_64
+          - go_os: darwin
+            go_arch: arm64
+            os: macos
+            arch: arm64
+          - go_os: windows
+            go_arch: amd64
+            os: windows
+            arch: x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ matrix.go_os }}-${{ matrix.go_arch }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ matrix.go_os }}-${{ matrix.go_arch }}-go-
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Determine CLI version
+        id: determine_cli_version
+        run: |
+          CLI_VERSION=$(grep VersionString cli/version.go | sed -E 's|.+"(.+)".*|\1|')
+          echo "::set-output name=version::$CLI_VERSION"
+
+      - run: go mod download
+      - run: go build -tags production -o sqedule-cli -ldflags '-w -s' -a -installsuffix cgo -trimpath ./cmd/cli
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.go_os }}
+          GOARCH: ${{ matrix.go_arch }}
+      - name: Create package
+        run: |
+          set -e
+          mkdir sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
+          mv sqedule-cli sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}/
+          tar -cz sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }} \
+          | gzip --best \
+          > sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+      - uses: actions/upload-artifact@v2
+        with:
+          name: sqedule-cli-${{ matrix.os }}-${{ matrix.arch }}
+          path: sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+
+  build_server_image:
+    name: Build server image
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image
+        run: >
+          docker build
+          --pull
+          --cache-from ghcr.io/fullstaq-labs/cache_sqedule-server
+          --build-arg BUILDKIT_INLINE_CACHE=1
+          -t image
+          .
+        env:
+          DOCKER_BUILDKIT: '1'
+      - name: Push image artifact
+        run: |
+          set -e
+          IMAGE_NAME="ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
+          docker tag image "$IMAGE_NAME"
+          docker push "$IMAGE_NAME"
+      - name: Update image cache
+        run: |
+          set -e
+          IMAGE_NAME=ghcr.io/fullstaq-labs/cache_sqedule-server
+          docker tag image "$IMAGE_NAME"
+          docker push "$IMAGE_NAME"
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+    needs:
+      - lint_editorconfig
+      - lint_go
+      - test
+      - build_server_binary
+      - build_cli_binary
+      - build_server_image
+    steps:
+      - uses: actions/checkout@v2
+      - name: Determine server version
+        id: determine_server_version
+        run: |
+          SERVER_VERSION=$(grep VersionString server/version.go | sed -E 's|.+"(.+)".*|\1|')
+          echo "::set-output name=version::$SERVER_VERSION"
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - name: Download server image artifact
+        run: docker pull "ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
+      - name: Determine server image tag
+        run: >
+          docker tag
+          "ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
+          "ghcr.io/fullstaq-labs/sqedule-server:${{ steps.determine_server_version.outputs.version }}"
+      - name: Publish server image
+        if: github.event.inputs.create_release == 'true'
+        run: docker push "ghcr.io/fullstaq-labs/sqedule-server:${{ steps.determine_server_version.outputs.version }}"
