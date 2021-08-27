@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useRouter, NextRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -69,13 +70,11 @@ export default function Navbar(props: IProps) {
     <Drawer variant={variant} open={open} className={styles.navbar} classes={{paper: styles.paper}} onClose={onCloseClicked}>
       <List classes={{ root: styles.app_banner }}>
         <ListItem>
-          <ListItemIcon>
-            <AccessAlarmIcon fontSize="large" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Sqedule"
-            primaryTypographyProps={{ variant: "h6" }}
-            classes={{ primary: styles.app_banner_text }} />
+          <MaterialLink href="https://github.com/fullstaq-labs/sqedule" underline="none" target="_blank" rel="noopener">
+            <ListItemIcon>
+              <Image src="/logo-sqedule-horizontal.svg" width={132} height={39} alt="Sqedule logo" />
+            </ListItemIcon>
+          </MaterialLink>
           {showCloseButton &&
             <ListItemSecondaryAction>
               <IconButton edge="end" aria-label="Close menu" onClick={onCloseClicked}>

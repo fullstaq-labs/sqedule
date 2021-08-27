@@ -44,7 +44,7 @@ export default function AboutPage(props: IProps) {
               <h2>About Fullstaq</h2>
               <p>
                 <MaterialLink href="https://fullstaq.com" target="_blank" rel="noopener">
-                  <Image src="/logo-fullstaq.svg" alt="Fullstaq logo" height="99" width="421" />
+                  <Image src="/logo-fullstaq.svg" alt="Fullstaq logo" height={99} width={421} />
                 </MaterialLink>
               </p>
               <p>
