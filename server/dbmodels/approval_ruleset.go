@@ -92,6 +92,7 @@ func (c ApprovalRulesetContents) NumRules() uint {
 }
 
 func (c ApprovalRulesetContents) CopyAsUnsaved() ApprovalRulesetContents {
+	//nolint:errcheck
 	c.ForEach(func(rule IApprovalRule) error {
 		rule.ClearPrimaryKey()
 		rule.AssociateWithApprovalRulesetAdjustment(ApprovalRulesetAdjustment{})

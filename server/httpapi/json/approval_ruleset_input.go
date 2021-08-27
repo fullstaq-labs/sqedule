@@ -59,6 +59,7 @@ func PatchApprovalRulesetAdjustment(organizationID string, adjustment *dbmodels.
 	}
 	if input.ApprovalRules != nil {
 		adjustment.Rules = input.ToDbmodelsApprovalRulesetContents(organizationID)
+		//nolint:errcheck
 		adjustment.Rules.ForEach(func(rule dbmodels.IApprovalRule) error {
 			rule.AssociateWithApprovalRulesetAdjustment(*adjustment)
 			return nil

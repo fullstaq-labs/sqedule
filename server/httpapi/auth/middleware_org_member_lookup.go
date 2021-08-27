@@ -119,6 +119,7 @@ func (m orgMemberLookupMiddleware) lookupTestAuthenticatedOrgMember(ginctx *gin.
 	return dbmodels.FindOrganizationMember(m.Db, orgID, dbmodels.OrganizationMemberType(orgMemberType), orgMemberID)
 }
 
+//nolint:unused
 func (m orgMemberLookupMiddleware) getOrgMemberFromJwtClaims(ginctx *gin.Context) (string, dbmodels.OrganizationMemberType, string, bool) {
 	var orgID, orgMemberType, orgMemberID string
 	var ok bool

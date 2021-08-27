@@ -21,6 +21,7 @@ const (
 )
 
 func ProcessInBackground(db *gorm.DB, organizationID string, job dbmodels.ReleaseBackgroundJob) error {
+	//nolint:errcheck
 	go realProcessInBackground(db, organizationID, job, mocking.RealClock{}, false)
 	return nil
 }
