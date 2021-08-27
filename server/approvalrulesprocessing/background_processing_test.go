@@ -38,13 +38,13 @@ var _ = Describe("Background processing", func() {
 
 		BeforeEach(func() {
 			txerr := db.Transaction(func(tx *gorm.DB) error {
-				app, err := dbmodels.CreateMockApplicationWith1Version(db, org1, nil, nil)
+				app, err := dbmodels.CreateMockApplicationWith1Version(tx, org1, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				release, err := dbmodels.CreateMockReleaseWithInProgressState(db, org1, app, nil)
+				release, err := dbmodels.CreateMockReleaseWithInProgressState(tx, org1, app, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				job, err = dbmodels.CreateMockReleaseBackgroundJob(db, org1, app, release, nil)
+				job, err = dbmodels.CreateMockReleaseBackgroundJob(tx, org1, app, release, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				return nil
@@ -83,14 +83,14 @@ var _ = Describe("Background processing", func() {
 	Describe("ProcessAllPendingReleasesInBackground", func() {
 		var org2 dbmodels.Organization
 
-		createMockReleaseBackgroundJob := func(org dbmodels.Organization, jobLockSubID uint32) dbmodels.ReleaseBackgroundJob {
-			app, err := dbmodels.CreateMockApplicationWith1Version(db, org, nil, nil)
+		createMockReleaseBackgroundJob := func(tx *gorm.DB, org dbmodels.Organization, jobLockSubID uint32) dbmodels.ReleaseBackgroundJob {
+			app, err := dbmodels.CreateMockApplicationWith1Version(tx, org, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			release, err := dbmodels.CreateMockReleaseWithInProgressState(db, org, app, nil)
+			release, err := dbmodels.CreateMockReleaseWithInProgressState(tx, org, app, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			job, err := dbmodels.CreateMockReleaseBackgroundJob(db, org, app, release, func(job *dbmodels.ReleaseBackgroundJob) {
+			job, err := dbmodels.CreateMockReleaseBackgroundJob(tx, org, app, release, func(job *dbmodels.ReleaseBackgroundJob) {
 				job.LockSubID = jobLockSubID
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -101,13 +101,13 @@ var _ = Describe("Background processing", func() {
 		BeforeEach(func() {
 			txerr := db.Transaction(func(tx *gorm.DB) error {
 				var err error
-				org2, err = dbmodels.CreateMockOrganization(db, func(org *dbmodels.Organization) {
+				org2, err = dbmodels.CreateMockOrganization(tx, func(org *dbmodels.Organization) {
 					org.ID = "org2"
 					org.DisplayName = "Org 2"
 				})
 				Expect(err).ToNot(HaveOccurred())
-				createMockReleaseBackgroundJob(org1, 1)
-				createMockReleaseBackgroundJob(org2, 2)
+				createMockReleaseBackgroundJob(tx, org1, 1)
+				createMockReleaseBackgroundJob(tx, org2, 2)
 				return nil
 			})
 			Expect(txerr).ToNot(HaveOccurred())
