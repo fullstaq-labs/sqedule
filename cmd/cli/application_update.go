@@ -23,7 +23,11 @@ To update its versioned properties (e.g. display name or rules):
  1. create a proposal first: ` + "`sqedule application proposal create`" + `
  2. then use ` + "`sqedule application proposal update`" + ` and ` + "`sqedule application proposal rule`",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationUpdateCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

@@ -15,7 +15,11 @@ var applicationListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List applications",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationListCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

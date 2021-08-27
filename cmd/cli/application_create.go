@@ -17,7 +17,11 @@ var applicationCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an application",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationCreateCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

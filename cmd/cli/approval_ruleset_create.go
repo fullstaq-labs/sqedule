@@ -18,7 +18,11 @@ var approvalRulesetCreateCmd = &cobra.Command{
 	Short: "Create an approval ruleset",
 	Long:  "Creates an approval ruleset without any rules inside it. To add rules, use `sqedule approval-ruleset proposal rule create`",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return approvalRulesetCreateCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

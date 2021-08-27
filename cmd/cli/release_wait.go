@@ -22,7 +22,11 @@ var releaseWaitCmd = &cobra.Command{
 	Use:   "wait",
 	Short: "Wait until a release's approval state is final",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		state, err := releaseWaitCmd_run(viper.GetViper(), mocking.RealPrinter{}, mocking.RealClock{}, false)
 		if err != nil {
 			return err

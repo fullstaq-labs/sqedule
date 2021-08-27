@@ -17,7 +17,11 @@ var approvalRulesetProposalUpdateCmd = &cobra.Command{
 	Short: "Update an approval ruleset proposal",
 	Long:  "Update an approval ruleset proposal's properties, but not its rules. To manage rules, use `sqedule approval-ruleset proposal rule`",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return approvalRulesetProposalUpdateCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

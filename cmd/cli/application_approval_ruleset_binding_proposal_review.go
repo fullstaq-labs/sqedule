@@ -18,7 +18,11 @@ var applicationApprovalRulesetBindingProposalReviewCmd = &cobra.Command{
 	Use:   "review",
 	Short: "Review an application approval ruleset binding proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationApprovalRulesetBindingProposalReviewCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

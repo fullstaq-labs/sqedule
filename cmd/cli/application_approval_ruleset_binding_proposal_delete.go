@@ -16,7 +16,11 @@ var applicationApprovalRulesetBindingProposalDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete an application approval ruleset binding proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationApprovalRulesetBindingProposalDeleteCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

@@ -15,7 +15,11 @@ var approvalRulesetProposalRuleCreateScheduleCmd = &cobra.Command{
 	Use:   "create-schedule",
 	Short: "Create a schedule rule",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return approvalRulesetProposalRuleCreateScheduleCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

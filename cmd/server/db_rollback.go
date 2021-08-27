@@ -18,8 +18,12 @@ var dbRollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Rollback database schema",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
-		err := dbRollbackCmd_checkConfig(viper.GetViper())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
+		err = dbRollbackCmd_checkConfig(viper.GetViper())
 		if err != nil {
 			return err
 		}

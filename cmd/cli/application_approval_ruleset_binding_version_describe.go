@@ -16,7 +16,11 @@ var applicationApprovalRulesetBindingVersionDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Describe an application approval ruleset binding version",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationApprovalRulesetBindingVersionDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

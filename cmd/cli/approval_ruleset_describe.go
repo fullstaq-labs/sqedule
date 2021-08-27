@@ -16,7 +16,11 @@ var approvalRulesetDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Describe an approval ruleset",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return approvalRulesetDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

@@ -16,7 +16,11 @@ var applicationVersionDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Describe an application version",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationVersionDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

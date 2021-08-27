@@ -17,7 +17,11 @@ var applicationApprovalRulesetBindingProposalUpdateCmd = &cobra.Command{
 	Short: "Update an application approval ruleset binding proposal",
 	Long:  "Update an application approval ruleset binding proposal's properties, but not its rules. To manage rules, use `sqedule application-approval-ruleset-binding proposal rule`",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationApprovalRulesetBindingProposalUpdateCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

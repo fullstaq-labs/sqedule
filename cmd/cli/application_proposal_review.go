@@ -18,7 +18,11 @@ var applicationProposalReviewCmd = &cobra.Command{
 	Use:   "review",
 	Short: "Review an application proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationProposalReviewCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

@@ -25,8 +25,12 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the Sqedule HTTP server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
-		err := runCmd_checkConfig(viper.GetViper())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
+		err = runCmd_checkConfig(viper.GetViper())
 		if err != nil {
 			return err
 		}
@@ -91,8 +95,7 @@ var runCmd = &cobra.Command{
 			return fmt.Errorf("Error processing pending releases in the background: %w", err)
 		}
 
-		engine.Run(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")))
-		return nil
+		return engine.Run(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")))
 	},
 }
 

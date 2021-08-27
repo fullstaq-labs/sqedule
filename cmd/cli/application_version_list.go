@@ -16,7 +16,11 @@ var applicationVersionListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List application versions",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationVersionListCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

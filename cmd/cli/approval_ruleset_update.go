@@ -23,7 +23,11 @@ To update its versioned properties (e.g. display name or rules):
  1. create a proposal first: ` + "`sqedule approval-ruleset proposal create`" + `
  2. then use ` + "`sqedule approval-ruleset proposal update`" + ` and ` + "`sqedule approval-ruleset proposal rule`",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return approvalRulesetUpdateCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

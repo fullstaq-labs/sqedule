@@ -13,7 +13,11 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show CLI version",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		fmt.Println(cli.VersionString)
 		return nil
 	},

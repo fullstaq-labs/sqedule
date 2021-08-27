@@ -19,7 +19,11 @@ var releaseCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a release",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return releaseCreateCmd_run(viper.GetViper(), mocking.RealPrinter{}, false)
 	},
 }

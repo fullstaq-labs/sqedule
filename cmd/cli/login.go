@@ -15,7 +15,11 @@ var loginCmd = &cobra.Command{
 	Short:  "Logs into a Sqedule server",
 	Hidden: !cli.SupportLogin,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return loginCmd_run(viper.GetViper())
 	},
 }

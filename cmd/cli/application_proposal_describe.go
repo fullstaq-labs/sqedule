@@ -16,7 +16,11 @@ var applicationProposalDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Describe an application proposal",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
 		return applicationProposalDescribeCmd_run(viper.GetViper(), mocking.RealPrinter{})
 	},
 }

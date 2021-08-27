@@ -19,8 +19,12 @@ var dbMigrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Migrate database schema",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
-		err := dbMigrateCmd_checkConfig(viper.GetViper())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+
+		err = dbMigrateCmd_checkConfig(viper.GetViper())
 		if err != nil {
 			return err
 		}

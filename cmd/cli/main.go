@@ -38,7 +38,11 @@ func init() {
 	rootFlags.cfgFile = rootCmd.PersistentFlags().String("config", "", "config file (default ~/.config/sqedule-cli/config.yml)")
 
 	rootCmd.PersistentFlags().Bool("debug", false, "show API requests/responses")
-	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+
+	err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.
