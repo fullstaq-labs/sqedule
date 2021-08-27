@@ -96,7 +96,7 @@ export default function Navbar(props: IProps) {
         <Link href="/">
           <ListItem button selected={navigationSection == NavigationSection.Dashboard}>
             <ListItemIcon><HomeIcon /></ListItemIcon>
-            <ListItemText primary="Dashboard" />
+            <ListItemText primary="Home" />
           </ListItem>
         </Link>
       </List>
