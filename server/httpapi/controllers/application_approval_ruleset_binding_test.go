@@ -685,7 +685,7 @@ var _ = Describe("application-approval-ruleset-binding API", func() {
 				version, err := dbmodels.FindApplicationApprovalRulesetBindingVersionByID(ctx.Db, ctx.Org.ID, app.ID, ruleset.ID, proposal1.ID)
 				Expect(err).ToNot(HaveOccurred())
 
-				dbmodels.LoadApplicationApprovalRulesetBindingVersionsLatestAdjustments(ctx.Db, ctx.Org.ID,
+				err = dbmodels.LoadApplicationApprovalRulesetBindingVersionsLatestAdjustments(ctx.Db, ctx.Org.ID,
 					[]*dbmodels.ApplicationApprovalRulesetBindingVersion{&version})
 				Expect(err).ToNot(HaveOccurred())
 

@@ -533,7 +533,7 @@ var _ = Describe("application API", func() {
 				version, err := dbmodels.FindApplicationVersionByID(ctx.Db, ctx.Org.ID, app.ID, proposal1.ID)
 				Expect(err).ToNot(HaveOccurred())
 
-				dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApplicationVersion{&version})
+				err = dbmodels.LoadApplicationVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApplicationVersion{&version})
 				Expect(err).ToNot(HaveOccurred())
 
 				return &version, version.Adjustment

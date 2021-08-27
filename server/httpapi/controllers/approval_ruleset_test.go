@@ -857,7 +857,7 @@ var _ = Describe("approval-ruleset API", func() {
 				version, err := dbmodels.FindApprovalRulesetVersionByID(ctx.Db, ctx.Org.ID, mockRuleset.ID, mockProposal1.ID)
 				Expect(err).ToNot(HaveOccurred())
 
-				dbmodels.LoadApprovalRulesetVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApprovalRulesetVersion{&version})
+				err = dbmodels.LoadApprovalRulesetVersionsLatestAdjustments(ctx.Db, ctx.Org.ID, []*dbmodels.ApprovalRulesetVersion{&version})
 				Expect(err).ToNot(HaveOccurred())
 
 				return &version, version.Adjustment

@@ -801,7 +801,7 @@ func (ctx Context) UpdateApprovalRulesetProposalState(ginctx *gin.Context) {
 
 	var latestApprovedVersionNumber uint32 = 0
 	if input.State == reviewstateinput.Approved {
-		dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
+		err = dbmodels.LoadApprovalRulesetsLatestVersions(ctx.Db, orgID, []*dbmodels.ApprovalRuleset{&ruleset})
 		if err != nil {
 			respondWithDbQueryError("approval ruleset latest approved version", err, ginctx)
 			return
