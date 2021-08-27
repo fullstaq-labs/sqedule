@@ -29,11 +29,6 @@ var migration20210226000010 = gormigrate.Migration{
 			ID            uint64 `gorm:"primaryKey; not null"`
 		}
 
-		type ApprovalRuleset struct {
-			BaseModel
-			ID string `gorm:"type:citext; primaryKey; not null"`
-		}
-
 		type ReleaseBackgroundJob struct {
 			BaseModel
 			ApplicationID string    `gorm:"type:citext; primaryKey; not null"`
