@@ -13,6 +13,7 @@ var (
 	FDescribe   = ginkgo.FDescribe
 	BeforeEach  = ginkgo.BeforeEach
 	BeforeSuite = ginkgo.BeforeSuite
+	AfterEach   = ginkgo.AfterEach
 	It          = ginkgo.It
 	PIt         = ginkgo.PIt
 	FIt         = ginkgo.FIt

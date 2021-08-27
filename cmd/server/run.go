@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/fullstaq-labs/sqedule/cli"
 	"github.com/fullstaq-labs/sqedule/server/approvalrulesprocessing"
@@ -70,9 +71,11 @@ var runCmd = &cobra.Command{
 		engine := gin.Default()
 		ctx := httpapi.Context{
 			Db:              db,
+			WaitGroup:       &sync.WaitGroup{},
 			DevelopmentMode: viper.GetBool("dev"),
 			CorsOrigin:      viper.GetString("cors-origin"),
 		}
+		defer ctx.WaitGroup.Wait()
 
 		err = ctx.SetupRouter(engine, logger)
 		if err != nil {
@@ -90,7 +93,7 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		err = approvalrulesprocessing.ProcessAllPendingReleasesInBackground(ctx.Db)
+		err = approvalrulesprocessing.ProcessAllPendingReleasesInBackground(ctx.Db, ctx.WaitGroup)
 		if err != nil {
 			return fmt.Errorf("Error processing pending releases in the background: %w", err)
 		}

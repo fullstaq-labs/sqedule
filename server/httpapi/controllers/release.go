@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (ctx Context) CreateRelease(ginctx *gin.Context) {
+func (ctx *Context) CreateRelease(ginctx *gin.Context) {
 	// Fetch authentication, parse input, fetch related objects
 
 	orgMember := auth.GetAuthenticatedOrgMemberNoFail(ginctx)
@@ -126,7 +126,7 @@ func (ctx Context) CreateRelease(ginctx *gin.Context) {
 	}
 
 	if ctx.AutoProcessReleaseInBackground {
-		err = approvalrulesprocessing.ProcessInBackground(ctx.Db, orgID, job)
+		err = approvalrulesprocessing.ProcessInBackground(ctx.Db, orgID, job, ctx.WaitGroup)
 		if err != nil {
 			ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}

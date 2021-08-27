@@ -12,7 +12,7 @@ import (
 )
 
 func (ctx Context) SetupRouter(engine *gin.Engine, logger gormlogger.Interface) error {
-	controllerCtx := controllers.NewContext(ctx.Db)
+	controllerCtx := controllers.NewContext(ctx.Db, ctx.WaitGroup)
 	jwtAuthMiddleware, orgMemberLookupMiddleware, err := ctx.newAuthMiddlewares()
 	if err != nil {
 		return err

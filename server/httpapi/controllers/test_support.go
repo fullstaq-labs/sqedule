@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
 	"github.com/fullstaq-labs/sqedule/server/dbutils"
@@ -20,6 +21,7 @@ type HTTPTestContext struct {
 	Engine        *gin.Engine
 	ControllerCtx Context
 	Recorder      *httptest.ResponseRecorder
+	WaitGroup     *sync.WaitGroup
 
 	Org            dbmodels.Organization
 	ServiceAccount dbmodels.ServiceAccount
@@ -60,8 +62,11 @@ func (ctx HTTPTestContext) BodyJSON() (gin.H, error) {
 }
 
 func SetupHTTPTestContext(initializer func(ctx *HTTPTestContext, tx *gorm.DB) error) (HTTPTestContext, error) {
-	var hctx HTTPTestContext
 	var err error
+
+	hctx := HTTPTestContext{
+		WaitGroup: &sync.WaitGroup{},
+	}
 
 	hctx.Db, err = dbutils.SetupTestDatabase()
 	if err != nil {
@@ -75,7 +80,7 @@ func SetupHTTPTestContext(initializer func(ctx *HTTPTestContext, tx *gorm.DB) er
 	routingGroup := hctx.Engine.Group("/v1")
 	routingGroup.Use(orgMemberLookupMiddleware)
 
-	hctx.ControllerCtx = NewContext(hctx.Db)
+	hctx.ControllerCtx = NewContext(hctx.Db, hctx.WaitGroup)
 	hctx.ControllerCtx.InstallAuthenticatedRoutes(routingGroup)
 
 	hctx.Recorder = httptest.NewRecorder()

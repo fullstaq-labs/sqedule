@@ -41,19 +41,14 @@ func ClearDatabaseSlow(context context.Context, db *gorm.DB, tableNames []string
 // disk space and does not reset sequence numbers.
 func ClearDatabaseFast(context context.Context, db *gorm.DB, tableNames []string) error {
 	return db.Transaction(func(tx *gorm.DB) error {
+		// Should delete nearly all data because of 'ON DELETE CASCADE'
+		err := tx.Exec("DELETE FROM organizations").Error
+		if err != nil {
+			return err
+		}
+
 		for _, tableName := range tableNames {
-			// Disable foreign key constraints checking so that we can delete tables in any order.
-			err := tx.Exec(fmt.Sprintf("ALTER TABLE %s DISABLE TRIGGER ALL", tableName)).Error
-			if err != nil {
-				return err
-			}
-
 			err = tx.Exec(fmt.Sprintf("DELETE FROM %s", tableName)).Error
-			if err != nil {
-				return err
-			}
-
-			err = tx.Exec(fmt.Sprintf("ALTER TABLE %s ENABLE TRIGGER ALL", tableName)).Error
 			if err != nil {
 				return err
 			}

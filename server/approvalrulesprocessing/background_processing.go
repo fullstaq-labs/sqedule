@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/fullstaq-labs/sqedule/lib"
@@ -20,16 +21,21 @@ const (
 	backgroundProcessingRetryMaxAttempts = 10
 )
 
-func ProcessInBackground(db *gorm.DB, organizationID string, job dbmodels.ReleaseBackgroundJob) error {
+func ProcessInBackground(db *gorm.DB, organizationID string, job dbmodels.ReleaseBackgroundJob, wg *sync.WaitGroup) error {
+	wg.Add(1)
 	//nolint:errcheck
-	go realProcessInBackground(db, organizationID, job, mocking.RealClock{}, false)
+	go realProcessInBackground(db, organizationID, job, wg, mocking.RealClock{}, false)
 	return nil
 }
 
-func realProcessInBackground(db *gorm.DB, organizationID string, job dbmodels.ReleaseBackgroundJob, clock mocking.IClock, fakeError bool) error {
+func realProcessInBackground(db *gorm.DB, organizationID string, job dbmodels.ReleaseBackgroundJob, wg *sync.WaitGroup, clock mocking.IClock, fakeError bool) error {
 	var lastSleepDuration time.Duration
 	var retryCount uint
 	var err error
+
+	if wg != nil {
+		defer wg.Done()
+	}
 
 	for {
 		engine := Engine{Db: db, OrganizationID: organizationID, ReleaseBackgroundJob: job}
@@ -62,14 +68,14 @@ func calcRetrySleepDuration(lastDuration time.Duration) time.Duration {
 		uint64(backgroundProcessingRetryMinDuration), uint64(backgroundProcessingRetryMaxDuration)))
 }
 
-func ProcessAllPendingReleasesInBackground(db *gorm.DB) error {
+func ProcessAllPendingReleasesInBackground(db *gorm.DB, wg *sync.WaitGroup) error {
 	jobs, err := dbmodels.FindUnlockedReleaseBackgroundJobs(db)
 	if err != nil {
 		return fmt.Errorf("Error querying release background jobs: %w", err)
 	}
 
 	for _, job := range jobs {
-		err = ProcessInBackground(db, job.OrganizationID, job)
+		err = ProcessInBackground(db, job.OrganizationID, job, wg)
 		if err != nil {
 			return fmt.Errorf("Error processing release %s in background: %w", job.Release.Description(), err)
 		}

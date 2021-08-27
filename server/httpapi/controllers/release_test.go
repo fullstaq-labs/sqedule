@@ -98,6 +98,10 @@ var _ = Describe("release API", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}
 
+		AfterEach(func() {
+			ctx.ControllerCtx.WaitGroup.Wait()
+		})
+
 		It("creates a release", func() {
 			Setup(false)
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/fullstaq-labs/sqedule/lib/mocking"
 	"github.com/fullstaq-labs/sqedule/server/dbmodels"
@@ -52,7 +53,7 @@ var _ = Describe("Background processing", func() {
 		})
 
 		It("processes a ReleaseBackgroundJob in the background", func() {
-			err := realProcessInBackground(db, org1.ID, job, &clock, false)
+			err := realProcessInBackground(db, org1.ID, job, nil, &clock, false)
 			Expect(err).ToNot(HaveOccurred())
 
 			var count int64
@@ -69,7 +70,7 @@ var _ = Describe("Background processing", func() {
 			buffer := bytes.NewBuffer([]byte{})
 			db.Logger = logger.New(log.New(buffer, "\n", log.LstdFlags), logger.Config{LogLevel: logger.Warn})
 
-			err := realProcessInBackground(db, org1.ID, job, &clock, true)
+			err := realProcessInBackground(db, org1.ID, job, nil, &clock, true)
 			Expect(err).To(HaveOccurred())
 
 			log := buffer.String()
@@ -113,17 +114,21 @@ var _ = Describe("Background processing", func() {
 		})
 
 		It("processes all ReleaseBackgroundJobs in the background", func() {
-			err := ProcessAllPendingReleasesInBackground(db)
+			var wg sync.WaitGroup
+
+			err := ProcessAllPendingReleasesInBackground(db, &wg)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(func() (int64, error) {
-				var count int64
-				tx := db.Model(dbmodels.ReleaseBackgroundJob{}).Count(&count)
-				return count, tx.Error
-			}).Should(Equal(int64(0)))
+			wg.Wait()
+
+			var count int64
+			err = db.Model(dbmodels.ReleaseBackgroundJob{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(BeNumerically("==", 0))
 
 			var releases []dbmodels.Release
 			Expect(db.Find(&releases).Error).ToNot(HaveOccurred())
+			Expect(releases).To(HaveLen(2))
 			Expect(releases[0].State).To(Equal(releasestate.Approved))
 			Expect(releases[1].State).To(Equal(releasestate.Approved))
 		})
