@@ -55,7 +55,7 @@ func (ctx HTTPTestContext) NewRequestWithAuth(method string, url string, body in
 // BodyJSON returns the response body as a JSON object.
 func (ctx HTTPTestContext) BodyJSON() (gin.H, error) {
 	var body gin.H
-	err := json.Unmarshal([]byte(ctx.Recorder.Body.String()), &body)
+	err := json.Unmarshal(ctx.Recorder.Body.Bytes(), &body)
 	return body, err
 }
 

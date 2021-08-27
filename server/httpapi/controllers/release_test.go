@@ -184,7 +184,7 @@ var _ = Describe("release API", func() {
 		BeforeEach(func() {
 			mctx = SetupMultipleAppsAndReleasesTestContext()
 
-			req, err := ctx.NewRequestWithAuth("GET", fmt.Sprintf("/v1/releases"), nil)
+			req, err := ctx.NewRequestWithAuth("GET", "/v1/releases", nil)
 			Expect(err).ToNot(HaveOccurred())
 			ctx.ServeHTTP(req)
 

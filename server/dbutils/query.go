@@ -53,6 +53,6 @@ func CreateFindOperationError(tx *gorm.DB) error {
 // IsUniqueConstraintError checks whether the given gorm error represents a unique key constraint error,
 // on the given constraint name.
 func IsUniqueConstraintError(err error, constraintName string) bool {
-	return strings.Index(err.Error(), "violates unique constraint \""+constraintName+"\"") != -1 &&
-		strings.Index(err.Error(), "SQLSTATE 23505") != -1
+	return strings.Contains(err.Error(), "violates unique constraint \""+constraintName+"\"") &&
+		strings.Contains(err.Error(), "SQLSTATE 23505")
 }

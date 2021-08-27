@@ -23,12 +23,8 @@ type ConfigRequirementSpec struct {
 // Names returns all configuration option names that appear in this spec.
 func (spec ConfigRequirementSpec) Names() []string {
 	result := make([]string, 0)
-	for _, name := range spec.StringNonEmpty {
-		result = append(result, name)
-	}
-	for _, name := range spec.UintNonZero {
-		result = append(result, name)
-	}
+	result = append(result, spec.StringNonEmpty...)
+	result = append(result, spec.UintNonZero...)
 	return result
 }
 
