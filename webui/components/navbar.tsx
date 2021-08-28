@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useRouter, NextRouter } from 'next/router';
 import Link from 'next/link';
-import Image from 'next/image';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -25,7 +24,7 @@ import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import InfoIcon from '@material-ui/icons/Info';
 import { IUser } from '../common/user';
-import styles from './navbar.module.scss';
+import navarStyles from './navbar.module.scss';
 
 export enum NavigationSection {
   Dashboard = 'dashboard',
@@ -67,12 +66,12 @@ export default function Navbar(props: IProps) {
   useEffect_CloseNavbarOnRouteChange(router, onCloseClicked);
 
   return (
-    <Drawer variant={variant} open={open} className={styles.navbar} classes={{paper: styles.paper}} onClose={onCloseClicked}>
-      <List classes={{ root: styles.app_banner }}>
+    <Drawer variant={variant} open={open} className={navarStyles.navbar} classes={{ paper: navarStyles.paper }} onClose={onCloseClicked}>
+      <List classes={{ root: navarStyles.app_banner }}>
         <ListItem>
           <MaterialLink href="https://github.com/fullstaq-labs/sqedule" underline="none" target="_blank" rel="noopener">
             <ListItemIcon>
-              <Image src="/logo-sqedule-horizontal.svg" width={132} height={39} alt="Sqedule logo" />
+              <img src="/logo-sqedule-horizontal.svg" alt="Sqedule logo" width="132" height="39" />
             </ListItemIcon>
           </MaterialLink>
           {showCloseButton &&

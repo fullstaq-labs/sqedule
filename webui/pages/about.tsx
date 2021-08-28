@@ -1,5 +1,4 @@
 import useSWR from 'swr';
-import Image from 'next/image';
 import { NavigationSection } from '../components/navbar';
 import { IAppContext, declareValidatingFetchedData } from '../components/app_context';
 import DataRefreshErrorSnackbar from '../components/data_refresh_error_snackbar';
@@ -8,6 +7,7 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import MaterialLink from '@material-ui/core/Link';
 import Button from '@material-ui/core/Button';
+import imageStyles from '../common/images.module.css';
 
 interface IProps {
   appContext: IAppContext;
@@ -37,14 +37,14 @@ export default function AboutPage(props: IProps) {
             <Typography variant="body1">
               <h2>About Sqedule</h2>
               <ul>
-                <li><strong>Server version</strong> — { version }</li>
+                <li><strong>Server version</strong> — {version}</li>
                 <li><strong>Github</strong> — <MaterialLink href="https://github.com/fullstaq-labs/sqedule" target="_blank" rel="noopener">fullstaq-labs/sqedule</MaterialLink></li>
               </ul>
 
               <h2>About Fullstaq</h2>
               <p>
                 <MaterialLink href="https://fullstaq.com" target="_blank" rel="noopener">
-                  <Image src="/logo-fullstaq.svg" alt="Fullstaq logo" height={99} width={421} />
+                  <img src="../logo-fullstaq.svg" alt="Fullstaq logo" className={imageStyles.img_responsive} style={{ maxHeight: '99px' }} />
                 </MaterialLink>
               </p>
               <p>

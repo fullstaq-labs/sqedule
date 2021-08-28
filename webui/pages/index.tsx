@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { IAppContext } from '../components/app_context';
 import { NavigationSection } from '../components/navbar';
 import Container from '@material-ui/core/Container';
@@ -6,6 +5,7 @@ import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import MaterialLink from '@material-ui/core/Link';
 import Button from '@material-ui/core/Button';
+import imageStyles from '../common/images.module.css';
 
 interface IProps {
   appContext: IAppContext;
@@ -19,7 +19,7 @@ export default function DashboardPage(_props: IProps) {
           <Typography variant="body1" color="textSecondary">
             <p>
               <MaterialLink href="https://docs.sqedule.io/user_guide/" target="_blank" rel="noopener">
-                <Image src="/logo-sqedule-horizontal.svg" alt="Sqedule logo" height={150} width={508} />
+                <img src="logo-sqedule-horizontal.svg" alt="Sqedule logo" className={imageStyles.img_responsive} style={{ maxHeight: '150px' }} />
               </MaterialLink>
             </p>
             <p>
