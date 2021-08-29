@@ -1,5 +1,7 @@
 # Sqedule — a release auditing & approval platform
 
+![Sqedule logo](docs/logo-sqedule-horizontal.svg)
+
 Sqedule is an application release auditing & approval platform.
 
  - **Auditing**: Sqedule allows teams to have a central audit log of all released applications and their versions. This provides valuable information when troubleshooting complex application architectures that may involve many microservices or components.

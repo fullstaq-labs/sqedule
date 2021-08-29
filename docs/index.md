@@ -1,5 +1,7 @@
 # Welcome to the Sqedule docs
 
+![Sqedule logo](logo-sqedule-horizontal.svg){ .home-logo }
+
 [:fontawesome-brands-github: Github](https://github.com/fullstaq-labs/sqedule){ .md-button .home-btnlist .home-btnlist-1 }
 [:fontawesome-solid-user: Read User Guide ](user_guide/index.md){ .md-button .md-button--primary .home-btnlist .home-btnlist-2 }
 [:fontawesome-solid-server: Read Server Guide](server_guide/index.md){ .md-button .md-button--primary .home-btnlist .home-btnlist-3 }

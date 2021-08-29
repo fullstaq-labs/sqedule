@@ -10,6 +10,7 @@ extra:
 
 theme:
   name: material
+  logo: logo-sqedule-icon-white.svg
   features:
     - navigation.tabs
     - navigation.sections

@@ -1,3 +1,7 @@
+.home-logo {
+    max-height: 130px;
+}
+
 @media (max-width: 450px) {
     .home-btnlist-2 {
         margin-top: 0.5rem;
