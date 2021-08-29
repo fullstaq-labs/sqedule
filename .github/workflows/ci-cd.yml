@@ -4,6 +4,7 @@ on:
   push:
     paths-ignore:
       - .github/workflows/docs.yml
+      - .github/workflows/codeql-analysis.yml
       - mkdocs.yml
       - requirements.mkdocs.txt
       - docs/**
