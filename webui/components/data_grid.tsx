@@ -152,7 +152,7 @@ function renameColumnInColumns(columns: Columns): Columns {
  * However, passing the `page` property may result in firing of the `onPageChange`
  * callback. That callback then rerenders MaterialDataGrid, which refires the callback.
  */
-export function DataGrid(props: IProps) {
+export function DataGrid(props: IProps): JSX.Element {
   const { rows, columns, requestedState, onSortModelChange, style } = props;
   const { requestedPage, setRequestedPage } = requestedState;
   const [page, setPage] = useState(requestedPage);

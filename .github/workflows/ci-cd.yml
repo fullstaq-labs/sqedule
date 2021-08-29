@@ -41,6 +41,22 @@ jobs:
         with:
           version: v1.42.0
 
+  lint_typescript:
+    name: Lint Typescript
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-webui-${{ hashFiles('webui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-webui-
+      - run: npm ci
+        working-directory: webui
+      - run: npm run lint
+        working-directory: webui
+
   test:
     name: Test
     runs-on: ubuntu-20.04
@@ -263,6 +279,7 @@ jobs:
     needs:
       - lint_editorconfig
       - lint_go
+      - lint_typescript
       - test
       - build_server_binary
       - build_cli_binary

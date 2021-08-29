@@ -56,7 +56,7 @@ export function humanizeUnderscoreString(str: string | undefined | null): string
  * to an errored Axios response, then we'll attempt to extract the error
  * message as returned by the server API call.
  */
-export function formatErrorMessage(error: any): string {
+export function formatErrorMessage(error: Record<string, any>): string {
   if (error.isAxiosError
     && typeof error.response === 'object'
     && error.response !== null
@@ -137,6 +137,6 @@ export function formatBooleanAsIconWithLabel(val: boolean | undefined | null): s
   }
 }
 
-export function isNullish(val: any): boolean {
+export function isNullish(val: unknown): boolean {
   return typeof(val) === 'undefined' || val === null;
 }

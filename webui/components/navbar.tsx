@@ -11,16 +11,16 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import MaterialLink from '@material-ui/core/Link';
 import CloseIcon from '@material-ui/icons/Close';
-import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
+// import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
 import HomeIcon from '@material-ui/icons/Home';
 import AppsIcon from '@material-ui/icons/Apps';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import GavelIcon from '@material-ui/icons/Gavel';
-import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
-import BusinessIcon from '@material-ui/icons/Business';
-import AccountBoxIcon from '@material-ui/icons/AccountBox';
-import SettingsIcon from '@material-ui/icons/Settings';
-import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+// import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
+// import BusinessIcon from '@material-ui/icons/Business';
+// import AccountBoxIcon from '@material-ui/icons/AccountBox';
+// import SettingsIcon from '@material-ui/icons/Settings';
+// import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import InfoIcon from '@material-ui/icons/Info';
 import { IUser } from '../common/user';
@@ -59,8 +59,8 @@ function useEffect_CloseNavbarOnRouteChange(router: NextRouter, onCloseClicked?:
   }, []);
 }
 
-export default function Navbar(props: IProps) {
-  const { open, variant, navigationSection, user, showCloseButton, onCloseClicked } = props;
+export default function Navbar(props: IProps): JSX.Element {
+  const { open, variant, navigationSection, showCloseButton, onCloseClicked } = props;
   const router = useRouter();
 
   useEffect_CloseNavbarOnRouteChange(router, onCloseClicked);

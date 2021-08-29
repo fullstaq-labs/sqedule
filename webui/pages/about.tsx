@@ -13,13 +13,13 @@ interface IProps {
   appContext: IAppContext;
 }
 
-export default function AboutPage(props: IProps) {
+export default function AboutPage(props: IProps): JSX.Element {
   const { appContext } = props;
   const { data, error, isValidating, mutate } = useSWR(`/v1/about`);
 
   declareValidatingFetchedData(appContext, isValidating);
 
-  var version: any;
+  var version: string;
   if (data) {
     version = data.version;
   } else if (error) {

@@ -37,7 +37,7 @@ interface IProps {
   appContext: IAppContext;
 }
 
-export default function ApprovalRulesetPage(props: IProps) {
+export default function ApprovalRulesetPage(props: IProps): JSX.Element {
   const { appContext } = props;
   const theme = useTheme();
   const viewIsLarge = useMediaQuery(theme.breakpoints.up('md'));
@@ -69,13 +69,13 @@ export default function ApprovalRulesetPage(props: IProps) {
     }
   }
 
-  function handleTabChange(_event: React.ChangeEvent<{}>, newValue: number) {
+  function handleTabChange(_event: React.ChangeEvent<any>, newValue: number) {
     setTabIndex(newValue);
   }
 
   function handleTabIndexChange(index: number) {
     setTabIndex(index);
-  };
+  }
 
   return (
     <>

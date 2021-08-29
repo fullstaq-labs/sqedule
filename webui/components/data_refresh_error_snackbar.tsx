@@ -13,7 +13,7 @@ interface IProps {
 
 // A snackbar that presents the fact that data cannot be refreshed,
 // and presents the option to reload or dismiss.
-export default function DataRefreshErrorSnackbar(props: IProps) {
+export default function DataRefreshErrorSnackbar(props: IProps): JSX.Element {
   const { error, refreshing, onReload } = props;
   const [show, setShow] = useState(false);
 

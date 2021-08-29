@@ -4,7 +4,6 @@ import Hidden from '@material-ui/core/Hidden';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -22,7 +21,7 @@ interface IProps {
   children: any;
 }
 
-export default function Layout(props: IProps) {
+export default function Layout(props: IProps): JSX.Element {
   const { navigationSection, title, hasBackButton, loading, user, children } = props;
   const router = useRouter();
   const [navbarOpened, setNavbarOpened] = useState(false);

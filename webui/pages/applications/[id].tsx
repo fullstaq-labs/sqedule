@@ -32,7 +32,7 @@ interface IProps {
   appContext: IAppContext;
 }
 
-export default function ApplicationPage(props: IProps) {
+export default function ApplicationPage(props: IProps): JSX.Element {
   const { appContext } = props;
   const theme = useTheme();
   const viewIsLarge = useMediaQuery(theme.breakpoints.up('md'));
@@ -71,13 +71,13 @@ export default function ApplicationPage(props: IProps) {
     }
   }
 
-  function handleTabChange(_event: React.ChangeEvent<{}>, newValue: number) {
+  function handleTabChange(_event: React.ChangeEvent<any>, newValue: number) {
     setTabIndex(newValue);
   }
 
   function handleTabIndexChange(index: number) {
     setTabIndex(index);
-  };
+  }
 
   function mutateAll() {
     appDataMutate();
@@ -269,7 +269,7 @@ const RULESET_BINDING_COLUMNS: ColDef[] = [
     headerName: 'Display name',
     width: 250,
     valueGetter: ({ row }) => row.approval_ruleset.display_name ?? row.approval_ruleset.id,
-    renderCell: ({ row, value }) => (
+    renderCell: ({ row }) => (
       <Link href={pathToApprovalRuleset(row.approval_ruleset)}>
         <a>{row.approval_ruleset.display_name ?? row.approval_ruleset.id}</a>
       </Link>

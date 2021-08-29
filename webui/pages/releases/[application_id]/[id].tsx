@@ -23,7 +23,6 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
-import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
@@ -31,13 +30,11 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import Badge from '@material-ui/core/Badge';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
-import CheckIcon from '@material-ui/icons/Check';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CloudIcon from '@material-ui/icons/Cloud';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import GavelIcon from '@material-ui/icons/Gavel';
-//import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Container from '@material-ui/core/Container';
 import { ColDef } from '@material-ui/data-grid';
 import styles from '../../../common/tables.module.scss';
@@ -49,7 +46,7 @@ interface IProps {
   appContext: IAppContext;
 }
 
-export default function ReleasePage(props: IProps) {
+export default function ReleasePage(props: IProps): JSX.Element {
   const { appContext } = props;
   const theme = useTheme();
   const viewIsLarge = useMediaQuery(theme.breakpoints.up('md'));
@@ -89,13 +86,13 @@ export default function ReleasePage(props: IProps) {
     }
   }
 
-  function handleTabChange(_event: React.ChangeEvent<{}>, newValue: number) {
+  function handleTabChange(_event: React.ChangeEvent<any>, newValue: number) {
     setTabIndex(newValue);
   }
 
   function handleTabIndexChange(index: number) {
     setTabIndex(index);
-  };
+  }
 
   function mutateAll() {
     appDataMutate();
@@ -281,7 +278,7 @@ function GeneralTabContents(props: IGeneralTabContentsProps) {
   );
 }
 
-function renderMetadata(metadata: object): string | JSX.Element {
+function renderMetadata(metadata: Record<string, unknown>): string | JSX.Element {
   if (Object.keys(metadata).length == 0) {
     return 'N/A';
   } else {

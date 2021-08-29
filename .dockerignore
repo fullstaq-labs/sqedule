@@ -1,5 +1,7 @@
+.*
 Dockerfile
 notes
 site
 venv
-.*
+webui/node_modules
+webui/out

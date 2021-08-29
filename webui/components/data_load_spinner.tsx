@@ -8,12 +8,12 @@ interface IProps {
 
 // A spinner for indicating that data is being loaded. To avoid making the UI
 // look too busy, it only shows up after a short timeout.
-export default function DataLoadSpinner(props: IProps) {
+export default function DataLoadSpinner(props: IProps): JSX.Element {
   const { active, position } = props;
   const [show, setShow] = useState(false);
   const timerRef = useRef<number>();
 
-  function getDivStyle(): object {
+  function getDivStyle(): Record<string, unknown> {
     var result: any = {
       position: 'relative',
     };
@@ -23,7 +23,7 @@ export default function DataLoadSpinner(props: IProps) {
     return result;
   }
 
-  function getProgressStyle(): object {
+  function getProgressStyle(): Record<string, unknown> {
     var result: any = {
       width: '100%',
     };

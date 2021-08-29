@@ -101,7 +101,7 @@ const COLUMNS: ColDef[] = [
   },
 ];
 
-export default function ApprovalRulesetsPage(props: IProps) {
+export default function ApprovalRulesetsPage(props: IProps): JSX.Element {
   const { appContext } = props;
   const dataGridState = useDataGrid();
   const { data, error, isValidating, mutate } = useSWR(`/v1/approval-rulesets?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);

@@ -88,7 +88,7 @@ const COLUMNS: ColDef[] = [
   },
 ];
 
-export default function ApplicationsPage(props: IProps) {
+export default function ApplicationsPage(props: IProps): JSX.Element {
   const { appContext } = props;
   const dataGridState = useDataGrid();
   const { data, error, isValidating, mutate } = useSWR(`/v1/applications?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);

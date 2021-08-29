@@ -11,7 +11,7 @@ interface IProps {
   appContext: IAppContext;
 }
 
-export default function DashboardPage(_props: IProps) {
+export default function DashboardPage(_props: IProps): JSX.Element {
   return (
     <>
       <Container maxWidth="md">

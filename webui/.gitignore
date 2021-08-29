@@ -1,0 +1,5 @@
+.DS_Store
+.next
+.eslintcache
+/out
+/node_modules

@@ -1,9 +1,7 @@
 .DS_Store
 .vscode
-.next
 
 target
-node_modules
 site
-webui/out
 venv
+notes

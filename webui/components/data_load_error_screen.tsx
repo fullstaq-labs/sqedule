@@ -13,7 +13,7 @@ interface IProps {
 
 // An error screen that presents the fact that data cannot be loaded,
 // and presents the option to reload.
-export default function DataLoadErrorScreen(props: IProps) {
+export default function DataLoadErrorScreen(props: IProps): JSX.Element {
   const { error, onReload } = props;
 
   function handleReload() {

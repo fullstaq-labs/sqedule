@@ -7,17 +7,17 @@ export interface IAppContext {
 
   isValidatingFetchedData: boolean,
   setValidatingFetchedData: (val: boolean) => void;
-};
+}
 
 export const AppContext = React.createContext({} as IAppContext);
 
-export function declarePageTitle(appContext: IAppContext, value: string) {
+export function declarePageTitle(appContext: IAppContext, value: string): void {
   useIsomorphicLayoutEffect(function() {
     appContext.setPageTitle(value);
   }, [value]);
 }
 
-export function declareValidatingFetchedData(appContext: IAppContext, value: boolean) {
+export function declareValidatingFetchedData(appContext: IAppContext, value: boolean): void {
   useIsomorphicLayoutEffect(function() {
     appContext.setValidatingFetchedData(value);
   }, [value]);

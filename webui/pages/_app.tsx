@@ -59,7 +59,8 @@ function useEffect_ClearPageTitleContextOnRouteChange(router: NextRouter, appCon
   }, [appContext.pageTitle, appContext.setPageTitle]);
 }
 
-function AppWithContext({ Component, pageProps }) {
+function AppWithContext(props: IApp): JSX.Element {
+  const { Component, pageProps } = props;
   const appContext = useContext(AppContext);
 
   function getPageTitle(): string | undefined {
@@ -101,7 +102,13 @@ function AppWithContext({ Component, pageProps }) {
   );
 }
 
-export default function App({ Component, pageProps }) {
+interface IApp {
+  Component: any;
+  pageProps: Record<string, unknown>;
+}
+
+export default function App(props: IApp): JSX.Element {
+  const { Component, pageProps } = props;
   const [pageTitle, setPageTitle] = useState('');
   const [isValidatingFetchedData, setValidatingFetchedData] = useState(false);
   const appContextValue: IAppContext = {

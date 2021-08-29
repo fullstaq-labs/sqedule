@@ -75,7 +75,7 @@ const COLUMNS: ColDef[] = [
   },
 ];
 
-export default function ReleasesPage(props: IProps) {
+export default function ReleasesPage(props: IProps): JSX.Element {
   const { appContext } = props;
   const dataGridState = useDataGrid();
   const { data, error, isValidating, mutate } = useSWR(`/v1/releases?page=${dataGridState.requestedPage}&per_page=${dataGridState.requestedPageSize}`);
@@ -153,7 +153,7 @@ ReleasesPage.navigationSection = NavigationSection.Releases;
 ReleasesPage.pageTitle = 'Releases';
 
 
-export function formatStateString(state: string) {
+export function formatStateString(state: string): string | undefined {
   switch (state) {
     case 'in_progress':
       return '🕐\xa0 In progress';
