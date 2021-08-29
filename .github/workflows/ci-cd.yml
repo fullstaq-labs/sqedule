@@ -43,14 +43,20 @@ jobs:
       - name: Determine server version
         id: determine_server_version
         run: |
-          SERVER_VERSION=$(grep VersionString server/version.go | sed -E 's|.+"(.+)".*|\1|')
-          echo "::set-output name=version::$SERVER_VERSION"
+          VERSION=$(grep VersionString server/version.go | sed -E 's|.+"(.+)".*|\1|')
+          echo "::set-output name=version::$VERSION"
 
       - name: Determine CLI version
         id: determine_cli_version
         run: |
-          CLI_VERSION=$(grep VersionString cli/version.go | sed -E 's|.+"(.+)".*|\1|')
-          echo "::set-output name=version::$CLI_VERSION"
+          VERSION=$(grep VersionString cli/version.go | sed -E 's|.+"(.+)".*|\1|')
+          echo "::set-output name=version::$VERSION"
+
+      - name: Determine docs version
+        id: determine_docs_version
+        run: |
+          VERSION=$(grep latest_version mkdocs.yml | sed -E 's|.+: *||')
+          echo "::set-output name=version::$VERSION"
 
       - name: Verify that server and CLI version match
         run: |
@@ -58,6 +64,13 @@ jobs:
         env:
           SERVER_VERSION: ${{ steps.determine_server_version.outputs.version }}
           CLI_VERSION: ${{ steps.determine_cli_version.outputs.version }}
+
+      - name: Verify that server and docs version match
+        run: |
+          [[ "$SERVER_VERSION" = "$DOCS_VERSION" ]]
+        env:
+          SERVER_VERSION: ${{ steps.determine_server_version.outputs.version }}
+          DOCS_VERSION: ${{ steps.determine_docs_version.outputs.version }}
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
