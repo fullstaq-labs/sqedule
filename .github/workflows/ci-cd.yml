@@ -235,18 +235,22 @@ jobs:
             go_arch: amd64
             os: linux
             arch: x86_64
+            package_suffix: tar.gz
           - go_os: darwin
             go_arch: amd64
             os: macos
             arch: x86_64
+            package_suffix: tar.gz
           - go_os: darwin
             go_arch: arm64
             os: macos
             arch: arm64
+            package_suffix: tar.gz
           - go_os: windows
             go_arch: amd64
             os: windows
             arch: x86_64
+            package_suffix: zip
     steps:
       - uses: actions/checkout@v2
 
@@ -280,16 +284,22 @@ jobs:
           set -x
           mkdir sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
           mv sqedule-cli sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}/
-          tar -cz sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }} \
-          | gzip --best \
-          > sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          if [[ "${{ matrix.package_suffix }}" = zip ]]; then
+            zip -9r \
+              sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}.zip \
+              sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
+          else
+            tar -cz sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }} \
+            | gzip --best \
+            > sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          fi
         env:
           CLI_VERSION: ${{ steps.determine_cli_version.outputs.version }}
 
       - uses: actions/upload-artifact@v2
         with:
           name: sqedule-cli-${{ matrix.os }}-${{ matrix.arch }}
-          path: sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          path: sqedule-cli-${{ steps.determine_cli_version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.${{ matrix.package_suffix }}
 
 
   build_server_image:
@@ -403,7 +413,7 @@ jobs:
 
       - name: Upload release assets
         if: github.event.inputs.create_release == 'true'
-        run: gh release upload --clobber "v${PRODUCT_VERSION}" artifacts/sqedule-{server,cli}-*/*.tar.gz
+        run: gh release upload --clobber "v${PRODUCT_VERSION}" artifacts/sqedule-{server,cli}-*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRODUCT_VERSION: ${{ steps.determine_server_version.outputs.version }}
