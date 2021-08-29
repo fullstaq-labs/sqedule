@@ -210,7 +210,7 @@ jobs:
 
       - name: Create package
         run: |
-          set -e
+          set -x
           mkdir sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
           mv sqedule-server webui-assets sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }}/
           tar -cz sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }} \
@@ -277,7 +277,7 @@ jobs:
 
       - name: Create package
         run: |
-          set -e
+          set -x
           mkdir sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
           mv sqedule-cli sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}/
           tar -cz sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }} \
@@ -321,14 +321,14 @@ jobs:
 
       - name: Push image artifact
         run: |
-          set -e
+          set -x
           IMAGE_NAME="ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
           docker tag image "$IMAGE_NAME"
           docker push "$IMAGE_NAME"
 
       - name: Update image cache
         run: |
-          set -e
+          set -x
           IMAGE_NAME=ghcr.io/fullstaq-labs/cache_sqedule-server
           docker tag image "$IMAGE_NAME"
           docker push "$IMAGE_NAME"
@@ -338,7 +338,7 @@ jobs:
     name: Publish
     runs-on: ubuntu-20.04
     permissions:
-      contents: read
+      contents: write
       packages: write
     needs:
       - lint_editorconfig
@@ -398,8 +398,12 @@ jobs:
         if: github.event.inputs.create_release == 'true'
         run: gh release create "v${PRODUCT_VERSION}" --draft --title "Version $PRODUCT_VERSION"
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRODUCT_VERSION: ${{ steps.determine_server_version.outputs.version }}
 
       - name: Upload release assets
         if: github.event.inputs.create_release == 'true'
-        run: gh release upload "v${PRODUCT_VERSION}" artifacts/sqedule-{server,cli}-*/*.tar.gz
+        run: gh release upload --clobber "v${PRODUCT_VERSION}" artifacts/sqedule-{server,cli}-*/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRODUCT_VERSION: ${{ steps.determine_server_version.outputs.version }}
