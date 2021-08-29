@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY webui/package.json .
 COPY webui/package-lock.json .
-RUN npm install
+RUN npm ci
 
 COPY webui .
 RUN npx next build
@@ -34,6 +34,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -tags production -o sqedule-server -ldflag
 FROM alpine:3.14
 
 LABEL maintainer="Fullstaq"
+LABEL org.opencontainers.image.source=https://github.com/fullstaq-labs/sqedule
 
 COPY --from=frontend-builder /app/out webui-assets
 COPY --from=server-builder /app/sqedule-server .
