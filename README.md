@@ -35,5 +35,5 @@ With Sqedule we are trying to bridge the gap between ITIL-style change/release m
 
 ## Development & contribution
 
- * [Development & contribution guide](CONTRIBUTING.md) — helps you get started.
- * [Development documentation](devdocs/README.md) — documents design, architecture, processes and more.
+ * [Contribution guide](CONTRIBUTING.md) — describes how one can contribute.
+ * [Development documentation](devdocs/README.md) — how to get started with developing; documents design, architecture, processes and more.

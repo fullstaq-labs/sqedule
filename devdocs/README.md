@@ -2,9 +2,12 @@
 
 ## Getting started
 
- * [Development environment setup]
- * [Running the server]
- * [Loading database seeds]
+ * [Development environment setup](dev-env-setup.md)
+ * [Running the server](running-the-server.md)
+ * [Loading database development seed data](db-dev-seeds-load.md)
+ * [Development seed data organization members](db-dev-seeds-org-members.md)
+ * [Resetting the database](db-reset.md)
+ * [Running tests](run-tests.md)
 
 ## Design concepts
 
