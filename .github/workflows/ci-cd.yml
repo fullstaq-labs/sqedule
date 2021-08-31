@@ -224,13 +224,15 @@ jobs:
       - name: Create package
         run: |
           set -x
-          mkdir sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
-          mv sqedule-server webui-assets sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }}/
-          tar -cz sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }} \
+          mkdir sqedule-server-"${SERVER_VERSION}-${OS}-${ARCH}"
+          mv sqedule-server webui-assets sqedule-server-"${SERVER_VERSION}-${OS}-${ARCH}"/
+          tar -cz sqedule-server-"${SERVER_VERSION}-${OS}-${ARCH}" \
           | gzip --best \
-          > sqedule-server-"$SERVER_VERSION"-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          > sqedule-server-"${SERVER_VERSION}-${OS}-${ARCH}".tar.gz
         env:
           SERVER_VERSION: ${{ steps.determine_server_version.outputs.version }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v2
         with:
@@ -295,19 +297,22 @@ jobs:
       - name: Create package
         run: |
           set -x
-          mkdir sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
-          mv sqedule-cli sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}/
-          if [[ "${{ matrix.package_suffix }}" = zip ]]; then
+          mkdir sqedule-cli-"${CLI_VERSION}-${OS}-${ARCH}"
+          mv sqedule-cli sqedule-cli-"${CLI_VERSION}-${OS}-${ARCH}"/
+          if [[ "$PACKAGE_SUFFIX" = zip ]]; then
             zip -9r \
-              sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}.zip \
-              sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}
+              sqedule-cli-"${CLI_VERSION}-${OS}-${ARCH}".zip \
+              sqedule-cli-"${CLI_VERSION}-${OS}-${ARCH}"
           else
-            tar -cz sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }} \
+            tar -cz sqedule-cli-"${CLI_VERSION}-${OS}-${ARCH}" \
             | gzip --best \
-            > sqedule-cli-"$CLI_VERSION"-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+            > sqedule-cli-"${CLI_VERSION}-${OS}-${ARCH}".tar.gz
           fi
         env:
           CLI_VERSION: ${{ steps.determine_cli_version.outputs.version }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
 
       - uses: actions/upload-artifact@v2
         with:
@@ -335,26 +340,31 @@ jobs:
         run: >
           docker build
           --pull
-          --cache-from ghcr.io/fullstaq-labs/cache_sqedule-server
+          --cache-from "ghcr.io/$REPO_OWNER/cache_sqedule-server"
           --build-arg BUILDKIT_INLINE_CACHE=1
           -t image
           .
         env:
           DOCKER_BUILDKIT: '1'
+          REPO_OWNER: ${{ github.repository_owner }}
 
       - name: Push image artifact
         run: |
           set -x
-          IMAGE_NAME="ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
+          IMAGE_NAME="ghcr.io/$REPO_OWNER/ci-artifact_sqedule-server:cirun${GITHUB_RUN_NUMBER}"
           docker tag image "$IMAGE_NAME"
           docker push "$IMAGE_NAME"
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
 
       - name: Update image cache
         run: |
           set -x
-          IMAGE_NAME=ghcr.io/fullstaq-labs/cache_sqedule-server
+          IMAGE_NAME="ghcr.io/$REPO_OWNER/cache_sqedule-server"
           docker tag image "$IMAGE_NAME"
           docker push "$IMAGE_NAME"
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
 
 
   publish:
@@ -392,21 +402,25 @@ jobs:
           path: artifacts
 
       - name: Download server image artifact
-        run: docker pull "ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
+        run: docker pull "ghcr.io/$REPO_OWNER/ci-artifact_sqedule-server:cirun${GITHUB_RUN_NUMBER}"
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
 
       - name: Determine server image tag
         run: >
           docker tag
-          "ghcr.io/fullstaq-labs/ci-artifact_sqedule-server:cirun${{ github.run_number }}"
-          "ghcr.io/fullstaq-labs/sqedule-server:$SERVER_VERSION"
+          "ghcr.io/$REPO_OWNER/ci-artifact_sqedule-server:cirun${GITHUB_RUN_NUMBER}"
+          "ghcr.io/$REPO_OWNER/sqedule-server:$SERVER_VERSION"
         env:
           SERVER_VERSION: ${{ steps.determine_server_version.outputs.version }}
+          REPO_OWNER: ${{ github.repository_owner }}
 
       - name: Publish server image
         if: github.event.inputs.create_release == 'true'
-        run: docker push "ghcr.io/fullstaq-labs/sqedule-server:$SERVER_VERSION"
+        run: docker push "ghcr.io/$REPO_OWNER/sqedule-server:$SERVER_VERSION"
         env:
           SERVER_VERSION: ${{ steps.determine_server_version.outputs.version }}
+          REPO_OWNER: ${{ github.repository_owner }}
 
       - name: Create tag
         if: github.event.inputs.create_release == 'true'
