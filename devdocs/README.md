@@ -63,6 +63,10 @@ Collaboration:
  * [Code review checklist](code-review-checklist.md)
  * [Editing diagrams](editing-diagrams.md)
 
+Governance:
+
+ * [Release process](release-process.md)
+
 ## Team handbook
 
 Only applicable to core team members.
