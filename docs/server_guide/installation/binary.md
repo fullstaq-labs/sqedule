@@ -37,9 +37,9 @@ sudo chown sqedule-server: /etc/sqedule-server.yml
 sudo chmod 600 /etc/sqedule-server.yml
 ~~~
 
-## 4. Install SystemD service
+## 4. Install systemd service
 
-Install a SystemD service file. Create /etc/systemd/system/sqedule-server.service:
+Install a systemd service file. Create /etc/systemd/system/sqedule-server.service:
 
 ~~~ini
 [Unit]
@@ -57,7 +57,7 @@ WantedBy=multi-user.target
 !!! note
     Be sure to replace `/path-to/sqedule-server` with the actual path!
 
-Then reload SystemD:
+Then reload systemd:
 
 ~~~bash
 sudo systemctl daemon-reload
