@@ -7,7 +7,7 @@ By default, the Sqedule server [automatically migrates the database schema](../c
 
 !!! note
 
-    Schema migration requires [sufficient permissions](../installation/requirements.md#permissions).
+    Schema migration may require [sufficient permissions](../installation/requirements.md#permissions).
 
 ## Upgrading the database schema
 

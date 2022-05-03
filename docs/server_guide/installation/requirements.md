@@ -12,18 +12,24 @@ You don't need to manually setup database schemas. The Sqedule server [takes car
 
 ### Permissions
 
-When the Sqedule server migrates the database schema, it will enable the citext extension. This requires sufficient permissions. Therefore the Sqedule server requires one of the following:
+When the Sqedule server migrates the database schema, it will enable the citext extension. Since PostgreSQL 13, the citext extension is by default considered a trusted extension, and so anybody can enable it. Everything should work by default.
 
- * The database must be owned by the PostgreSQL user that the Sqedule server authenticates with.
+On older PostgreSQL versions, enabling the extension may result in this error:
 
-    !!! tip
-        You can change the owner with:
+~~~
+ERROR:  permission denied to create extension "citext"
+HINT:  Must be superuser to create this extension.
+~~~
 
-        ~~~sql
-        ALTER DATABASE your-database-name OWNER TO your-user-name;
-        ~~~
+You can do one of the following to make it work:
 
- * -OR- (since PostgreSQL 13): The citext extension must be marked as a trusted extension.
+ * Let a superuser role pre-enable the citext extension on the Sqedule database.
+
+    ~~~sql
+    CREATE EXTENSION citext;
+    ~~~
+
+ * -OR-: The PostgreSQL user that the Sqedule server authenticates with, must have the superuser role.
 
 ## Operating system
 

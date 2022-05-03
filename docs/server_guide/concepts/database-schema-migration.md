@@ -2,7 +2,7 @@
 
 During startup, the Sqedule server checks whether the database schema is up-to-date. If not then it will automatically migrate the database schema to the latest version.
 
-Note that schema migration requires [sufficient permissions](../installation/requirements.md#permissions).
+Note that schema migration may require [sufficient permissions](../installation/requirements.md#permissions).
 
 Schema database migration is not concurrency-safe. This is the main reason why the Sqedule server currently [does not support running multiple concurrent instances](multi-instance-safety.md) in its default configuration.
 
