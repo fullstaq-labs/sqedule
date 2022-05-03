@@ -5,6 +5,10 @@ By default, the Sqedule server [automatically migrates the database schema](../c
  * You've [disabled automatic database schema migration](disabling-automatic-schema-migration.md).
  * You want to downgrade Sqedule to a previous version, and thus you need to rollback to a previous schema version.
 
+!!! note
+
+    Schema migration requires [sufficient permissions](../installation/requirements.md#permissions).
+
 ## Upgrading the database schema
 
 [Invoke the subcommand](../concepts/server-exe.md) `sqedule-server db migrate`. This subcommand requires the following [configuration options](../config/index.md):
