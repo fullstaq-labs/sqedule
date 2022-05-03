@@ -1,0 +1,1469 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="canonical" href="https://docs.sqedule.io/user_guide/tutorials/release-logging/">
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-7.2.8">
+    
+    
+      
+        <title>1 Release audit logging - Sqedule docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.92558b1b.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../../extra.css">
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    <script>function __prefix(e){return new URL("../../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorial-1-release-audit-logging" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Sqedule docs" class="md-header__button md-logo" aria-label="Sqedule docs" data-md-component="logo">
+      
+  <img src="../../../logo-sqedule-icon-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Sqedule docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              1 Release audit logging
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/fullstaq-labs/sqedule/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fullstaq-labs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link md-tabs__link--active">
+        User Guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../server_guide/" class="md-tabs__link">
+        Server Guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../fullstaq/" class="md-tabs__link">
+      About Fullstaq
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Sqedule docs" class="md-nav__button md-logo" aria-label="Sqedule docs" data-md-component="logo">
+      
+  <img src="../../../logo-sqedule-icon-white.svg" alt="logo">
+
+    </a>
+    Sqedule docs
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/fullstaq-labs/sqedule/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fullstaq-labs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      <label class="md-nav__link" for="__nav_2">
+        User Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="User Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          User Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help_support/" class="md-nav__link">
+        Help & support
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" checked>
+      
+      <label class="md-nav__link" for="__nav_2_3">
+        Tutorials
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Tutorials" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          Tutorials
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          1 Release audit logging
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        1 Release audit logging
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-begin" class="md-nav__link">
+    Before you begin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-create-github-repo-with-pipeline" class="md-nav__link">
+    1 Create Github repo with pipeline
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configure-cli" class="md-nav__link">
+    2 Configure CLI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-register-an-application" class="md-nav__link">
+    3 Register an application
+  </a>
+  
+    <nav class="md-nav" aria-label="3 Register an application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viewing-the-registered-application" class="md-nav__link">
+    Viewing the registered application
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing the registered application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-the-cli" class="md-nav__link">
+    With the CLI
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-the-web-interface" class="md-nav__link">
+    With the web interface
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-integrate-with-cd-pipeline" class="md-nav__link">
+    4 Integrate with CD pipeline
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-view-release" class="md-nav__link">
+    5 View release
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    Conclusion
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approval/" class="md-nav__link">
+        2 Release approval
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_4" data-md-state="indeterminate" type="checkbox" id="__nav_2_4" checked>
+      
+      <label class="md-nav__link" for="__nav_2_4">
+        Concepts
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Concepts" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_4">
+          <span class="md-nav__icon md-icon"></span>
+          Concepts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/applications-releases/" class="md-nav__link">
+        Applications & releases
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/versioning/" class="md-nav__link">
+        Versioning, proposals & reviews
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/approval-rules/" class="md-nav__link">
+        Approval rules
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/web-interface/" class="md-nav__link">
+        Web interface
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/cli/" class="md-nav__link">
+        CLI
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/api/" class="md-nav__link">
+        API
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_5" data-md-state="indeterminate" type="checkbox" id="__nav_2_5" checked>
+      
+      <label class="md-nav__link" for="__nav_2_5">
+        Tasks
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Tasks" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_5">
+          <span class="md-nav__icon md-icon"></span>
+          Tasks
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tasks/install-cli/" class="md-nav__link">
+        Installing the CLI
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tasks/initial-cli-setup/" class="md-nav__link">
+        Initial CLI setup
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_6" data-md-state="indeterminate" type="checkbox" id="__nav_2_6" checked>
+      
+      <label class="md-nav__link" for="__nav_2_6">
+        References
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="References" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_6">
+          <span class="md-nav__icon md-icon"></span>
+          References
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/api-endpoints/" class="md-nav__link">
+        API endpoints
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/cli-config/" class="md-nav__link">
+        CLI configuration
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" data-md-state="indeterminate" type="checkbox" id="__nav_3" checked>
+      
+      <label class="md-nav__link" for="__nav_3">
+        Server Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Server Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Server Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/help_support/" class="md-nav__link">
+        Help & support
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" data-md-state="indeterminate" type="checkbox" id="__nav_3_3" checked>
+      
+      <label class="md-nav__link" for="__nav_3_3">
+        Installation
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/installation/requirements/" class="md-nav__link">
+        Requirements
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/installation/binary/" class="md-nav__link">
+        With binary (no container)
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/installation/container/" class="md-nav__link">
+        With container
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/installation/kubernetes/" class="md-nav__link">
+        With Kubernetes
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4" data-md-state="indeterminate" type="checkbox" id="__nav_3_4" checked>
+      
+      <label class="md-nav__link" for="__nav_3_4">
+        Configuration
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Configuration" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/config/ways/" class="md-nav__link">
+        Ways to pass configuration
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/config/naming/" class="md-nav__link">
+        Naming format
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/config/reference/" class="md-nav__link">
+        Reference
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/config/postgresql/" class="md-nav__link">
+        PostgreSQL connection string
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_5" data-md-state="indeterminate" type="checkbox" id="__nav_3_5" checked>
+      
+      <label class="md-nav__link" for="__nav_3_5">
+        Concepts
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Concepts" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_5">
+          <span class="md-nav__icon md-icon"></span>
+          Concepts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/concepts/server-exe/" class="md-nav__link">
+        The Sqedule server executable
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/concepts/security/" class="md-nav__link">
+        Security
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/concepts/database-schema-migration/" class="md-nav__link">
+        Database schema migration
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/concepts/multi-instance-safety/" class="md-nav__link">
+        Multi-instance safety
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_6" data-md-state="indeterminate" type="checkbox" id="__nav_3_6" checked>
+      
+      <label class="md-nav__link" for="__nav_3_6">
+        Tasks
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Tasks" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_6">
+          <span class="md-nav__icon md-icon"></span>
+          Tasks
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/tasks/disabling-automatic-schema-migration/" class="md-nav__link">
+        Disabling automatic schema migration
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/tasks/manual-database-schema-migration/" class="md-nav__link">
+        Manually migrating the database schema
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server_guide/tasks/multi-instance/" class="md-nav__link">
+        Running multiple server instances
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fullstaq/" class="md-nav__link">
+        About Fullstaq
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-begin" class="md-nav__link">
+    Before you begin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-create-github-repo-with-pipeline" class="md-nav__link">
+    1 Create Github repo with pipeline
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configure-cli" class="md-nav__link">
+    2 Configure CLI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-register-an-application" class="md-nav__link">
+    3 Register an application
+  </a>
+  
+    <nav class="md-nav" aria-label="3 Register an application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viewing-the-registered-application" class="md-nav__link">
+    Viewing the registered application
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing the registered application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-the-cli" class="md-nav__link">
+    With the CLI
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-the-web-interface" class="md-nav__link">
+    With the web interface
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-integrate-with-cd-pipeline" class="md-nav__link">
+    4 Integrate with CD pipeline
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-view-release" class="md-nav__link">
+    5 View release
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    Conclusion
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/fullstaq-labs/sqedule/edit/main/docs/user_guide/tutorials/release-logging.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="tutorial-1-release-audit-logging">Tutorial 1: release audit logging</h1>
+<p>In this tutorial, we will:</p>
+<ol>
+<li>Create a Github repository with a CD pipeline.</li>
+<li>Configure the <a href="../../concepts/cli/">CLI</a>.</li>
+<li>Register an <a href="../../concepts/applications-releases/">application</a> in Sqedule using the CLI. We will touch upon the <a href="../../concepts/versioning/">Versioning</a> concept.</li>
+<li>Integrate a CD pipeline with Sqedule, so that the pipeline registers a release in Sqedule. The pipeline will make use of the CLI.</li>
+<li>View a list of releases for the registered applications.</li>
+</ol>
+<figure>
+  <img src="../release-logging.drawio.svg" alt="Diagram of a CD pipeline integrating with Sqedule">
+  <figcaption>We will integrate a CD pipeline with Sqedule. The pipeline will register releases in the Sqedule server.</figcaption>
+</figure>
+
+<h2 id="before-you-begin">Before you begin</h2>
+<p>Please make sure you've done the following before proceeding with this tutorial:</p>
+<ul>
+<li><a href="../../../server_guide/">Setup a Sqedule server</a></li>
+<li><a href="../../tasks/install-cli/">Install the CLI</a></li>
+</ul>
+<h2 id="1-create-github-repo-with-pipeline">1 Create Github repo with pipeline</h2>
+<p>Create a new Git repo:</p>
+<div class="highlight"><pre><span></span><code>mkdir sqedule-tutorial-1
+<span class="nb">cd</span> sqedule-tutorial-1
+git init
+</code></pre></div>
+<p>Add a new Github workflow representing our CD pipeline. Since this is just a tutorial, this pipeline doesn't actually deploy anything and merely prints "I have deployed". In <code>.github/workflows/cd.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CD</span><span class="w"></span>
+
+<span class="nt">on</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+
+<span class="nt">jobs</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">deploy</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-20.04</span><span class="w"></span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v2</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo I have deployed</span><span class="w"></span>
+</code></pre></div>
+<p>Commit the file:</p>
+<div class="highlight"><pre><span></span><code>git add .github/workflows/ci.yml
+git commit -a -m <span class="s2">&quot;Initial commit&quot;</span>
+</code></pre></div>
+<p>Then <a href="https://github.com/new">create a Github repo</a> and push this Git repo to Github.</p>
+<h2 id="2-configure-cli">2 Configure CLI</h2>
+<p>Before we can use the Sqedule CLI, we must configure it to tell it which Sqedule server to use. Edit the Sqedule configuration file:</p>
+<ul>
+<li>Unix: <code>~/.sqedule-cli.yaml</code></li>
+<li>Windows: <code>C:\Users\&lt;Username&gt;\.sqedule-cli.yaml</code></li>
+</ul>
+<p>In this file:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">server-base-url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://your-sqedule-server.com</span><span class="w"></span>
+</code></pre></div>
+<p>If the Sqedule server is behind a reverse proxy with HTTP Basic Authentication, then also specify the Basic Authentication credentials:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">basic-auth-user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;username here&gt;</span><span class="w"></span>
+<span class="nt">basic-auth-password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password here&gt;</span><span class="w"></span>
+</code></pre></div>
+<p>On Unix, be sure to restrict the file's permissions so that the credentials can't be read by other users:</p>
+<div class="highlight"><pre><span></span><code>chmod <span class="m">600</span> ~/.sqedule-cli.yaml
+</code></pre></div>
+<h2 id="3-register-an-application">3 Register an application</h2>
+<p>Use the CLI to register an application. This requires two parameters:</p>
+<ul>
+<li>An ID meant for machines. It will also be used in URLs. Example: <code>shopping_cart_service</code></li>
+<li>A human-readable display name. Example: "Shopping Cart Service"</li>
+</ul>
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Unix</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>sqedule application create <span class="se">\</span>
+  --id shopping_cart_service <span class="se">\</span>
+  --display-name <span class="s1">&#39;Shopping Cart Service&#39;</span> <span class="se">\</span>
+  --proposal-state final
+</code></pre></div>
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Windows (cmd)</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>sqedule application create <span class="se">^</span>
+<span class="se"> </span> --id shopping_cart_service <span class="se">^</span>
+<span class="se"> </span> --display-name <span class="s2">&quot;Shopping Cart Service&quot;</span> <span class="se">^</span>
+<span class="se"> </span> --proposal-state final
+</code></pre></div>
+</div>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Proposal state?</p>
+<p>Many resources in Sqedule are versioned. There are two kinds of versions: proposals (unapproved versions), and approved versions. Proposals can be modified at will and have no effect. Once you are satisfied with the proposal, you finalize the proposal, after which it may become an approved version (approval is done either by change managers or automatically by the system).</p>
+<p><code>sqedule xxx create</code> commands don't create finalized versions by default. Instead, they create draft (unfinalized) proposals. The <code>--proposal-state final</code> flag indicates that we want to finalize the proposal and submit it for approval.</p>
+<p>Learn more about the concept: <a href="../../concepts/versioning/">Versioning, proposals &amp; reviews</a>.</p>
+</div>
+<p>The CLI tells you that the operation is successful, and outputs the properties of the registered application:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.115866+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shopping_cart_service&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.115866+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;proposal_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;approved&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;approved_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.115686+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.11635+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;display_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Shopping Cart Service&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">738</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.11722+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;version_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;version_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;approved&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+<span class="mi">--------------------</span><span class="w"></span>
+<span class="err">🎉</span><span class="w"> </span><span class="err">Applica</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="w"> </span><span class="err">crea</span><span class="kc">te</span><span class="err">d!</span><span class="w"></span>
+<span class="err">💡</span><span class="w"> </span><span class="err">I</span><span class="kc">t</span><span class="w"> </span><span class="err">has</span><span class="w"> </span><span class="err">bee</span><span class="kc">n</span><span class="w"> </span><span class="err">au</span><span class="kc">t</span><span class="err">o</span><span class="mi">-</span><span class="err">approved</span><span class="w"> </span><span class="err">by</span><span class="w"> </span><span class="kc">t</span><span class="err">he</span><span class="w"> </span><span class="err">sys</span><span class="kc">te</span><span class="err">m.</span><span class="w"> </span><span class="err">To</span><span class="w"> </span><span class="err">view</span><span class="w"> </span><span class="err">i</span><span class="kc">t</span><span class="p">,</span><span class="w"> </span><span class="err">use</span><span class="w"> </span><span class="err">`sqedule</span><span class="w"> </span><span class="err">applica</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="w"> </span><span class="err">describe`</span><span class="w"></span>
+</code></pre></div>
+<h3 id="viewing-the-registered-application">Viewing the registered application</h3>
+<h4 id="with-the-cli">With the CLI</h4>
+<p>Run:</p>
+<div class="highlight"><pre><span></span><code>sqedule application describe --id shopping_cart_service
+</code></pre></div>
+<p>The CLI outputs the properties of the application:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;approval_ruleset_bindings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.115866+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shopping_cart_service&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;latest_approved_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;proposal_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;approved&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;approved_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.115686+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.11635+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;display_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Shopping Cart Service&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">738</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.11722+02:00&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;version_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;version_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;approved&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="p">},</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-08-22T14:44:14.115866+02:00&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+<h4 id="with-the-web-interface">With the web interface</h4>
+<p>Visit your Sqedule server's base URL. That will open up the <a href="../../concepts/web-interface/">web interface</a>.</p>
+<p>Click "Applications" and you should see your application.</p>
+<h2 id="4-integrate-with-cd-pipeline">4 Integrate with CD pipeline</h2>
+<p>Modify <code>.github/workflows/cd.yml</code> to:</p>
+<ol>
+<li>Download and extract the Sqedule CLI.</li>
+<li>Use the Sqedule CLI to register a release before deploying.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CD</span><span class="w"></span>
+
+<span class="nt">on</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+
+<span class="nt">jobs</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">deploy</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-20.04</span><span class="w"></span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v2</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">### Begin modification</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Download Sqedule CLI</span><span class="w"></span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">curl -fsSLo sqedule-cli.tar.gz https://github.com/fullstaq-labs/sqedule/releases/download/v0.1.0/sqedule-cli-0.1.0-x86_64-linux.tar.gz</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Extract Sqedule CLI</span><span class="w"></span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tar -xzf sqedule-cli.tar.gz --strip-components=1</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Register release</span><span class="w"></span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./sqedule release create</span><span class="w"></span>
+<span class="w">        </span><span class="nt">env</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">SQEDULE_SERVER_BASE_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://your-sqedule-server.com</span><span class="w">  </span><span class="c1"># &lt;--- change this!</span><span class="w"></span>
+<span class="w">          </span><span class="nt">SQEDULE_APPLICATION_ID</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shopping_cart_service</span><span class="w"></span>
+<span class="w">          </span><span class="nt">SQEDULE_METADATA</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span><span class="w"></span>
+<span class="w">            </span><span class="no">{</span><span class="w"></span>
+<span class="w">              </span><span class="no">&quot;commit_sha&quot;: &quot;${{ github.sha }}&quot;,</span><span class="w"></span>
+<span class="w">              </span><span class="no">&quot;run_number&quot;: ${{ github.run_number }}</span><span class="w"></span>
+<span class="w">            </span><span class="no">}</span><span class="w"></span>
+<span class="w">      </span><span class="c1">### End modification</span><span class="w"></span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo I have deployed</span><span class="w"></span>
+</code></pre></div>
+<p>The most important addition is the <code>sqedule release create</code> invocation — this is the CLI command that registers a release. This command accepts the following parameters (which we pass via environment variables):</p>
+<ul>
+<li>The Sqedule server URL.</li>
+<li>The ID of the application for which we want to register a release.</li>
+<li>Arbitrary JSON metadata to include in the release. In this case, we include the Git commit SHA and the Github Actions run number.</li>
+</ul>
+<p>Commit and push the changes:</p>
+<div class="highlight"><pre><span></span><code>git commit -a -m <span class="s2">&quot;Log releases in Sqedule&quot;</span>
+git push
+</code></pre></div>
+<p>Then wait until the CD pipeline finishes.</p>
+<h2 id="5-view-release">5 View release</h2>
+<p>Visit your Sqedule server's base URL. That will open up the <a href="../../concepts/web-interface/">web interface</a>.</p>
+<p>Click "Releases" and you should see the release that just occurred.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Congratulations, you've integrated a CD pipeline with Sqedule! Every time the pipeline deploys, it registers a new release in Sqedule.</p>
+<p>In <a href="../approval/">the next tutorial</a>, we'll not only use Sqedule to log releases, but also to approve releases.</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../../help_support/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Help &amp; support" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Help & support
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../approval/" class="md-footer__link md-footer__link--next" aria-label="Next: 2 Release approval" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              2 Release approval
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../../assets/javascripts/workers/search.94ec81fe.min.js", "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.48dfec6c.min.js"></script>
+      
+    
+  </body>
+</html>
